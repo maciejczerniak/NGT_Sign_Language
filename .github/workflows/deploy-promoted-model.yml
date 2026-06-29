@@ -1,0 +1,212 @@
+name: Deploy Promoted Azure ML Model
+
+on:
+  schedule:
+    # Runs after the daily 02:00 UTC (4:00 AM - W. Europe Standard Time) Azure ML trigger checker.
+    - cron: "7 2 * * *"
+  workflow_dispatch:
+
+permissions:
+  id-token: write
+  contents: read
+
+concurrency:
+  group: azure-promoted-model-deploy
+  cancel-in-progress: false
+
+jobs:
+  deploy-promoted-model:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v5
+
+      - name: Azure login
+        uses: azure/login@v2
+        with:
+          client-id: ${{ vars.AZURE_CLIENT_ID }}
+          tenant-id: ${{ vars.AZURE_TENANT_ID }}
+          subscription-id: ${{ vars.AZURE_SUBSCRIPTION_ID }}
+
+      - name: Validate Azure deployment variables
+        env:
+          AZURE_RESOURCE_GROUP: ${{ vars.AZURE_ML_RESOURCE_GROUP }}
+          AZURE_WORKSPACE: ${{ vars.AZURE_WORKSPACE }}
+          AZURE_COMPUTE_TARGET: ${{ vars.AZURE_COMPUTE_TARGET }}
+          AZURE_INFERENCE_ENVIRONMENT_NAME: ${{ vars.AZURE_INFERENCE_ENVIRONMENT_NAME }}
+          AZURE_INFERENCE_ENVIRONMENT_VERSION: ${{ vars.AZURE_INFERENCE_ENVIRONMENT_VERSION }}
+        run: |
+          required_vars=(
+            AZURE_RESOURCE_GROUP
+            AZURE_WORKSPACE
+            AZURE_COMPUTE_TARGET
+            AZURE_INFERENCE_ENVIRONMENT_NAME
+            AZURE_INFERENCE_ENVIRONMENT_VERSION
+          )
+          for variable_name in "${required_vars[@]}"; do
+            if [ -z "${!variable_name}" ]; then
+              echo "::error::Missing required GitHub variable: ${variable_name}"
+              exit 1
+            fi
+          done
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install Poetry
+        run: |
+          curl -sSL https://install.python-poetry.org | python3 - --version 1.8.0
+          echo "$HOME/.local/bin" >> "$GITHUB_PATH"
+
+      - name: Install Azure deployment dependencies
+        run: |
+          poetry config virtualenvs.in-project true
+          poetry install --with training --no-interaction
+
+      - name: Detect promoted model change
+        id: model
+        env:
+          AZURE_SUBSCRIPTION_ID: ${{ vars.AZURE_SUBSCRIPTION_ID }}
+          AZURE_RESOURCE_GROUP: ${{ vars.AZURE_ML_RESOURCE_GROUP }}
+          AZURE_WORKSPACE: ${{ vars.AZURE_WORKSPACE }}
+          ENDPOINT_NAME: ${{ vars.AZURE_ONLINE_ENDPOINT_NAME }}
+          MODEL_NAME: ${{ vars.AZURE_ONLINE_MODEL_NAME }}
+        run: |
+          poetry run python - <<'PY'
+          import os
+          from pathlib import Path
+          import sys
+
+          sys.path.insert(0, str(Path("scripts").resolve()))
+
+          from endpoint_common import get_ml_client, resolve_model_version
+          from rollout_blue_green import _active_deployment, _inactive
+
+          endpoint_name = os.environ.get("ENDPOINT_NAME") or "ngt-sign-language-blue-green"
+          model_name = os.environ.get("MODEL_NAME") or "ngt-sign-language"
+          client = get_ml_client()
+          endpoint = client.online_endpoints.get(endpoint_name)
+          active = _active_deployment(endpoint)
+          target = _inactive(active)
+          deployment = client.online_deployments.get(
+              name=active,
+              endpoint_name=endpoint_name,
+          )
+          active_version = str((deployment.tags or {}).get("model_version", ""))
+          promoted_version = resolve_model_version(
+              ml_client=client,
+              model_name=model_name,
+              model_version=None,
+              use_promoted=True,
+              use_latest=False,
+          )
+          deploy_needed = active_version != promoted_version
+
+          with open(os.environ["GITHUB_OUTPUT"], "a", encoding="utf-8") as output:
+              output.write(f"active={active}\n")
+              output.write(f"target={target}\n")
+              output.write(f"active_version={active_version}\n")
+              output.write(f"promoted_version={promoted_version}\n")
+              output.write(f"deploy_needed={str(deploy_needed).lower()}\n")
+
+          print(f"Active deployment: {active}")
+          print(f"Active model version: {active_version or '<unknown>'}")
+          print(f"Promoted model version: {promoted_version}")
+          print(f"Deployment needed: {deploy_needed}")
+          PY
+
+      - name: Stage promoted model on inactive color
+        if: steps.model.outputs.deploy_needed == 'true'
+        env:
+          AZURE_SUBSCRIPTION_ID: ${{ vars.AZURE_SUBSCRIPTION_ID }}
+          AZURE_RESOURCE_GROUP: ${{ vars.AZURE_ML_RESOURCE_GROUP }}
+          AZURE_WORKSPACE: ${{ vars.AZURE_WORKSPACE }}
+          AZURE_COMPUTE_TARGET: ${{ vars.AZURE_COMPUTE_TARGET }}
+          AZURE_INSTANCE_TYPE: ${{ vars.AZURE_INSTANCE_TYPE }}
+          AZURE_INFERENCE_ENVIRONMENT_NAME: ${{ vars.AZURE_INFERENCE_ENVIRONMENT_NAME }}
+          AZURE_INFERENCE_ENVIRONMENT_VERSION: ${{ vars.AZURE_INFERENCE_ENVIRONMENT_VERSION }}
+          ENDPOINT_NAME: ${{ vars.AZURE_ONLINE_ENDPOINT_NAME }}
+          MODEL_NAME: ${{ vars.AZURE_ONLINE_MODEL_NAME }}
+          INSTANCE_COUNT: ${{ vars.AZURE_ONLINE_INSTANCE_COUNT }}
+        run: |
+          poetry run python scripts/rollout_blue_green.py \
+            --endpoint-name "${ENDPOINT_NAME:-ngt-sign-language-blue-green}" \
+            --model-name "${MODEL_NAME:-ngt-sign-language}" \
+            --model-version "${{ steps.model.outputs.promoted_version }}" \
+            --instance-type "${AZURE_INSTANCE_TYPE:-gpu}" \
+            --instance-count "${INSTANCE_COUNT:-1}" \
+            --source-revision "$GITHUB_SHA" \
+            --stage-only
+
+      - name: Read endpoint credentials
+        if: steps.model.outputs.deploy_needed == 'true'
+        id: endpoint
+        env:
+          ENDPOINT_NAME: ${{ vars.AZURE_ONLINE_ENDPOINT_NAME }}
+        run: |
+          az extension add --name ml --yes
+          ENDPOINT_NAME="${ENDPOINT_NAME:-ngt-sign-language-blue-green}"
+          SCORING_URI="$(az ml online-endpoint show \
+            --name "$ENDPOINT_NAME" \
+            --resource-group "${{ vars.AZURE_ML_RESOURCE_GROUP }}" \
+            --workspace-name "${{ vars.AZURE_WORKSPACE }}" \
+            --query scoring_uri \
+            --output tsv)"
+          case "$SCORING_URI" in
+            http://194.171.191.226:*)
+              PUBLIC_SCORING_URI="${SCORING_URI/http:\/\/194.171.191.226:/https:\/\/cradle.buas.ngrok.app\/port-}"
+              ;;
+            http://194.171.191.227:*)
+              PUBLIC_SCORING_URI="${SCORING_URI/http:\/\/194.171.191.227:/https:\/\/adsai2.ngrok.dev\/port-}"
+              ;;
+            https://cradle.buas.ngrok.app/*|https://adsai2.ngrok.dev/*)
+              PUBLIC_SCORING_URI="$SCORING_URI"
+              ;;
+            *)
+              echo "::error::Unsupported Azure ML scoring URI host: $SCORING_URI"
+              exit 1
+              ;;
+          esac
+          ENDPOINT_KEY="$(az ml online-endpoint get-credentials \
+            --name "$ENDPOINT_NAME" \
+            --resource-group "${{ vars.AZURE_ML_RESOURCE_GROUP }}" \
+            --workspace-name "${{ vars.AZURE_WORKSPACE }}" \
+            --query primaryKey \
+            --output tsv)"
+          echo "::add-mask::$SCORING_URI"
+          echo "::add-mask::$PUBLIC_SCORING_URI"
+          echo "::add-mask::$ENDPOINT_KEY"
+          echo "scoring_uri=$PUBLIC_SCORING_URI" >> "$GITHUB_OUTPUT"
+          echo "endpoint_key=$ENDPOINT_KEY" >> "$GITHUB_OUTPUT"
+
+      - name: Smoke-test staged deployment
+        if: steps.model.outputs.deploy_needed == 'true'
+        run: |
+          poetry run python scripts/test_online_endpoint.py \
+            --endpoint-url "${{ steps.endpoint.outputs.scoring_uri }}" \
+            --endpoint-key "${{ steps.endpoint.outputs.endpoint_key }}" \
+            --deployment-name "${{ steps.model.outputs.target }}" \
+            --max-latency-seconds 30
+
+      - name: Activate staged deployment
+        if: steps.model.outputs.deploy_needed == 'true'
+        env:
+          AZURE_SUBSCRIPTION_ID: ${{ vars.AZURE_SUBSCRIPTION_ID }}
+          AZURE_RESOURCE_GROUP: ${{ vars.AZURE_ML_RESOURCE_GROUP }}
+          AZURE_WORKSPACE: ${{ vars.AZURE_WORKSPACE }}
+          ENDPOINT_NAME: ${{ vars.AZURE_ONLINE_ENDPOINT_NAME }}
+        run: |
+          poetry run python scripts/rollout_blue_green.py \
+            --endpoint-name "${ENDPOINT_NAME:-ngt-sign-language-blue-green}" \
+            --activate-staged
+
+      - name: Deployment summary
+        run: |
+          echo "### Promoted model deployment" >> "$GITHUB_STEP_SUMMARY"
+          echo "- Active before check: \`${{ steps.model.outputs.active }}\`" >> "$GITHUB_STEP_SUMMARY"
+          echo "- Previous model version: \`${{ steps.model.outputs.active_version }}\`" >> "$GITHUB_STEP_SUMMARY"
+          echo "- Promoted model version: \`${{ steps.model.outputs.promoted_version }}\`" >> "$GITHUB_STEP_SUMMARY"
+          echo "- Deployment required: \`${{ steps.model.outputs.deploy_needed }}\`" >> "$GITHUB_STEP_SUMMARY"

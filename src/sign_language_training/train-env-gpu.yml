@@ -1,0 +1,35 @@
+name: sign-language-training-env-gpu
+dependencies:
+  - python=3.11
+  - pip
+  - pip:
+      # CUDA wheels — extra-index, NOT index-url
+      - --extra-index-url https://download.pytorch.org/whl/cu118
+      - torch==2.2.0+cu118
+      - torchvision==0.17.0+cu118
+
+      # Azure ML SDK v2 — used for model registration inside the job
+      - azure-ai-ml>=1.33.0,<2.0.0
+      - azure-identity>=1.15.0
+
+      # MLflow — pin BOTH mlflow and mlflow-skinny to the SAME 2.x version
+      # so azureml-mlflow does NOT pull in mlflow-skinny 3.x which produces
+      # 404s on /api/2.0/mlflow/logged-models/search.
+      - mlflow==2.14.3
+      - mlflow-skinny==2.14.3
+      - azureml-mlflow==1.62.0.post2
+
+      # Core ML deps
+      - numpy>=1.24,<2.0          # torchvision transforms break with NumPy 2.x
+      - pillow>=10.0
+      - scikit-learn>=1.5,<2.0
+      - matplotlib>=3.7
+      - typer>=0.25.0,<0.26.0
+
+      # Config
+      - pydantic>=2.13.3,<3.0.0
+      - pydantic-settings>=2.14.0,<3.0.0
+      - python-dotenv>=1.0
+
+      # Build / runtime
+      - setuptools>=65.0,<81  # setuptools 81+ removed pkg_resources which mlflow 2.x requires

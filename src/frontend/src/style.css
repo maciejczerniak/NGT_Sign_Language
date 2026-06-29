@@ -1,0 +1,37 @@
+@import '@fontsource/plus-jakarta-sans/400.css';
+@import '@fontsource/plus-jakarta-sans/600.css';
+@import '@fontsource/plus-jakarta-sans/700.css';
+@import '@fontsource/plus-jakarta-sans/800.css';
+@import '@fontsource/playfair-display/700-italic.css';
+@import "tailwindcss";
+
+@theme {
+  --font-sans: 'Plus Jakarta Sans', sans-serif;
+
+  /* The Deep Background (Passes everything) */
+  --color-brand-purple: #1e0033;
+
+  /* Vibrant Accent (Use for icons/borders only) */
+  --color-brand-vibrant: #a855f7;
+
+  /* Accessible Accent (Use for labels/text on dark backgrounds) */
+  /* This color (#d8b4fe) provides 7:1 contrast against your dark purple */
+  --color-brand-accent: #d8b4fe;
+
+  /* Success Green for those 95% match scores */
+  --color-brand-success: #4ade80;
+
+  /* Muted accents for the home progress UI — calmer than brand-success so
+     they sit better against the purple palette. */
+  --color-brand-goal: #2dd4bf;      /* teal — daily goal accent */
+  --color-brand-learned: #4ade80;   /* green — learned-letter accent */
+}
+
+/* Ensure the background stays dark even if the app is empty */
+@layer base {
+  html, body {
+    background-color: var(--color-brand-purple);
+    color: white;
+    margin: 0;
+  }
+}

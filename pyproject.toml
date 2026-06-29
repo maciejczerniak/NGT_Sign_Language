@@ -1,0 +1,229 @@
+[tool.poetry]
+name = "sign-language"
+version = "0.1.0"
+description = "Block D project"
+authors = ["Szymon Chirowski, Maciej Czerniak, Ana Farazică, Raya Kichukova, Kinga Marchlewska"]
+readme = "README.md"
+packages = [
+  { include = "sign_language", from = "src" },
+  { include = "sign_language_training", from = "src" },
+  { include = "sign_language_azure_api", from = "src" }
+]
+
+# ──────────────────────────────────────────────────────────────────────────────
+# Pin torch to CPU-only wheels by default. The training Dockerfile can reinstall
+# CUDA torch if it really needs on-host GPU; in this project training compute is
+# Azure ML, so the training *image* doesn't need CUDA either.
+[[tool.poetry.source]]
+name = "pytorch-cpu"
+url = "https://download.pytorch.org/whl/cpu"
+priority = "explicit"
+# ──────────────────────────────────────────────────────────────────────────────
+
+[tool.poetry.dependencies]
+python = ">=3.11,<3.12"
+
+# Shared by both backend and training (vision + serialization)
+numpy = ">=1.24"
+Pillow = ">=10.0"
+pydantic = "^2.13.3"
+pydantic-settings = "^2.14.0"
+mediapipe = ">=0.10"
+opencv-python = ">=4.8"
+scikit-learn = ">=1.5,<2.0"
+typer = "^0.25.0"
+
+# CPU-only torch for backend; training image gets the same unless overridden
+torch = { version = ">=2.0", source = "pytorch-cpu" }
+torchvision = { version = ">=0.15", source = "pytorch-cpu" }
+
+# Backend service (FastAPI + DB + WS)
+fastapi = ">=0.100"
+uvicorn = { version = ">=0.20", extras = ["standard"] }
+fastapi-users = { version = "^15.0.5", extras = ["sqlalchemy"] }
+asyncpg = "^0.31.0"
+alembic = "^1.18.4"
+pyjwt = "^2.13.0"
+opencensus-ext-azure = "^1.1.15"
+websockets = "^16.0"
+
+# Model registry client (backend startup pulls .pth from MLflow when DEPLOY_TARGET=onprem).
+# mlflow-skinny excludes the server/UI bits we don't need at inference time;
+# boto3 is required transitively for S3-style artifact stores (MinIO/Azure Blob).
+# Pinned to match the BUaS-hosted MLflow 3.11.1 reference (registry alias API).
+mlflow-skinny = "3.11.1"
+boto3 = "^1.34"
+
+# Azure Container Apps API-only dependencies
+[tool.poetry.group.azure-api]
+optional = true
+
+[tool.poetry.group.azure-api.dependencies]
+azure-storage-blob = "^12.29.0"
+
+# Training-only: mlflow + Azure ML SDK + CLI
+# Install with: poetry install --with training
+[tool.poetry.group.training]
+optional = true
+
+[tool.poetry.group.training.dependencies]
+mlflow = "3.11.1"  # match the BUaS-hosted MLflow server version
+# azureml-mlflow removed: nothing imports it, and its <=3.9.0 mlflow-skinny
+# pin conflicted with the 3.11.1 we use in main deps. Azure ML compute sets
+# MLFLOW_TRACKING_URI automatically inside training jobs, so the plugin is
+# not needed. Re-add if you ever call mlflow.set_tracking_uri("azureml://...")
+# from a local machine.
+azure-ai-ml = "^1.33.0"
+protobuf = "3.20.3"     # pinned for mlflow compatibility
+
+[tool.poetry.group.dev.dependencies]
+pytest = ">=8.4.1,<9"
+pytest-cov = ">=7.0.0,<8"
+black = ">=25.1.0,<26"
+flake8 = ">=7.3.0,<8"
+flake8-pyproject = ">=1.2.3,<2"
+mypy = ">=1.16.1,<2"
+types-requests = ">=2.32.4.20250611,<3"
+pre-commit = ">=4.2.0,<5"
+httpx = "^0.28.1"
+sphinx = ">=7.0,<8.0"
+sphinx-rtd-theme = "^3.1.0"
+pytest-asyncio = "^1.4.0"
+aiosqlite = "^0.22.1"
+pylint = "^4.0.5"
+
+[tool.poetry.scripts]
+sign-language = "sign_language.main:main"
+sign-language-training = "sign_language_training.train:main"
+sign-language-azure-api = "sign_language_azure_api.main:main"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
+
+# ── Tool config (unchanged) ──────────────────────────────────────────────────
+
+[tool.black]
+line-length = 88
+target-version = ['py311']
+include = '\.pyi?$'
+extend-exclude = '''
+/(
+    \.eggs
+    | \.git
+    | \.hg
+    | \.mypy_cache
+    | \.tox
+    | \.venv
+    | build
+    | dist
+    | migrations
+)/
+'''
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["src"]
+python_files = ["test_*.py", "*_test.py"]
+python_classes = ["Test*"]
+python_functions = ["test_*"]
+asyncio_mode = "auto"
+addopts = [
+    "-v",
+    "--tb=short",
+    "--strict-markers",
+    "--disable-warnings"
+]
+markers = [
+    "slow: marks tests as slow (deselect with '-m \"not slow\"')",
+    "integration: marks tests as integration tests",
+    "unit: marks tests as unit tests",
+]
+filterwarnings = [
+    "ignore::DeprecationWarning",
+    "ignore::PendingDeprecationWarning"
+]
+
+[tool.mypy]
+python_version = "3.11"
+mypy_path = ["src", "scripts"]
+warn_return_any = true
+warn_unused_configs = false
+disallow_untyped_defs = true
+disallow_incomplete_defs = true
+check_untyped_defs = true
+disallow_untyped_decorators = true
+no_implicit_optional = true
+warn_redundant_casts = true
+warn_unused_ignores = false
+warn_no_return = true
+warn_unreachable = true
+strict_equality = true
+exclude = [
+    "^migrations/",
+    "^.venv/",
+    "^build/",
+    "^dist/"
+]
+ignore_missing_imports = false
+allow_untyped_calls = true
+
+[[tool.mypy.overrides]]
+module = [
+    "torchvision",
+    "torchvision.*",
+    "sklearn",
+    "sklearn.*",
+    "typer",
+    "typer.*",
+    "mlflow",
+    "mlflow.*",
+    "azure.*",
+    "alembic",
+    "alembic.*",
+    "sqlalchemy",
+    "sqlalchemy.*",
+    "fastapi_users",
+    "fastapi_users.*",
+    "fastapi_users_db_sqlalchemy",
+    "fastapi_users_db_sqlalchemy.*",
+]
+ignore_missing_imports = true
+
+[tool.flake8]
+max-line-length = 88
+extend-ignore = [
+    "E203",
+    "E501",
+    "W503",
+]
+exclude = [
+    ".venv",
+    ".git",
+    "__pycache__",
+    "migrations",
+    "build",
+    "dist",
+    "src/frontend",
+    "tests",
+]
+per-file-ignores = [
+    "__init__.py:F401",
+]
+
+[tool.coverage.run]
+source = ["sign_language", "sign_language_training"]
+omit = [
+    "src/sign_language/api/*",
+    "src/sign_language_training/augmentation.py",
+    "*/__init__.py",
+    "*/tests/*",
+]
+
+[tool.coverage.report]
+show_missing = true
+fail_under = 90
+exclude_lines = [
+    "torch.device\\(\"cuda\"\\)",
+    "torch.device\\(\"mps\"\\)",
+]

@@ -1,0 +1,68 @@
+name: Deploy to On-Prem (Portainer GitOps)
+
+on:
+  workflow_run:
+    workflows: ["Docker Build & Push"]
+    types: [completed]
+    branches: [ main ]
+
+permissions:
+  contents: write
+  packages: write
+
+jobs:
+  publish-deploy-branch:
+    if: github.event.workflow_run.conclusion == 'success'
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v5
+        with:
+          ref: ${{ github.event.workflow_run.head_sha }}
+
+      # Render base + onprem overlay into a single deploy file.
+      #
+      # `--no-interpolate` leaves ${VAR} references intact so Portainer's
+      # env-vars UI is the single source of truth for runtime secrets
+      # (POSTGRES_USER, SECRET_KEY, etc.). All non-secret config is declared
+      # as literals in the source compose, so the rendered file is fully
+      # self-documenting.
+      - name: Render merged compose
+        run: |
+          docker compose \
+            -f docker/compose/docker-compose.yml \
+            -f docker/compose/docker-compose.onprem.yml \
+            config --no-interpolate > docker-compose.deploy.yml
+
+      # `docker compose config` normalizes everything to canonical forms that
+      # upstream `docker compose` CLI accepts but Portainer's stricter parser
+      # rejects. Rewrite the troublesome bits to the short forms Portainer
+      # expects.
+      - name: Normalize for Portainer
+        run: |
+          # depends_on: map form → array form. Portainer rejects the map
+          # form with conditions; wants `- db`.
+          yq -i '(.services[] | select(.depends_on)).depends_on |= keys' docker-compose.deploy.yml
+
+          # Published ports: stringified → numbers. Spec allows port ranges
+          # as strings; Portainer demands uint32.
+          yq -i '(.services[] | select(.ports != null).ports[] | select(.published)).published |= to_number' docker-compose.deploy.yml
+
+      - name: Pin image tags in rendered compose
+        run: |
+          TAG="${{ github.event.workflow_run.head_sha }}"
+          TAG="${TAG::7}"
+          BASE="ghcr.io/bredauniversityadsai/2025-26d-fai2-adsai-group-researchgroup2"
+          yq -i ".services.backend.image  = \"${BASE}/signlang-backend:sha-${TAG}\""  docker-compose.deploy.yml
+          yq -i ".services.frontend.image = \"${BASE}/signlang-frontend:sha-${TAG}\"" docker-compose.deploy.yml
+
+      - name: Commit to deploy branch
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git checkout -B deploy
+          mv docker-compose.deploy.yml docker-compose.yml
+          git add docker-compose.yml
+          git commit -m "deploy ${{ github.event.workflow_run.head_sha }}"
+          git push -f origin deploy

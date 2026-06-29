@@ -1,0 +1,33 @@
+[build-system]
+requires = ["setuptools>=65.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "sign-language-training"
+version = "0.1.0"
+description = "Standalone training package for the NGT sign-language model"
+requires-python = ">=3.11"
+dependencies = [
+    "torch",
+    "torchvision",
+    "azure-ai-ml>=1.33.0,<2.0.0",
+    "azure-identity",
+    "mlflow==2.14.3",
+    "mlflow-skinny==2.14.3",
+    "azureml-mlflow",
+    "numpy>=1.24,<2.0",
+    "pillow>=10.0",
+    "scikit-learn>=1.5,<2.0",
+    "pydantic>=2.13.3,<3.0.0",
+    "pydantic-settings>=2.14.0,<3.0.0",
+    "matplotlib>=3.7",
+    "python-dotenv>=1.0",
+    "setuptools>=65.0",
+]
+
+[project.scripts]
+sign-language-training = "sign_language_training.train:main"
+
+[tool.setuptools.packages.find]
+where = [".."]
+include = ["sign_language_training*"]

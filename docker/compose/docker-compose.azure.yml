@@ -1,0 +1,22 @@
+# Azure deployment overlay.
+#
+# Wires the backend to the Azure ML model registry. AZURE_* values are read
+# from the Azure Container Apps environment configuration at runtime (or from
+# a service principal in another deployment mechanism). The Azure SDK
+# credential chain (ManagedIdentity → AzureCli) resolves credentials
+# automatically — no service-principal secrets in the compose.
+#
+# This file is reference layout. Production Azure deployment uses Container
+# Apps YAML; render this with `docker compose ... config` to inspect the
+# fully-resolved environment, or run locally against Azure with `az login`
+# providing credentials via AzureCliCredential.
+services:
+  backend:
+    environment:
+      # Switch model resolution to Azure ML registry.
+      - DEPLOY_TARGET=azure
+      # Azure ML workspace coordinates. These don't have container-internal
+      # defaults — they come from the deployed-environment configuration.
+      - AZURE_SUBSCRIPTION_ID=${AZURE_SUBSCRIPTION_ID}
+      - AZURE_RESOURCE_GROUP=${AZURE_RESOURCE_GROUP}
+      - AZURE_WORKSPACE=${AZURE_WORKSPACE}

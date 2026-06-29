@@ -1,0 +1,81 @@
+# Python/cache
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+
+# Virtual environments
+.venv/
+venv/
+env/
+
+# Local env/secrets
+.env
+.env.*
+!.env.example
+
+# Git / editor
+.git/
+.github/
+.vscode/
+.idea/
+
+# Data should be registered as Azure ML data assets
+data/
+!data/.gitkeep
+
+# Local outputs/artifacts
+logs/
+mlruns/
+mlartifacts/
+outputs/
+wandb/
+
+# Model binaries should be registered as assets, not uploaded with code
+*.pth
+*.pt
+*.onnx
+*.pkl
+
+# Node/frontend dependencies and build output
+src/frontend/node_modules/
+src/frontend/dist/
+src/frontend/.vite/
+
+# Docker/local deployment outputs
+docker/**/data/
+docker/**/volumes/
+
+# OS files
+.DS_Store
+Thumbs.db
+# Everything the training job doesn't need.
+# The job only uses src/sign_language_training/ + pyproject.toml
+src/frontend/
+tests/
+docs/
+docker/
+scripts/
+!scripts/
+scripts/*
+!scripts/check_training_triggers.py
+.dvc/
+CONTRIBUTING.md
+Makefile
+package-lock.json
+docker-compose.yml
+conda.yaml
+.pre-commit-config.yaml
+env.example
+poetry.lock
+.gitattributes
+models/
+
+# Training job installs from src/sign_language_training/pyproject.toml directly.
+# The inference package and root pyproject.toml are not needed.
+src/sign_language/
+/pyproject.toml
+README.md

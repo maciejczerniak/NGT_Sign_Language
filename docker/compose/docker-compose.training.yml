@@ -1,0 +1,100 @@
+# Portainer training stack — self-contained local training pipeline.
+#
+# IMPORTANT: this stack runs LOCAL training on the Lambda host. It is the
+# Portainer-side mirror of the Azure ML training pipeline, not a wrapper
+# around it — the two pipelines are independent. After Azure-side training,
+# models land in Azure ML registry; after this local pipeline, models land
+# in on-prem MLflow. They never cross-sync.
+#
+# Why a separate stack from the app:
+# - Different lifecycle. The app is always-on; training runs on demand.
+# - Different resource profile. Training is CPU/RAM-heavy for hours, idle
+#   for days. Mixing forces you to over- or under-provision one of them.
+# - Different deploy cadence. The app image rolls on every PR; the training
+#   image rolls when training code changes (rare).
+#
+# Connects to the existing signlang-shared external network so it can:
+# - Fetch @champion from http://mlflow:5000 as the pretrained starting point.
+# - Register the new checkpoint as @candidate after training succeeds.
+#
+# Requires the network to exist (created once on the host):
+#   docker network create signlang-shared
+#
+# Lifecycle:
+# - On stack deploy or `Pull and redeploy`, the training-pipeline container
+#   starts immediately, runs preprocess -> train -> MLflow upload, then exits.
+# - `restart: "no"` means it stays in `Exited (0)` state after completion;
+#   it does NOT restart on its own.
+# - To run training again later: click the training-pipeline container in
+#   Portainer -> Restart. The same one-shot lifecycle replays.
+# - Pushing new training code to main triggers a Portainer re-poll, which
+#   re-pulls the image and re-runs the pipeline on its own. If that is not
+#   what you want, disable `Re-pull image` on the stack settings.
+#
+# After a successful run:
+# 1. Check the container logs for the candidate version: `Registered
+#    ngt-sign-language v<N> with alias '@candidate'`.
+# 2. Promote with `scripts/promote_mlflow_champion.py --from-candidate --yes`
+#    (from your laptop, with MLFLOW_TRACKING_URI exported).
+# 3. Restart the backend container in the app stack so it picks up the new
+#    champion on startup.
+#
+# Data:
+# The training-data volume is `external: true` — populate it once on the
+# Lambda host with your raw ImageFolder dataset (one subdir per class), e.g.:
+#   docker run --rm -v training-data:/dest -v /path/to/raw:/src \
+#     alpine cp -r /src/. /dest/
+# Or bind-mount a host path by replacing the external volume with:
+#   volumes: ["/host/path/to/raw:/data:ro"]
+services:
+  training-pipeline:
+    image: ghcr.io/bredauniversityadsai/2025-26d-fai2-adsai-group-researchgroup2/signlang-training:latest
+    # One-shot semantics: do NOT restart on exit. The container runs once
+    # per stack deploy or container Restart, and stays in Exited (0) state
+    # afterwards so the logs remain inspectable in Portainer.
+    restart: "no"
+    environment:
+      # Talks to the self-hosted MLflow over signlang-shared.
+      - MLFLOW_TRACKING_URI=http://mlflow:5000
+      - MLFLOW_EXPERIMENT_NAME=ngt-training-runs
+      - PYTHONUNBUFFERED=1
+    volumes:
+      - training-data:/data:ro
+      - training-outputs:/outputs
+    command: >
+      python scripts/run_local_pipeline.py
+        --raw-data-dir /data
+        --output-dir /outputs
+        --pretrain-from-mlflow
+        --register-as-candidate
+        --mlflow
+        --num-workers 0
+        --clean
+    networks:
+      - default
+      - signlang-shared
+
+  # ---------------------------------------------------------------------------
+  # NOTE: The on-prem scheduled trigger is no longer here. It used to be a
+  # supercronic `signlang-trigger` service; it has been replaced by an Airflow
+  # DAG (see docker/compose/docker-compose.airflow.yml + dags/ngt_retraining_dag.py).
+  # Airflow's decision step reuses the `trigger-state` and `training-data`
+  # volumes declared below, and its `train_model` task launches the
+  # `training-pipeline` image above via DockerOperator.
+  # ---------------------------------------------------------------------------
+
+volumes:
+  training-data:
+    # Populate with raw ImageFolder data before the first stack deploy.
+    external: true
+  training-outputs:
+    # Pipeline writes checkpoints, metrics, plots, gate results here.
+    # Referenced as `external` by the Airflow stack's DockerOperator task.
+  trigger-state:
+    # Persists the data-change baseline (training_trigger_state_local.json).
+    # Shared with the Airflow decision step (mounted read-only there is fine,
+    # but it is mounted read-write here in case a manual run needs to update it).
+
+networks:
+  signlang-shared:
+    external: true

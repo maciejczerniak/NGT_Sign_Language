@@ -1,0 +1,9 @@
+{
+    "epochs": 30,
+    "batch_sizes": [8, 16, 32],
+    "patience_values": [5, 7, 10],
+    "learning_rate_min": 1e-5,
+    "learning_rate_max": 3e-4,
+    "max_total_trials": 12,
+    "max_concurrent_trials": 2
+}

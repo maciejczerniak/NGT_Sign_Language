@@ -1,0 +1,44 @@
+FROM python:3.11-slim
+
+WORKDIR /app
+
+# System deps for image processing (Pillow, torchvision, opencv)
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends \
+        libgl1 libglib2.0-0 && \
+    rm -rf /var/lib/apt/lists/*
+
+# Pin Poetry for reproducibility
+RUN pip install --no-cache-dir poetry==1.8.0
+
+# Install deps WITH the training group (mlflow + azureml-mlflow + azure-ai-ml + typer)
+COPY pyproject.toml poetry.lock ./
+RUN poetry config virtualenvs.create false && \
+    poetry install --without dev --with training --no-root --no-interaction --no-ansi && \
+    rm -rf /root/.cache/pypoetry /root/.cache/pip /tmp/*
+
+# Copy source
+COPY src/ ./src/
+COPY scripts/run_local_pipeline.py ./scripts/run_local_pipeline.py
+COPY scripts/check_training_triggers_local.py ./scripts/check_training_triggers_local.py
+COPY README.md ./
+
+# Install the project itself (keeps training group for the second install too)
+RUN poetry install --without dev --with training --no-interaction --no-ansi && \
+    rm -rf /root/.cache/pypoetry /root/.cache/pip
+
+# Standalone training package (separate pyproject under src/sign_language_training/)
+RUN pip install --no-cache-dir --no-deps -e src/sign_language_training/
+
+# Volumes mounted at runtime:
+#   /data    -> raw training data (read-only)
+#   /models  -> pretrained checkpoints (read-only)
+#   /outputs -> pipeline outputs (read-write)
+
+EXPOSE 8010
+
+CMD ["python", "scripts/run_local_pipeline.py", \
+     "--raw-data-dir", "/data", \
+     "--output-dir", "/outputs", \
+     "--pretrained-checkpoint", "/models/best_ngt_model_v2.pth", \
+     "--num-workers", "0"]

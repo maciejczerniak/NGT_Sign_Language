@@ -1,0 +1,31 @@
+# Airflow image for the on-prem NGT retraining scheduler.
+#
+# This replaces the supercronic `signlang-trigger` container. It is deliberately
+# LIGHT: it carries only what the DAG's decision step needs — the
+# `sign_language_training` package (pure-Python policy + dataset inventory) and
+# the mlflow client — plus the Docker provider so the `train_model` task can
+# launch the existing heavy `signlang-training` image via DockerOperator.
+#
+# It does NOT install torch / mediapipe / azureml. Training runs in the separate
+# training image; Airflow only conducts it.
+FROM apache/airflow:2.10.3-python3.11
+
+# --- Python deps (as the airflow user; never pip-install as root) -----------
+# mlflow: read the newest registered-version timestamp for the interval check.
+# docker provider: DockerOperator + docker SDK for the train task.
+USER airflow
+RUN pip install --no-cache-dir \
+    "mlflow>=2.0,<3" \
+    "apache-airflow-providers-docker>=3.0"
+
+# --- Project policy code ----------------------------------------------------
+# Copy only the training package source needed for the decision import. We add
+# it to PYTHONPATH rather than `pip install` to avoid pulling its heavy deps.
+COPY --chown=airflow:airflow src/sign_language_training /opt/ngt/sign_language_training
+ENV PYTHONPATH=/opt/ngt:${PYTHONPATH}
+
+# --- DAGs -------------------------------------------------------------------
+# Bake the DAG into the image (same rationale as the supercronic crontab):
+# Portainer has no SSH/volume write path, so DAGs ship in the image and a
+# schedule/logic change means a rebuild — versioned and reproducible.
+COPY --chown=airflow:airflow dags/ /opt/airflow/dags/

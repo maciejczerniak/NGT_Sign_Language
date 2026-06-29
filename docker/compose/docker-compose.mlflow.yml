@@ -1,0 +1,122 @@
+# Self-hosted MLflow stack (on-prem / Portainer only).
+#
+# Mirrors the BUaS "MLflow Self-Hosted" reference architecture: tracking
+# server + Postgres backend store + MinIO artifact store + one-shot bucket
+# init. MLflow runs with --serve-artifacts so clients (the backend) only
+# need MLFLOW_TRACKING_URI — no S3 credentials.
+#
+# Port allocation on the Portainer host (range 2027-2031):
+#   2027 — MLflow tracking server UI / API   (container :5000)
+#   2028 — REASSIGNED to Airflow UI (was MinIO S3 API; now internal-only)
+#   2029 — MinIO web console                  (container :9001)
+#   2030 — already used by frontend
+#   2031 — already used by signlang-pg
+# MLflow's Postgres has NO host port — it's internal-only on this network.
+#
+# Required env vars in Portainer's stack env editor:
+#   MLFLOW_PG_USER, MLFLOW_PG_PASSWORD, MLFLOW_PG_DB
+#   MINIO_ROOT_USER, MINIO_ROOT_PASSWORD
+#   MLFLOW_BUCKET (default: mlflow-artifacts)
+#
+# Network: requires the external `signlang-shared` network, created once
+# on the Portainer host before deploying either stack:
+#   docker network create signlang-shared
+services:
+  mlflow:
+    image: ghcr.io/mlflow/mlflow:v3.11.1
+    # ghcr.io/mlflow/mlflow doesn't ship psycopg2 or boto3 — install at start.
+    # For production, bake a thin custom image.
+    #
+    # IMPORTANT (MLflow 3.x):
+    # - Bare `--host 0.0.0.0` is no longer sufficient. A new security middleware
+    #   validates the request's Host header against --allowed-hosts and refuses
+    #   anything not matching. Use `--allowed-hosts '*'` to accept all.
+    # - Do NOT pass --gunicorn-opts "--bind ..." — MLflow already binds via
+    #   --host/--port; a second bind attempt causes EADDRINUSE in-container.
+    entrypoint: ["/bin/bash", "-c"]
+    command:
+      - |
+        set -e
+        pip install --no-cache-dir psycopg2-binary boto3
+        exec mlflow server \
+          --host 0.0.0.0 \
+          --port 5000 \
+          --backend-store-uri "postgresql://${MLFLOW_PG_USER}:${MLFLOW_PG_PASSWORD}@mlflow-postgres:5432/${MLFLOW_PG_DB}" \
+          --artifacts-destination "s3://${MLFLOW_BUCKET:-mlflow-artifacts}/" \
+          --serve-artifacts \
+          --allowed-hosts '*' \
+          --cors-allowed-origins '*'
+    environment:
+      - MLFLOW_S3_ENDPOINT_URL=http://mlflow-minio:9000
+      - AWS_ACCESS_KEY_ID=${MINIO_ROOT_USER}
+      - AWS_SECRET_ACCESS_KEY=${MINIO_ROOT_PASSWORD}
+    ports:
+      - "2027:5000"
+    restart: unless-stopped
+    depends_on:
+      - mlflow-postgres
+      - mlflow-minio-init
+    networks:
+      - default
+      - signlang-shared
+
+  mlflow-postgres:
+    image: postgres:17-alpine
+    container_name: mlflow-pg
+    environment:
+      POSTGRES_USER: ${MLFLOW_PG_USER}
+      POSTGRES_PASSWORD: ${MLFLOW_PG_PASSWORD}
+      POSTGRES_DB: ${MLFLOW_PG_DB}
+    volumes:
+      - mlflow-pgdata:/var/lib/postgresql/data
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${MLFLOW_PG_USER} -d ${MLFLOW_PG_DB}"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  mlflow-minio:
+    image: minio/minio:latest
+    container_name: mlflow-minio
+    command: server /data --console-address ":9001"
+    environment:
+      MINIO_ROOT_USER: ${MINIO_ROOT_USER}
+      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD}
+    ports:
+      # 2028:9000 removed — the S3 API is reached internally over
+      # signlang-shared (http://mlflow-minio:9000), and MLflow serves artifacts
+      # via --serve-artifacts on 2027, so no host binding is needed. Port 2028
+      # is reassigned to the Airflow UI (docker-compose.airflow.yml).
+      - "2029:9001"
+    volumes:
+      - mlflow-minio-data:/data
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://127.0.0.1:9000/minio/health/live"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  mlflow-minio-init:
+    image: minio/mc:latest
+    depends_on:
+      - mlflow-minio
+    entrypoint: >
+      sh -c "
+        until mc alias set local http://mlflow-minio:9000 ${MINIO_ROOT_USER} ${MINIO_ROOT_PASSWORD} >/dev/null 2>&1; do
+          echo 'waiting for minio…';
+          sleep 2;
+        done;
+        mc mb -p local/${MLFLOW_BUCKET:-mlflow-artifacts} || true;
+        echo 'bucket ready';
+      "
+    restart: "no"
+
+volumes:
+  mlflow-pgdata:
+  mlflow-minio-data:
+
+networks:
+  signlang-shared:
+    external: true

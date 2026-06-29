@@ -1,0 +1,28 @@
+FROM python:3.11-slim
+
+WORKDIR /app
+
+# System deps for OpenCV / mediapipe runtime
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends \
+        libgl1 libglib2.0-0 libegl1 libgles2 && \
+    rm -rf /var/lib/apt/lists/*
+
+# Pin Poetry for reproducibility
+RUN pip install --no-cache-dir poetry==1.8.0
+
+# Install deps (main only — training group is optional and skipped by default)
+COPY pyproject.toml poetry.lock ./
+RUN poetry config virtualenvs.create false && \
+    poetry install --without dev --no-root --no-interaction --no-ansi && \
+    rm -rf /root/.cache/pypoetry /root/.cache/pip /tmp/*
+
+# Install the project itself
+COPY src/ ./src/
+COPY README.md ./
+RUN poetry install --without dev --no-interaction --no-ansi && \
+    rm -rf /root/.cache/pypoetry /root/.cache/pip
+
+EXPOSE 8000
+ENV STATUS=PRODUCTION
+CMD ["uvicorn", "sign_language.api:create_app", "--factory", "--host", "0.0.0.0", "--port", "8000"]

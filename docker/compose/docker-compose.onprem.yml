@@ -1,0 +1,28 @@
+# On-prem deployment overlay.
+#
+# Wires the backend to the self-hosted MLflow stack (deployed as a separate
+# Portainer stack from docker-compose.mlflow.yml). The two stacks communicate
+# over the external `signlang-shared` network, which must be created once on
+# the Portainer host before either stack starts:
+#
+#   docker network create signlang-shared
+#
+# Usage (rendered into a single file by CI for Portainer to pull):
+#   docker compose -f docker-compose.yml -f docker-compose.onprem.yml config \
+#     --no-interpolate > docker-compose.deploy.yml
+services:
+  backend:
+    environment:
+      # Override base defaults: switch model resolution to MLflow registry.
+      - DEPLOY_TARGET=onprem
+      - MLFLOW_TRACKING_URI=http://mlflow:5000
+      - MLFLOW_ENABLED=true
+      # Production CORS — frontend served at port 2030 on the Portainer host.
+      - CORS_ORIGINS=http://194.171.191.227:2030
+    networks:
+      - default          # talks to db, frontend
+      - signlang-shared  # talks to mlflow
+
+networks:
+  signlang-shared:
+    external: true

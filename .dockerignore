@@ -1,0 +1,18 @@
+.venv
+.git
+.github
+__pycache__
+*.pyc
+.mypy_cache
+.pytest_cache
+htmlcov
+.coverage
+docs
+notebooks
+*.egg-info
+dist
+build
+.env
+# Frontend
+src/frontend/node_modules
+src/frontend/dist

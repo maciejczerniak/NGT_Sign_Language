@@ -1,0 +1,178 @@
+# On-prem Airflow stack — NGT retraining scheduler (replaces supercronic).
+#
+# Trimmed LocalExecutor deployment: just what a single scheduled DAG needs.
+# Compared to Airflow's reference compose this drops redis, the celery workers,
+# and flower — LocalExecutor runs tasks in the scheduler process, which is
+# plenty for one daily DAG.
+#
+# Services:
+#   airflow-postgres  — Airflow metadata DB (separate from the MLflow PG).
+#   airflow-init      — one-shot: db migrate + create admin user, then exits.
+#   airflow-webserver — UI on :2028 (evidence / manual trigger).
+#   airflow-scheduler — parses the DAG and fires it on schedule.
+#
+# Network: joins the external `signlang-shared` network so the DockerOperator
+# task and the decision step can reach the `mlflow` service at
+# http://mlflow:5000.
+#
+# Docker socket: mounted into webserver + scheduler so DockerOperator can launch
+# the training image on the host daemon. This grants host-level Docker access —
+# acceptable on the single-tenant Lambda host; note it in the security section
+# of the portfolio.
+#
+# Build: the image is built from docker/dockerfiles/Dockerfile.airflow with the
+# repo root as context (DAG + policy package baked in). Build/push it in CI
+# alongside the other images, then deploy this stack in Portainer.
+
+x-airflow-common: &airflow-common
+  image: ghcr.io/bredauniversityadsai/2025-26d-fai2-adsai-group-researchgroup2/signlang-airflow:latest
+  environment: &airflow-common-env
+    AIRFLOW__CORE__EXECUTOR: LocalExecutor
+    AIRFLOW__DATABASE__SQL_ALCHEMY_CONN: postgresql+psycopg2://airflow:airflow@airflow-postgres/airflow
+    AIRFLOW__CORE__LOAD_EXAMPLES: "false"
+    AIRFLOW__CORE__DAGS_ARE_PAUSED_AT_CREATION: "true"
+    # Secrets — set these in Portainer's stack "Environment variables" section,
+    # NOT in this file (keeps them out of git). Both must be identical across
+    # the webserver, scheduler, and init containers (the &airflow-common-env
+    # anchor guarantees that). If unset, Airflow auto-generates ephemeral keys
+    # that change on restart, breaking sessions and any encrypted connections.
+    #   AIRFLOW_FERNET_KEY:
+    #     python -c "from cryptography.fernet import Fernet; print(Fernet.generate_key().decode())"
+    #   AIRFLOW_SECRET_KEY:
+    #     python -c "import secrets; print(secrets.token_hex(32))"
+    AIRFLOW__CORE__FERNET_KEY: ${AIRFLOW_FERNET_KEY}
+    AIRFLOW__WEBSERVER__SECRET_KEY: ${AIRFLOW_SECRET_KEY}
+    # Decision-step + DockerOperator configuration (read by the DAG).
+    MLFLOW_TRACKING_URI: http://mlflow:5000
+    NGT_TRAINING_IMAGE: ghcr.io/bredauniversityadsai/2025-26d-fai2-adsai-group-researchgroup2/signlang-training:latest
+    NGT_MODEL_NAME: ngt-sign-language
+    NGT_MIN_NEW_IMAGES: "10"
+    NGT_INTERVAL_DAYS: "7"
+    NGT_SHARED_NETWORK: signlang-shared
+    NGT_DATA_DIR: /data
+    NGT_STATE_PATH: /opt/airflow/state/training_trigger_state_local.json
+    NGT_DATA_VOLUME: training-data
+    NGT_OUTPUTS_VOLUME: training-outputs
+  volumes:
+    - airflow-logs:/opt/airflow/logs
+    # The decision step reads the dataset and the trigger-state baseline,
+    # exactly like the supercronic checker did.
+    - training-data:/data:ro
+    - trigger-state:/opt/airflow/state
+    # DockerOperator needs the host daemon to launch the training image.
+    - /var/run/docker.sock:/var/run/docker.sock
+  # Mounting docker.sock is not enough: the non-root Airflow user must also
+  # belong to the socket's numeric host group. Set DOCKER_GID in Portainer to
+  # the result of: stat -c '%g' /var/run/docker.sock
+  group_add:
+    - "${DOCKER_GID:-999}"
+  networks:
+    - default
+    - signlang-shared
+  # Array form of depends_on (Portainer Business 2.39 rejects the map form with
+  # `condition:`). Array form only waits for container START, not health, so the
+  # webserver/scheduler guard against an un-migrated DB in their own command
+  # (see below) and rely on Airflow's built-in DB-connection retry.
+  depends_on:
+    - airflow-postgres
+
+services:
+  airflow-postgres:
+    image: postgres:15
+    container_name: airflow-pg
+    environment:
+      POSTGRES_USER: airflow
+      POSTGRES_PASSWORD: airflow
+      POSTGRES_DB: airflow
+    volumes:
+      - airflow-pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD", "pg_isready", "-U", "airflow"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+    networks:
+      - default
+
+  airflow-init:
+    <<: *airflow-common
+    container_name: airflow-init
+    # One-shot: wait for Postgres, run migrations, create the admin user, exit.
+    # The wait loop replaces the map-form `condition: service_healthy` that
+    # Portainer rejects — array-form depends_on only waits for start, not health.
+    entrypoint: /bin/bash
+    command:
+      - -c
+      - |
+        until airflow db check >/dev/null 2>&1; do
+          echo "waiting for postgres..."; sleep 5;
+        done
+        airflow db migrate
+        airflow users create \
+          --username admin --password admin \
+          --firstname admin --lastname admin \
+          --role Admin --email admin@example.com || true
+    restart: "no"
+
+  airflow-webserver:
+    <<: *airflow-common
+    container_name: airflow-web
+    # Wait until the DB is reachable AND migrated (init creates the tables)
+    # before starting the webserver. Replaces the map-form
+    # `condition: service_completed_successfully` that Portainer rejects.
+    command:
+      - bash
+      - -c
+      - |
+        until airflow db check >/dev/null 2>&1; do
+          echo "waiting for airflow metadata DB..."; sleep 5;
+        done
+        until airflow db check-migrations >/dev/null 2>&1; do
+          echo "waiting for migrations to finish..."; sleep 5;
+        done
+        exec airflow webserver
+    ports:
+      - "2028:8080"
+    healthcheck:
+      test: ["CMD", "curl", "--fail", "http://localhost:8080/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+    restart: unless-stopped
+    depends_on:
+      - airflow-postgres
+      - airflow-init
+
+  airflow-scheduler:
+    <<: *airflow-common
+    container_name: airflow-scheduler
+    command:
+      - bash
+      - -c
+      - |
+        until airflow db check >/dev/null 2>&1; do
+          echo "waiting for airflow metadata DB..."; sleep 5;
+        done
+        until airflow db check-migrations >/dev/null 2>&1; do
+          echo "waiting for migrations to finish..."; sleep 5;
+        done
+        exec airflow scheduler
+    restart: unless-stopped
+    depends_on:
+      - airflow-postgres
+      - airflow-init
+
+volumes:
+  airflow-pgdata:
+  airflow-logs:
+  training-data:
+    external: true
+  trigger-state:
+    external: true
+  training-outputs:
+    external: true
+
+networks:
+  signlang-shared:
+    external: true

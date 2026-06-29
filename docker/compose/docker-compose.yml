@@ -1,0 +1,103 @@
+# Base compose — deployment-target-neutral.
+#
+# Used standalone for local dev (with ../../.env auto-loaded by compose), or
+# merged with an overlay for deployed environments:
+#
+#   On-prem:
+#     docker compose -f docker-compose.yml -f docker-compose.onprem.yml up -d
+#
+#   Azure (reference layout — actual Azure deploy uses Container Apps YAML):
+#     docker compose -f docker-compose.yml -f docker-compose.azure.yml config
+#
+# The deploy workflow renders the merged file with `docker compose ... config
+# --no-interpolate` and pushes the result to the `deploy` branch. Portainer
+# fills the ${VAR} placeholders from its stack env-vars UI at deploy time.
+#
+# Every variable the backend reads is declared explicitly in the `environment:`
+# block below, either as a literal (stable across environments) or as a ${VAR}
+# placeholder (filled by Portainer or local .env). This means the rendered
+# compose is self-documenting: you can see exactly what the container gets
+# just by reading the file.
+services:
+  db:
+    image: postgres:17-alpine
+    container_name: signlang-pg
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
+    ports:
+      - "2031:5432"
+    volumes:
+      - signlang-pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  backend:
+    image: ghcr.io/bredauniversityadsai/2025-26d-fai2-adsai-group-researchgroup2/signlang-backend:0.1.0
+    restart: unless-stopped
+    environment:
+      # ── App identity / runtime ─────────────────────────────────────────────
+      - APP_NAME=Sign Language
+      - VERSION=0.1.0
+      - STATUS=PRODUCTION
+      - DEBUG=false
+      - LOG_LEVEL=INFO
+      - LOG_PATH=logs/app.log
+      # CORS: overridden by overlays for the deployed frontend origin.
+      - CORS_ORIGINS=${CORS_ORIGINS}
+
+      # ── Database (in-container networking; port 5432 is the container port) ─
+      - DATABASE_URL=postgresql+asyncpg://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB}
+
+      # ── Auth ───────────────────────────────────────────────────────────────
+      - SECRET_KEY=${SECRET_KEY}
+      - JWT_LIFETIME_SECONDS=3600
+
+      # ── Model paths inside the container ───────────────────────────────────
+      # These map to where the Dockerfile copies them (or, for the EfficientNet
+      # checkpoint, where the loader caches MLflow downloads when DEPLOY_TARGET
+      # is onprem/azure).
+      - IMG_SIZE=224
+      - MODEL_PATH=models/best_ngt_model_v2.pth
+      - LM_MODEL_PATH=models/best_landmark_mlp.pth
+      # MediaPipe task file is shipped inside the package directory.
+      - HAND_LANDMARKER_PATH=/app/src/sign_language/hand_landmarker.task
+      - RECORDINGS_DIR=recorded_data
+
+      # ── Deployment target — overridden by onprem/azure overlay ────────────
+      # `local` is the safe default if neither overlay is applied. With the
+      # default, the loader reads MODEL_PATH from disk. Overlays flip this to
+      # `onprem` or `azure` to hit the model registry instead.
+      - DEPLOY_TARGET=local
+
+      # ── Model registry names (used when DEPLOY_TARGET is onprem/azure) ────
+      - MODEL_REGISTRY_NAME=ngt-sign-language
+      - LM_MODEL_REGISTRY_NAME=ngt-landmark-mlp
+
+      # ── MLflow tracking (set by onprem overlay; empty otherwise) ──────────
+      - MLFLOW_TRACKING_URI=
+      - MLFLOW_ENABLED=false
+      - MLFLOW_EXPERIMENT_NAME=sign-language-training
+    depends_on:
+      - db
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/api/health', timeout=2).read()"]
+      interval: 10s
+      timeout: 5s
+      retries: 6
+      start_period: 30s
+
+  frontend:
+    image: ghcr.io/bredauniversityadsai/2025-26d-fai2-adsai-group-researchgroup2/signlang-frontend:0.1.0
+    restart: unless-stopped
+    ports:
+      - "2030:80"
+    depends_on:
+      - backend
+
+volumes:
+  signlang-pgdata:

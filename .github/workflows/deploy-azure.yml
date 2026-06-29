@@ -1,0 +1,490 @@
+name: Deploy to Azure Container Apps
+
+on:
+  workflow_run:
+    workflows: ["Docker Build & Push"]
+    types: [completed]
+    branches: [ main ]
+  workflow_dispatch:
+    inputs:
+      image_tag:
+        description: "Image tag to deploy, e.g. sha-376493b. Defaults to current commit short SHA."
+        required: false
+        type: string
+      deploy_ml_endpoint:
+        description: "Deploy/update Azure ML online endpoint before updating Container Apps."
+        required: true
+        default: true
+        type: boolean
+      model_version:
+        description: "Azure ML model version to deploy. Empty uses the promoted model."
+        required: false
+        type: string
+      run_inference_smoke:
+        description: "Run WebSocket inference smoke test. Keep false while endpoint is private/VPN-only."
+        required: false
+        default: false
+        type: boolean
+permissions:
+  id-token: write
+  contents: read
+  packages: write
+
+env:
+  IMAGE_BASE: ghcr.io/bredauniversityadsai/2025-26d-fai2-adsai-group-researchgroup2
+  RESOURCE_GROUP: ${{ vars.AZURE_RESOURCE_GROUP }}
+  CONTAINERAPP_ENVIRONMENT: ${{ vars.AZURE_CONTAINERAPP_ENVIRONMENT }}
+  BACKEND_APP: ${{ vars.AZURE_CONTAINERAPP_BACKEND_NAME }}
+  FRONTEND_APP: ${{ vars.AZURE_CONTAINERAPP_FRONTEND_NAME }}
+  ENDPOINT_URL_SECRET_NAME: azure-api-online-endpoint-url
+  ENDPOINT_KEY_SECRET_NAME: azure-api-online-endpoint-key
+
+jobs:
+  deploy:
+    if: github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success'
+    runs-on: ubuntu-latest
+    concurrency:
+      group: azure-container-apps-deploy
+      cancel-in-progress: false
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v5
+        with:
+          ref: ${{ github.event_name == 'workflow_run' && github.event.workflow_run.head_sha || github.sha }}
+
+      - name: Compute image tags
+        id: images
+        env:
+          WORKFLOW_RUN_SHA: ${{ github.event.workflow_run.head_sha }}
+          INPUT_IMAGE_TAG: ${{ inputs.image_tag }}
+        run: |
+          if [ -n "$INPUT_IMAGE_TAG" ]; then
+            TAG="$INPUT_IMAGE_TAG"
+          else
+            TAG="${WORKFLOW_RUN_SHA:-${GITHUB_SHA}}"
+            TAG="sha-${TAG::7}"
+          fi
+          case "$TAG" in
+            sha-*) ;;
+            *) TAG="sha-${TAG}" ;;
+          esac
+          echo "backend=${IMAGE_BASE}/signlang-azure-api:${TAG}" >> "$GITHUB_OUTPUT"
+          echo "frontend=${IMAGE_BASE}/signlang-frontend:${TAG}" >> "$GITHUB_OUTPUT"
+
+      - name: Azure login
+        uses: azure/login@v2
+        with:
+          client-id: ${{ vars.AZURE_CLIENT_ID }}
+          tenant-id: ${{ vars.AZURE_TENANT_ID }}
+          subscription-id: ${{ vars.AZURE_SUBSCRIPTION_ID }}
+
+      - name: Validate Azure deployment variables
+        env:
+          AZURE_ML_RESOURCE_GROUP: ${{ vars.AZURE_ML_RESOURCE_GROUP }}
+          AZURE_WORKSPACE: ${{ vars.AZURE_WORKSPACE }}
+          AZURE_COMPUTE_TARGET: ${{ vars.AZURE_COMPUTE_TARGET }}
+          AZURE_INFERENCE_ENVIRONMENT_NAME: ${{ vars.AZURE_INFERENCE_ENVIRONMENT_NAME }}
+          AZURE_INFERENCE_ENVIRONMENT_VERSION: ${{ vars.AZURE_INFERENCE_ENVIRONMENT_VERSION }}
+        run: |
+          required_vars=(
+            RESOURCE_GROUP
+            CONTAINERAPP_ENVIRONMENT
+            BACKEND_APP
+            FRONTEND_APP
+            AZURE_ML_RESOURCE_GROUP
+            AZURE_WORKSPACE
+            AZURE_COMPUTE_TARGET
+            AZURE_INFERENCE_ENVIRONMENT_NAME
+            AZURE_INFERENCE_ENVIRONMENT_VERSION
+          )
+          for variable_name in "${required_vars[@]}"; do
+            if [ -z "${!variable_name}" ]; then
+              echo "::error::Missing required GitHub variable: ${variable_name}"
+              exit 1
+            fi
+          done
+
+      - name: Ensure Container Apps exist
+        env:
+          GHCR_PAT: ${{ secrets.GHCR_PAT }}
+        run: |
+          registry_args=()
+          if [ -n "$GHCR_PAT" ]; then
+            registry_args=(
+              --registry-server ghcr.io
+              --registry-username "${{ github.actor }}"
+              --registry-password "$GHCR_PAT"
+            )
+          fi
+
+          for app in "$BACKEND_APP" "$FRONTEND_APP"; do
+            state="$(az containerapp show \
+              --name "$app" \
+              --resource-group "$RESOURCE_GROUP" \
+              --query properties.provisioningState \
+              --output tsv 2>/dev/null || true)"
+            if [ "$state" = "Failed" ]; then
+              az containerapp delete \
+                --name "$app" \
+                --resource-group "$RESOURCE_GROUP" \
+                --yes
+            fi
+          done
+
+          if [ -n "$GHCR_PAT" ]; then
+            for app in "$BACKEND_APP" "$FRONTEND_APP"; do
+              if az containerapp show --name "$app" --resource-group "$RESOURCE_GROUP" >/dev/null 2>&1; then
+                az containerapp registry set \
+                  --name "$app" \
+                  --resource-group "$RESOURCE_GROUP" \
+                  --server ghcr.io \
+                  --username "${{ github.actor }}" \
+                  --password "$GHCR_PAT"
+              fi
+            done
+          fi
+
+          if ! az containerapp show --name "$BACKEND_APP" --resource-group "$RESOURCE_GROUP" >/dev/null 2>&1; then
+            az containerapp create \
+              --name "$BACKEND_APP" \
+              --resource-group "$RESOURCE_GROUP" \
+              --environment "$CONTAINERAPP_ENVIRONMENT" \
+              --image "${{ steps.images.outputs.backend }}" \
+              --target-port 8010 \
+              --ingress external \
+              --min-replicas 0 \
+              --max-replicas 1 \
+              "${registry_args[@]}"
+          fi
+
+          if ! az containerapp show --name "$FRONTEND_APP" --resource-group "$RESOURCE_GROUP" >/dev/null 2>&1; then
+            az containerapp create \
+              --name "$FRONTEND_APP" \
+              --resource-group "$RESOURCE_GROUP" \
+              --environment "$CONTAINERAPP_ENVIRONMENT" \
+              --image "${{ steps.images.outputs.frontend }}" \
+              --target-port 80 \
+              --ingress external \
+              --min-replicas 0 \
+              --max-replicas 1 \
+              "${registry_args[@]}"
+          fi
+
+      - name: Normalize Container App ingress
+        run: |
+          az containerapp ingress enable \
+            --name "$BACKEND_APP" \
+            --resource-group "$RESOURCE_GROUP" \
+            --type external \
+            --target-port 8010
+          az containerapp ingress enable \
+            --name "$FRONTEND_APP" \
+            --resource-group "$RESOURCE_GROUP" \
+            --type external \
+            --target-port 80
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install Poetry
+        run: |
+          curl -sSL https://install.python-poetry.org | python3 - --version 1.8.0
+          echo "$HOME/.local/bin" >> "$GITHUB_PATH"
+
+      - name: Install Azure deployment dependencies
+        run: |
+          poetry config virtualenvs.in-project true
+          poetry install --with training --no-interaction
+
+      - name: Blue/green deploy Azure ML online endpoint
+        if: github.event_name != 'workflow_dispatch' || inputs.deploy_ml_endpoint
+        env:
+          AZURE_SUBSCRIPTION_ID: ${{ vars.AZURE_SUBSCRIPTION_ID }}
+          AZURE_RESOURCE_GROUP: ${{ vars.AZURE_ML_RESOURCE_GROUP }}
+          AZURE_WORKSPACE: ${{ vars.AZURE_WORKSPACE }}
+          AZURE_COMPUTE_TARGET: ${{ vars.AZURE_COMPUTE_TARGET }}
+          ENDPOINT_NAME: ${{ vars.AZURE_ONLINE_ENDPOINT_NAME }}
+          MODEL_NAME: ${{ vars.AZURE_ONLINE_MODEL_NAME }}
+          MODEL_VERSION: ${{ vars.AZURE_ONLINE_MODEL_VERSION }}
+          INPUT_MODEL_VERSION: ${{ inputs.model_version }}
+          INSTANCE_TYPE: ${{ vars.AZURE_INSTANCE_TYPE }}
+          INSTANCE_COUNT: ${{ vars.AZURE_ONLINE_INSTANCE_COUNT }}
+          AZURE_INFERENCE_ENVIRONMENT_NAME: ${{ vars.AZURE_INFERENCE_ENVIRONMENT_NAME }}
+          AZURE_INFERENCE_ENVIRONMENT_VERSION: ${{ vars.AZURE_INFERENCE_ENVIRONMENT_VERSION }}
+        run: |
+          ENDPOINT_NAME="${ENDPOINT_NAME:-ngt-sign-language-blue-green}"
+          MODEL_NAME="${MODEL_NAME:-ngt-sign-language}"
+          MODEL_VERSION="${INPUT_MODEL_VERSION:-${MODEL_VERSION}}"
+          INSTANCE_TYPE="${INSTANCE_TYPE:-gpu}"
+          INSTANCE_COUNT="${INSTANCE_COUNT:-1}"
+          echo "Using Azure ML environment: ${AZURE_INFERENCE_ENVIRONMENT_NAME}:${AZURE_INFERENCE_ENVIRONMENT_VERSION}"
+          echo "Using Kubernetes instance type: ${INSTANCE_TYPE}"
+
+          args=(
+            --endpoint-name "$ENDPOINT_NAME"
+            --model-name "$MODEL_NAME"
+            --instance-type "$INSTANCE_TYPE"
+            --instance-count "$INSTANCE_COUNT"
+            --source-revision "$GITHUB_SHA"
+            --reuse-running
+          )
+
+          if [ -n "$MODEL_VERSION" ]; then
+            args+=(--model-version "$MODEL_VERSION")
+          else
+            args+=(--promoted)
+          fi
+
+          poetry run python scripts/rollout_blue_green.py "${args[@]}"
+
+      - name: Read Azure ML endpoint credentials
+        if: github.event_name != 'workflow_dispatch' || inputs.deploy_ml_endpoint
+        id: endpoint
+        env:
+          ENDPOINT_NAME: ${{ vars.AZURE_ONLINE_ENDPOINT_NAME }}
+        run: |
+          az extension add --name ml --yes
+          ENDPOINT_NAME="${ENDPOINT_NAME:-ngt-sign-language-blue-green}"
+          SCORING_URI="$(az ml online-endpoint show \
+            --name "$ENDPOINT_NAME" \
+            --resource-group "${{ vars.AZURE_ML_RESOURCE_GROUP }}" \
+            --workspace-name "${{ vars.AZURE_WORKSPACE }}" \
+            --query scoring_uri \
+            --output tsv)"
+          case "$SCORING_URI" in
+            http://194.171.191.226:*)
+              CONTAINER_APP_SCORING_URI="${SCORING_URI/http:\/\/194.171.191.226:/https:\/\/cradle.buas.ngrok.app\/port-}"
+              ;;
+            http://194.171.191.227:*)
+              CONTAINER_APP_SCORING_URI="${SCORING_URI/http:\/\/194.171.191.227:/https:\/\/adsai2.ngrok.dev\/port-}"
+              ;;
+            https://cradle.buas.ngrok.app/*|https://adsai2.ngrok.dev/*)
+              CONTAINER_APP_SCORING_URI="$SCORING_URI"
+              ;;
+            *)
+              echo "::error::Unsupported Azure ML scoring URI host: $SCORING_URI"
+              exit 1
+              ;;
+          esac
+          ENDPOINT_KEY="$(az ml online-endpoint get-credentials \
+            --name "$ENDPOINT_NAME" \
+            --resource-group "${{ vars.AZURE_ML_RESOURCE_GROUP }}" \
+            --workspace-name "${{ vars.AZURE_WORKSPACE }}" \
+            --query primaryKey \
+            --output tsv)"
+          echo "::add-mask::$SCORING_URI"
+          echo "::add-mask::$CONTAINER_APP_SCORING_URI"
+          echo "::add-mask::$ENDPOINT_KEY"
+          echo "scoring_uri=$CONTAINER_APP_SCORING_URI" >> "$GITHUB_OUTPUT"
+          echo "endpoint_key=$ENDPOINT_KEY" >> "$GITHUB_OUTPUT"
+
+      - name: Show Azure ML endpoint status
+        if: github.event_name != 'workflow_dispatch' || inputs.deploy_ml_endpoint
+        env:
+          ENDPOINT_NAME: ${{ vars.AZURE_ONLINE_ENDPOINT_NAME }}
+        run: |
+          az extension add --name ml --yes
+          ENDPOINT_NAME="${ENDPOINT_NAME:-ngt-sign-language-blue-green}"
+
+          echo "Azure ML online endpoint:"
+          az ml online-endpoint show \
+            --name "$ENDPOINT_NAME" \
+            --resource-group "${{ vars.AZURE_ML_RESOURCE_GROUP }}" \
+            --workspace-name "${{ vars.AZURE_WORKSPACE }}" \
+            --output table
+
+          echo "Azure ML online deployments:"
+          az ml online-deployment list \
+            --endpoint-name "$ENDPOINT_NAME" \
+            --resource-group "${{ vars.AZURE_ML_RESOURCE_GROUP }}" \
+            --workspace-name "${{ vars.AZURE_WORKSPACE }}" \
+            --output table
+
+      - name: Store endpoint credentials as Container App secrets
+        if: github.event_name != 'workflow_dispatch' || inputs.deploy_ml_endpoint
+        run: |
+          az containerapp secret set \
+            --name "$BACKEND_APP" \
+            --resource-group "$RESOURCE_GROUP" \
+            --secrets \
+              "${ENDPOINT_URL_SECRET_NAME}=${{ steps.endpoint.outputs.scoring_uri }}" \
+              "${ENDPOINT_KEY_SECRET_NAME}=${{ steps.endpoint.outputs.endpoint_key }}"
+
+      - name: Store backend secrets
+        env:
+          AZURE_COLLECT_SAS_TOKEN: ${{ secrets.AZURE_COLLECT_SAS_TOKEN }}
+        run: |
+          test -n "$AZURE_COLLECT_SAS_TOKEN"
+          az containerapp secret set \
+            --name "$BACKEND_APP" \
+            --resource-group "$RESOURCE_GROUP" \
+            --secrets \
+              "database-url=${{ secrets.DATABASE_URL }}" \
+              "collect-sas-token=${AZURE_COLLECT_SAS_TOKEN}" \
+              "secret-key=${{ secrets.SECRET_KEY }}"
+
+      - name: Deploy endpoint-backed API image and runtime config
+        run: |
+          az containerapp update \
+            --name "$BACKEND_APP" \
+            --resource-group "$RESOURCE_GROUP" \
+            --image "${{ steps.images.outputs.backend }}" \
+            --set-env-vars \
+              AZURE_API_APP_NAME="Sign Language Azure API" \
+              AZURE_API_HOST="0.0.0.0" \
+              AZURE_API_PORT="8010" \
+              AZURE_API_ONLINE_ENDPOINT_URL="secretref:${ENDPOINT_URL_SECRET_NAME}" \
+              AZURE_API_ONLINE_ENDPOINT_KEY="secretref:${ENDPOINT_KEY_SECRET_NAME}" \
+              AZURE_API_ONLINE_TIMEOUT_SECONDS="60" \
+              AZURE_API_DEFAULT_DEPLOYMENT="blue" \
+              AZURE_API_ML_SUBSCRIPTION_ID="${{ vars.AZURE_SUBSCRIPTION_ID }}" \
+              AZURE_API_ML_RESOURCE_GROUP="${{ vars.AZURE_ML_RESOURCE_GROUP }}" \
+              AZURE_API_ML_WORKSPACE="${{ vars.AZURE_WORKSPACE }}" \
+              AZURE_API_ONLINE_ENDPOINT_NAME="${{ vars.AZURE_ONLINE_ENDPOINT_NAME }}" \
+              AZURE_API_COLLECT_STORAGE_ACCOUNT="staswegend46479454361583" \
+              AZURE_API_COLLECT_CONTAINER="signlang-r2-collected" \
+              AZURE_API_COLLECT_SAS_TOKEN="secretref:collect-sas-token" \
+              AZURE_API_COLLECT_PREFIX="pending" \
+              HAND_LANDMARKER_PATH="/app/src/sign_language/hand_landmarker.task" \
+              DATABASE_URL="secretref:database-url" \
+              REQUIRE_SSL="true" \
+              SECRET_KEY="secretref:secret-key"
+
+      - name: Deploy frontend image
+        run: |
+          API_FQDN="$(az containerapp show \
+            --name "$BACKEND_APP" \
+            --resource-group "$RESOURCE_GROUP" \
+            --query properties.configuration.ingress.fqdn \
+            --output tsv)"
+
+          az containerapp update \
+            --name "$FRONTEND_APP" \
+            --resource-group "$RESOURCE_GROUP" \
+            --image "${{ steps.images.outputs.frontend }}" \
+            --set-env-vars \
+              FRONTEND_BACKEND_ORIGIN="https://${API_FQDN}"
+
+      - name: Smoke-test Azure deployment readiness
+        run: |
+          API_FQDN="$(az containerapp show \
+            --name "$BACKEND_APP" \
+            --resource-group "$RESOURCE_GROUP" \
+            --query properties.configuration.ingress.fqdn \
+            --output tsv)"
+
+          FRONTEND_FQDN="$(az containerapp show \
+            --name "$FRONTEND_APP" \
+            --resource-group "$RESOURCE_GROUP" \
+            --query properties.configuration.ingress.fqdn \
+            --output tsv)"
+
+          API_ORIGIN="https://${API_FQDN}"
+          FRONTEND_ORIGIN="https://${FRONTEND_FQDN}"
+
+          wait_for_url() {
+            local name="$1"
+            local url="$2"
+            echo "Waiting for ${name}: ${url}"
+            curl \
+              --fail \
+              --show-error \
+              --retry 30 \
+              --retry-delay 10 \
+              --retry-max-time 120 \
+              --retry-all-errors \
+              "$url"
+          }
+
+          wait_for_url "backend health" "${API_ORIGIN}/health"
+          wait_for_url "backend info" "${API_ORIGIN}/info"
+          wait_for_url "frontend" "${FRONTEND_ORIGIN}"
+
+      - name: Smoke-test WebSocket inference
+        if: ${{ (github.event_name == 'workflow_dispatch' && inputs.run_inference_smoke) || (github.event_name != 'workflow_dispatch' && vars.RUN_AZURE_INFERENCE_SMOKE == 'true') }}
+        run: |
+          API_FQDN="$(az containerapp show \
+            --name "$BACKEND_APP" \
+            --resource-group "$RESOURCE_GROUP" \
+            --query properties.configuration.ingress.fqdn \
+            --output tsv)"
+
+          AZURE_API_WS_URL="wss://${API_FQDN}/ws/predict" poetry run python - <<'PY'
+          import asyncio
+          import base64
+          import json
+          import os
+          from pathlib import Path
+
+          import websockets
+
+
+          async def request_prediction(url: str, payload: dict[str, str]) -> dict:
+              last_response = None
+              for attempt in range(1, 7):
+                  async with websockets.connect(url, open_timeout=30) as websocket:
+                      await websocket.send(json.dumps(payload))
+                      raw = await asyncio.wait_for(websocket.recv(), timeout=120)
+                  response = json.loads(raw)
+                  if response.get("hands"):
+                      return response
+                  last_response = response
+                  print(f"WebSocket inference attempt {attempt}/6 failed: {response}")
+                  if attempt < 6:
+                      await asyncio.sleep(20)
+              raise RuntimeError(f"WebSocket returned no hands: {last_response}")
+
+
+          async def main() -> None:
+              image_path = Path("src/frontend/public/signs/a_photo.jpg")
+              payload = {
+                  "image": (
+                      "data:image/jpeg;base64,"
+                      + base64.b64encode(image_path.read_bytes()).decode("ascii")
+                  )
+              }
+              response = await request_prediction(
+                  os.environ["AZURE_API_WS_URL"],
+                  payload,
+              )
+              hands = response["hands"]
+              landmarks = hands[0].get("landmarks") or []
+              if len(landmarks) != 21:
+                  raise RuntimeError(
+                      f"Expected 21 landmarks, received {len(landmarks)}: {response}"
+                  )
+
+
+          asyncio.run(main())
+          PY
+
+      - name: Show backend logs on failure
+        if: failure()
+        run: |
+          echo "Backend logs:"
+          az containerapp logs show \
+            --name "$BACKEND_APP" \
+            --resource-group "$RESOURCE_GROUP" \
+            --tail 100 || true
+
+          echo "Frontend logs:"
+          az containerapp logs show \
+            --name "$FRONTEND_APP" \
+            --resource-group "$RESOURCE_GROUP" \
+            --tail 100 || true
+
+      - name: Show active revisions
+        run: |
+          az containerapp revision list \
+            --name "$BACKEND_APP" \
+            --resource-group "$RESOURCE_GROUP" \
+            --query "[].{name:name,active:properties.active,traffic:properties.trafficWeight,image:properties.template.containers[0].image}" \
+            --output table
+          az containerapp revision list \
+            --name "$FRONTEND_APP" \
+            --resource-group "$RESOURCE_GROUP" \
+            --query "[].{name:name,active:properties.active,traffic:properties.trafficWeight,image:properties.template.containers[0].image}" \
+            --output table

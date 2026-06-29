@@ -1,0 +1,120 @@
+name: Docker Build & Push
+
+on:
+  workflow_run:
+    workflows: ["Code Quality"]
+    types: [completed]
+    branches: [ main ]
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE_BASE: ghcr.io/bredauniversityadsai/2025-26d-fai2-adsai-group-researchgroup2
+
+jobs:
+  build-push:
+    if: github.event.workflow_run.conclusion == 'success'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+
+    continue-on-error: ${{ matrix.continue || false }}
+
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: signlang-backend
+            dockerfile: docker/dockerfiles/Dockerfile.backend
+            context: .
+          - name: signlang-frontend
+            dockerfile: docker/dockerfiles/Dockerfile.frontend
+            context: .
+          - name: signlang-azure-api
+            dockerfile: docker/dockerfiles/Dockerfile.azure-api
+            context: .
+          - name: signlang-training
+            dockerfile: docker/dockerfiles/Dockerfile.training
+            context: .
+            continue: true
+          - name: signlang-airflow
+            dockerfile: docker/dockerfiles/Dockerfile.airflow
+            context: .
+            continue: true
+
+    steps:
+      - name: Free disk space
+        uses: jlumbroso/free-disk-space@main
+        with:
+          tool-cache: false
+          android: true
+          dotnet: true
+          haskell: true
+          large-packages: true
+          # Preserve runner-cached BuildKit images so setup-buildx does not
+          # unnecessarily depend on a fresh Docker Hub pull.
+          docker-images: false
+          swap-storage: true
+
+      - name: Checkout code
+        uses: actions/checkout@v5
+        with:
+          ref: ${{ github.event.workflow_run.head_sha }}
+          # Pull Git LFS objects (MediaPipe .task file, landmark MLP .pth, etc.)
+          # so the image ships the real binaries instead of LFS pointer stubs.
+          # Without this, COPY src/ ./src/ in the Dockerfile copies 130-byte
+          # text pointers that MediaPipe/torch can't open.
+          lfs: true
+
+      - name: Compute short SHA
+        id: short-sha
+        run: echo "sha=$(git rev-parse --short=7 HEAD)" >> $GITHUB_OUTPUT
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Login to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Extract metadata
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.IMAGE_BASE }}/${{ matrix.name }}
+          tags: |
+            type=ref,event=branch
+            type=raw,value=sha-${{ steps.short-sha.outputs.sha }}
+            type=raw,value=latest,enable=${{ github.event.workflow_run.head_branch == 'main' }}
+
+      - name: Build and push
+        id: build
+        continue-on-error: true
+        uses: docker/build-push-action@v5
+        with:
+          context: ${{ matrix.context }}
+          file: ${{ matrix.dockerfile }}
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha,scope=${{ matrix.name }}
+          cache-to: type=gha,mode=min,scope=${{ matrix.name }}
+
+      - name: Wait before retrying failed build
+        if: steps.build.outcome == 'failure'
+        run: sleep 30
+
+      - name: Retry build and push
+        if: steps.build.outcome == 'failure'
+        uses: docker/build-push-action@v5
+        with:
+          context: ${{ matrix.context }}
+          file: ${{ matrix.dockerfile }}
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha,scope=${{ matrix.name }}
+          cache-to: type=gha,mode=min,scope=${{ matrix.name }}

@@ -1,0 +1,30 @@
+export const VALID_LETTERS = [
+  'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I',
+  'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S',
+  'T', 'V', 'W', 'Y',
+] as const;
+
+export const LETTER_HINTS: Record<string, string> = {
+  A: 'Make a fist with your thumb slightly extended out to the side — not tucked against the fist like in ASL.',
+  B: 'Hold your hand flat and open with all four fingers extended and together, thumb tucked across the palm.',
+  C: 'Curve your hand into a C shape facing the camera — like you\'re gripping something round, seen from the front.',
+  D: 'Point your index finger straight up, make a fist with the rest, and tuck your thumb across the folded fingers.',
+  E: 'Curl all your fingers down into the palm with your thumb tucked underneath them.',
+  F: 'Extend all your fingers, then cross your index finger over your thumb.',
+  G: 'Pinch your index finger and thumb together and point them toward the camera.',
+  H: 'Extend your index and middle fingers straight up. Fold your ring and pinky fingers down, with your thumb crossing over those two.',
+  I: 'Make a fist and extend only your pinky finger straight up.',
+  K: 'Extend your index and middle fingers in a V shape, with your thumb resting against the palm over the middle finger.',
+  L: 'Extend your index finger straight up and your thumb out to the side, forming an L shape. Other fingers closed.',
+  M: 'Point your index, middle, and ring fingers downward at an angle. Tuck your pinky and thumb underneath them.',
+  N: 'Point your index and middle fingers downward at an angle. Tuck your ring finger, pinky, and thumb underneath.',
+  O: 'Curve all your fingertips down to meet your thumb, forming a round O shape.',
+  P: 'Point your index finger upward. Extend your ring, pinky, and middle fingers up as well, with your thumb resting underneath the middle finger.',
+  Q: 'Similar to G, but cross the tips of your thumb and index finger so they form a little heart shape.',
+  R: 'Cross your middle finger over your index finger. Tuck the rest of your fingers in.',
+  S: 'Make a fist with your thumb wrapped over the front of your curled fingers — like E, but thumb goes on top instead of underneath.',
+  T: 'Point your pinky, middle, and ring fingers upward. Pinch your index finger and thumb together.',
+  V: 'The classic peace sign! ✌️ Index and middle fingers up in a V, everything else closed.',
+  W: 'Extend your thumb, index, and middle fingers. Fold your ring and pinky fingers into the palm.',
+  Y: 'Fold your three middle fingers into the palm, extend your pinky and thumb out to the sides. Who\'s calling? 📞',
+};
