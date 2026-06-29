@@ -1,8 +1,7 @@
 name: Finalize Completed Azure ML Sweeps
 
 on:
-  schedule:
-    - cron: "*/30 * * * *"
+  # Automatic Azure ML sweep finalization is disabled. Run manually from the Actions tab when needed.
   workflow_dispatch:
 
 permissions:

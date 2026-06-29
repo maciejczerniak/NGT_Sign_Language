@@ -1,9 +1,7 @@
 name: Deploy Promoted Azure ML Model
 
 on:
-  schedule:
-    # Runs after the daily 02:00 UTC (4:00 AM - W. Europe Standard Time) Azure ML trigger checker.
-    - cron: "7 2 * * *"
+  # Automatic Azure ML deployments are disabled. Run manually from the Actions tab when needed.
   workflow_dispatch:
 
 permissions:

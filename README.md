@@ -458,20 +458,28 @@ poetry run python scripts/rollout_canary.py `
 
 ## Azure Container Apps CI/CD
 
-The repository mirrors the on-prem CI/CD chain for Azure Container Apps:
+The Azure Container Apps workflow mirrors the on-prem deployment steps, but is
+currently manual-only:
 
 ```text
-push to main -> Code Quality -> Docker Build & Push -> Deploy to Azure Container Apps
+push to main -> Code Quality -> Docker Build & Push -> manual Azure deployment
 ```
+
+> Note: Azure-related GitHub Actions workflows are intentionally kept in the
+> repository but disabled for automatic runs to avoid failed workflow
+> notifications. `.github/workflows/deploy-azure.yml`,
+> `.github/workflows/deploy-promoted-model.yml`, and
+> `.github/workflows/promote-model.yml` run only through `workflow_dispatch`
+> from the GitHub Actions tab.
 
 The on-prem workflow renders Compose and pushes a `deploy` branch for
 Portainer. Azure Container Apps does not consume Docker Compose directly, so
-`.github/workflows/deploy-azure.yml` keeps the same chained trigger but deploys
-the already-built SHA-tagged GHCR images with Azure CLI.
+`.github/workflows/deploy-azure.yml` can be run manually to deploy the
+already-built SHA-tagged GHCR images with Azure CLI.
 
 Authentication uses GitHub OIDC through `azure/login@v2`; do not store an Azure
-client secret in GitHub. The federated credential must trust the same branch as
-the workflow trigger, currently `main`.
+client secret in GitHub. The federated credential should trust the branch used
+for manual deployments, normally `main`.
 
 The Azure workflow automates the PDF course architecture:
 
@@ -567,10 +575,9 @@ the `blue` Kubernetes deployment. Later runs deploy the inactive color and then
 switch all endpoint traffic to it. The endpoint-backed API does not pin a
 deployment name, so requests follow the endpoint traffic allocation.
 
-The workflow can also be started manually from GitHub Actions through
+The workflow is started manually from GitHub Actions through
 `workflow_dispatch`. Manual runs support redeploying a specific image tag,
-skipping Azure ML endpoint deployment, or overriding the model version without
-pushing a new commit.
+skipping Azure ML endpoint deployment, or overriding the model version.
 
 After deployment, the workflow smoke-tests:
 
