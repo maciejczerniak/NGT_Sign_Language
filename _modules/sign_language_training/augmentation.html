@@ -1,0 +1,582 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>sign_language_training.augmentation &mdash; Sign Language 0.1.0 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../../_static/css/theme.css?v=9edc463e" />
+
+  
+      <script src="../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../_static/documentation_options.js?v=01f34227"></script>
+      <script src="../../_static/doctools.js?v=9a2dae69"></script>
+      <script src="../../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../index.html" class="icon icon-home">
+            Sign Language
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Getting Started</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../installation.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../usage.html">Usage</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">API Reference</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../reference/sign_language.html">sign_language package</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../reference/sign_language_training.html">sign_language_training package</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../index.html">Sign Language</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">sign_language_training.augmentation</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for sign_language_training.augmentation</h1><div class="highlight"><pre>
+<span></span><span class="sd">&quot;&quot;&quot;Offline data augmentation component for the NGT training pipeline.</span>
+
+<span class="sd">Performs three tasks in sequence:</span>
+
+<span class="sd">1. Stratified 80/10/10 split of the raw ImageFolder dataset.</span>
+<span class="sd">2. Augment the train split only (N copies per image).</span>
+<span class="sd">3. Register the augmented train split as an Azure ML data asset</span>
+<span class="sd">   tagged with the source ``ngt-raw`` version so downstream jobs can</span>
+<span class="sd">   detect whether augmentation needs to be re-run.</span>
+
+<span class="sd">Usage::</span>
+
+<span class="sd">    python -m sign_language_training.augmentation \\</span>
+<span class="sd">        --input-dir  /data/ngt-raw \\</span>
+<span class="sd">        --output-train-dir  /data/aug/train \\</span>
+<span class="sd">        --output-val-dir    /data/aug/val \\</span>
+<span class="sd">        --output-test-dir   /data/aug/test \\</span>
+<span class="sd">        --copies 4 --seed 42</span>
+<span class="sd">&quot;&quot;&quot;</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">logging</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">random</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">shutil</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">pathlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">Path</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Any</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">typer</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">PIL</span><span class="w"> </span><span class="kn">import</span> <span class="n">Image</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">sklearn.model_selection</span><span class="w"> </span><span class="kn">import</span> <span class="n">StratifiedShuffleSplit</span>
+
+<span class="n">logger</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="vm">__name__</span><span class="p">)</span>
+<span class="n">app</span> <span class="o">=</span> <span class="n">typer</span><span class="o">.</span><span class="n">Typer</span><span class="p">(</span>
+    <span class="n">name</span><span class="o">=</span><span class="s2">&quot;augmentation&quot;</span><span class="p">,</span>
+    <span class="n">help</span><span class="o">=</span><span class="s2">&quot;Stratified split and offline augmentation for the NGT pipeline.&quot;</span><span class="p">,</span>
+    <span class="n">add_completion</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+<span class="p">)</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_build_augment_fn</span><span class="p">(</span><span class="n">img_size</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Any</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Build the torchvision augmentation transform pipeline.</span>
+
+<span class="sd">    Imports torchvision lazily to avoid pulling it in at module level.</span>
+<span class="sd">    Applies random resized crop, horizontal flip, colour jitter, and</span>
+<span class="sd">    Gaussian blur.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        img_size: Target output image size in pixels applied to both</span>
+<span class="sd">            height and width by the random resized crop transform.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        A :class:`~torchvision.transforms.Compose` augmentation</span>
+<span class="sd">            pipeline.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">torchvision</span><span class="w"> </span><span class="kn">import</span> <span class="n">transforms</span>  <span class="c1"># noqa: PLC0415</span>
+
+    <span class="k">return</span> <span class="n">transforms</span><span class="o">.</span><span class="n">Compose</span><span class="p">(</span>
+        <span class="p">[</span>
+            <span class="n">transforms</span><span class="o">.</span><span class="n">RandomResizedCrop</span><span class="p">(</span><span class="n">img_size</span><span class="p">,</span> <span class="n">scale</span><span class="o">=</span><span class="p">(</span><span class="mf">0.7</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">)),</span>
+            <span class="n">transforms</span><span class="o">.</span><span class="n">RandomHorizontalFlip</span><span class="p">(</span><span class="n">p</span><span class="o">=</span><span class="mf">0.5</span><span class="p">),</span>
+            <span class="n">transforms</span><span class="o">.</span><span class="n">ColorJitter</span><span class="p">(</span>
+                <span class="n">brightness</span><span class="o">=</span><span class="mf">0.3</span><span class="p">,</span> <span class="n">contrast</span><span class="o">=</span><span class="mf">0.3</span><span class="p">,</span> <span class="n">saturation</span><span class="o">=</span><span class="mf">0.2</span><span class="p">,</span> <span class="n">hue</span><span class="o">=</span><span class="mf">0.05</span>
+            <span class="p">),</span>
+            <span class="n">transforms</span><span class="o">.</span><span class="n">GaussianBlur</span><span class="p">(</span><span class="n">kernel_size</span><span class="o">=</span><span class="mi">3</span><span class="p">,</span> <span class="n">sigma</span><span class="o">=</span><span class="p">(</span><span class="mf">0.1</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">)),</span>
+        <span class="p">]</span>
+    <span class="p">)</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_collect_samples</span><span class="p">(</span>
+    <span class="n">input_dir</span><span class="p">:</span> <span class="n">Path</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">list</span><span class="p">[</span><span class="n">Path</span><span class="p">],</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span> <span class="nb">list</span><span class="p">[</span><span class="nb">int</span><span class="p">]]:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Collect image paths, class names, and labels from an ImageFolder.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        input_dir: Root directory containing one subdirectory per class.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        Image paths, sorted class names, and integer labels.</span>
+
+<span class="sd">    Raises:</span>
+<span class="sd">        ValueError: If no class subdirectories are present.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">class_dirs</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">p</span> <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">input_dir</span><span class="o">.</span><span class="n">iterdir</span><span class="p">()</span> <span class="k">if</span> <span class="n">p</span><span class="o">.</span><span class="n">is_dir</span><span class="p">())</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">class_dirs</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;No class subdirectories found in </span><span class="si">{</span><span class="n">input_dir</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+
+    <span class="n">class_names</span> <span class="o">=</span> <span class="p">[</span><span class="n">d</span><span class="o">.</span><span class="n">name</span> <span class="k">for</span> <span class="n">d</span> <span class="ow">in</span> <span class="n">class_dirs</span><span class="p">]</span>
+    <span class="n">image_paths</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">Path</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="n">labels</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+
+    <span class="k">for</span> <span class="n">idx</span><span class="p">,</span> <span class="n">class_dir</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">class_dirs</span><span class="p">):</span>
+        <span class="n">images</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">(</span>
+            <span class="n">p</span>
+            <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">class_dir</span><span class="o">.</span><span class="n">iterdir</span><span class="p">()</span>
+            <span class="k">if</span> <span class="n">p</span><span class="o">.</span><span class="n">suffix</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span> <span class="ow">in</span> <span class="p">{</span><span class="s2">&quot;.jpg&quot;</span><span class="p">,</span> <span class="s2">&quot;.jpeg&quot;</span><span class="p">,</span> <span class="s2">&quot;.png&quot;</span><span class="p">,</span> <span class="s2">&quot;.bmp&quot;</span><span class="p">,</span> <span class="s2">&quot;.webp&quot;</span><span class="p">}</span>
+        <span class="p">)</span>
+        <span class="n">image_paths</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">images</span><span class="p">)</span>
+        <span class="n">labels</span><span class="o">.</span><span class="n">extend</span><span class="p">([</span><span class="n">idx</span><span class="p">]</span> <span class="o">*</span> <span class="nb">len</span><span class="p">(</span><span class="n">images</span><span class="p">))</span>
+
+    <span class="k">return</span> <span class="n">image_paths</span><span class="p">,</span> <span class="n">class_names</span><span class="p">,</span> <span class="n">labels</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_copy_split</span><span class="p">(</span>
+    <span class="n">image_paths</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">Path</span><span class="p">],</span>
+    <span class="n">labels</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">int</span><span class="p">],</span>
+    <span class="n">class_names</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span>
+    <span class="n">indices</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">int</span><span class="p">],</span>
+    <span class="n">output_dir</span><span class="p">:</span> <span class="n">Path</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Copy a dataset subset while preserving its class directories.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        image_paths: All source image paths.</span>
+<span class="sd">        labels: Integer class label for each image.</span>
+<span class="sd">        class_names: Class names indexed by label.</span>
+<span class="sd">        indices: Indices of images to copy.</span>
+<span class="sd">        output_dir: Destination ImageFolder root.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">output_dir</span><span class="o">.</span><span class="n">mkdir</span><span class="p">(</span><span class="n">parents</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">exist_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="k">for</span> <span class="n">class_name</span> <span class="ow">in</span> <span class="n">class_names</span><span class="p">:</span>
+        <span class="p">(</span><span class="n">output_dir</span> <span class="o">/</span> <span class="n">class_name</span><span class="p">)</span><span class="o">.</span><span class="n">mkdir</span><span class="p">(</span><span class="n">exist_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">indices</span><span class="p">:</span>
+        <span class="n">src</span> <span class="o">=</span> <span class="n">image_paths</span><span class="p">[</span><span class="n">i</span><span class="p">]</span>
+        <span class="n">class_name</span> <span class="o">=</span> <span class="n">class_names</span><span class="p">[</span><span class="n">labels</span><span class="p">[</span><span class="n">i</span><span class="p">]]</span>
+        <span class="n">shutil</span><span class="o">.</span><span class="n">copy2</span><span class="p">(</span><span class="n">src</span><span class="p">,</span> <span class="n">output_dir</span> <span class="o">/</span> <span class="n">class_name</span> <span class="o">/</span> <span class="n">src</span><span class="o">.</span><span class="n">name</span><span class="p">)</span>
+
+
+<div class="viewcode-block" id="stratified_split">
+<a class="viewcode-back" href="../../reference/sign_language_training.html#sign_language_training.augmentation.stratified_split">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">stratified_split</span><span class="p">(</span>
+    <span class="n">input_dir</span><span class="p">:</span> <span class="n">Path</span><span class="p">,</span>
+    <span class="n">train_dir</span><span class="p">:</span> <span class="n">Path</span><span class="p">,</span>
+    <span class="n">val_dir</span><span class="p">:</span> <span class="n">Path</span><span class="p">,</span>
+    <span class="n">test_dir</span><span class="p">:</span> <span class="n">Path</span><span class="p">,</span>
+    <span class="n">train_ratio</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
+    <span class="n">val_ratio</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
+    <span class="n">seed</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Split an ImageFolder dataset into train, validation, and test sets.</span>
+
+<span class="sd">    Uses two sequential :class:`~sklearn.model_selection.StratifiedShuffleSplit`</span>
+<span class="sd">    operations to preserve class distribution across all three splits. The</span>
+<span class="sd">    test ratio is computed as ``1 - train_ratio - val_ratio``.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        input_dir: Root directory of the ImageFolder dataset to split.</span>
+<span class="sd">        train_dir: Output directory for training images.</span>
+<span class="sd">        val_dir: Output directory for validation images.</span>
+<span class="sd">        test_dir: Output directory for test images.</span>
+<span class="sd">        train_ratio: Fraction of the dataset to use for training.</span>
+<span class="sd">        val_ratio: Fraction of the dataset to use for validation.</span>
+<span class="sd">        seed: Random seed for reproducible splitting.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        Sorted list of class name strings from the dataset.</span>
+
+<span class="sd">    Raises:</span>
+<span class="sd">        ValueError: If no class subdirectories are found in ``input_dir``.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">image_paths</span><span class="p">,</span> <span class="n">class_names</span><span class="p">,</span> <span class="n">labels</span> <span class="o">=</span> <span class="n">_collect_samples</span><span class="p">(</span><span class="n">input_dir</span><span class="p">)</span>
+    <span class="n">labels_arr</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">labels</span><span class="p">)</span>
+    <span class="n">indices</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">labels_arr</span><span class="p">))</span>
+
+    <span class="n">test_size</span> <span class="o">=</span> <span class="mf">1.0</span> <span class="o">-</span> <span class="n">train_ratio</span> <span class="o">-</span> <span class="n">val_ratio</span>
+    <span class="n">sss_test</span> <span class="o">=</span> <span class="n">StratifiedShuffleSplit</span><span class="p">(</span>
+        <span class="n">n_splits</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">test_size</span><span class="o">=</span><span class="n">test_size</span><span class="p">,</span> <span class="n">random_state</span><span class="o">=</span><span class="n">seed</span>
+    <span class="p">)</span>
+    <span class="n">trainval_idx</span><span class="p">,</span> <span class="n">test_idx</span> <span class="o">=</span> <span class="nb">next</span><span class="p">(</span><span class="n">sss_test</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="n">indices</span><span class="p">,</span> <span class="n">labels_arr</span><span class="p">))</span>
+
+    <span class="n">val_size_relative</span> <span class="o">=</span> <span class="n">val_ratio</span> <span class="o">/</span> <span class="p">(</span><span class="n">train_ratio</span> <span class="o">+</span> <span class="n">val_ratio</span><span class="p">)</span>
+    <span class="n">sss_val</span> <span class="o">=</span> <span class="n">StratifiedShuffleSplit</span><span class="p">(</span>
+        <span class="n">n_splits</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">test_size</span><span class="o">=</span><span class="n">val_size_relative</span><span class="p">,</span> <span class="n">random_state</span><span class="o">=</span><span class="n">seed</span>
+    <span class="p">)</span>
+    <span class="n">train_idx</span><span class="p">,</span> <span class="n">val_idx</span> <span class="o">=</span> <span class="nb">next</span><span class="p">(</span><span class="n">sss_val</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="n">trainval_idx</span><span class="p">,</span> <span class="n">labels_arr</span><span class="p">[</span><span class="n">trainval_idx</span><span class="p">]))</span>
+    <span class="n">train_idx</span> <span class="o">=</span> <span class="n">trainval_idx</span><span class="p">[</span><span class="n">train_idx</span><span class="p">]</span>
+    <span class="n">val_idx</span> <span class="o">=</span> <span class="n">trainval_idx</span><span class="p">[</span><span class="n">val_idx</span><span class="p">]</span>
+
+    <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span>
+        <span class="s2">&quot;Split: total=</span><span class="si">%d</span><span class="s2"> train=</span><span class="si">%d</span><span class="s2"> val=</span><span class="si">%d</span><span class="s2"> test=</span><span class="si">%d</span><span class="s2">&quot;</span><span class="p">,</span>
+        <span class="nb">len</span><span class="p">(</span><span class="n">labels_arr</span><span class="p">),</span>
+        <span class="nb">len</span><span class="p">(</span><span class="n">train_idx</span><span class="p">),</span>
+        <span class="nb">len</span><span class="p">(</span><span class="n">val_idx</span><span class="p">),</span>
+        <span class="nb">len</span><span class="p">(</span><span class="n">test_idx</span><span class="p">),</span>
+    <span class="p">)</span>
+
+    <span class="n">_copy_split</span><span class="p">(</span><span class="n">image_paths</span><span class="p">,</span> <span class="n">labels</span><span class="p">,</span> <span class="n">class_names</span><span class="p">,</span> <span class="n">train_idx</span><span class="o">.</span><span class="n">tolist</span><span class="p">(),</span> <span class="n">train_dir</span><span class="p">)</span>
+    <span class="n">_copy_split</span><span class="p">(</span><span class="n">image_paths</span><span class="p">,</span> <span class="n">labels</span><span class="p">,</span> <span class="n">class_names</span><span class="p">,</span> <span class="n">val_idx</span><span class="o">.</span><span class="n">tolist</span><span class="p">(),</span> <span class="n">val_dir</span><span class="p">)</span>
+    <span class="n">_copy_split</span><span class="p">(</span><span class="n">image_paths</span><span class="p">,</span> <span class="n">labels</span><span class="p">,</span> <span class="n">class_names</span><span class="p">,</span> <span class="n">test_idx</span><span class="o">.</span><span class="n">tolist</span><span class="p">(),</span> <span class="n">test_dir</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">class_names</span></div>
+
+
+
+<div class="viewcode-block" id="augment_dir">
+<a class="viewcode-back" href="../../reference/sign_language_training.html#sign_language_training.augmentation.augment_dir">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">augment_dir</span><span class="p">(</span>
+    <span class="n">source_dir</span><span class="p">:</span> <span class="n">Path</span><span class="p">,</span>
+    <span class="n">output_dir</span><span class="p">:</span> <span class="n">Path</span><span class="p">,</span>
+    <span class="n">copies</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+    <span class="n">img_size</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+    <span class="n">seed</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Copy originals and generate augmented training images.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        source_dir: Root of the unaugmented training split.</span>
+<span class="sd">        output_dir: Destination root for originals and augmented copies.</span>
+<span class="sd">        copies: Number of augmented copies to create per image.</span>
+<span class="sd">        img_size: Square augmentation output size in pixels.</span>
+<span class="sd">        seed: Random seed for reproducible augmentation.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">random</span><span class="o">.</span><span class="n">seed</span><span class="p">(</span><span class="n">seed</span><span class="p">)</span>
+    <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">seed</span><span class="p">(</span><span class="n">seed</span><span class="p">)</span>
+    <span class="kn">import</span><span class="w"> </span><span class="nn">torch</span>  <span class="c1"># noqa: PLC0415</span>
+
+    <span class="n">torch</span><span class="o">.</span><span class="n">manual_seed</span><span class="p">(</span><span class="n">seed</span><span class="p">)</span>
+    <span class="n">augment</span> <span class="o">=</span> <span class="n">_build_augment_fn</span><span class="p">(</span><span class="n">img_size</span><span class="p">)</span>
+
+    <span class="n">class_dirs</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">p</span> <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">source_dir</span><span class="o">.</span><span class="n">iterdir</span><span class="p">()</span> <span class="k">if</span> <span class="n">p</span><span class="o">.</span><span class="n">is_dir</span><span class="p">())</span>
+    <span class="n">total_orig</span> <span class="o">=</span> <span class="mi">0</span>
+    <span class="n">total_aug</span> <span class="o">=</span> <span class="mi">0</span>
+
+    <span class="k">for</span> <span class="n">class_dir</span> <span class="ow">in</span> <span class="n">class_dirs</span><span class="p">:</span>
+        <span class="n">out_class</span> <span class="o">=</span> <span class="n">output_dir</span> <span class="o">/</span> <span class="n">class_dir</span><span class="o">.</span><span class="n">name</span>
+        <span class="n">out_class</span><span class="o">.</span><span class="n">mkdir</span><span class="p">(</span><span class="n">parents</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">exist_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+        <span class="n">images</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">(</span>
+            <span class="n">p</span>
+            <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">class_dir</span><span class="o">.</span><span class="n">iterdir</span><span class="p">()</span>
+            <span class="k">if</span> <span class="n">p</span><span class="o">.</span><span class="n">suffix</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span> <span class="ow">in</span> <span class="p">{</span><span class="s2">&quot;.jpg&quot;</span><span class="p">,</span> <span class="s2">&quot;.jpeg&quot;</span><span class="p">,</span> <span class="s2">&quot;.png&quot;</span><span class="p">,</span> <span class="s2">&quot;.bmp&quot;</span><span class="p">,</span> <span class="s2">&quot;.webp&quot;</span><span class="p">}</span>
+        <span class="p">)</span>
+        <span class="k">for</span> <span class="n">img_path</span> <span class="ow">in</span> <span class="n">images</span><span class="p">:</span>
+            <span class="n">shutil</span><span class="o">.</span><span class="n">copy2</span><span class="p">(</span><span class="n">img_path</span><span class="p">,</span> <span class="n">out_class</span> <span class="o">/</span> <span class="n">img_path</span><span class="o">.</span><span class="n">name</span><span class="p">)</span>
+            <span class="n">total_orig</span> <span class="o">+=</span> <span class="mi">1</span>
+
+            <span class="n">img</span> <span class="o">=</span> <span class="n">Image</span><span class="o">.</span><span class="n">open</span><span class="p">(</span><span class="n">img_path</span><span class="p">)</span><span class="o">.</span><span class="n">convert</span><span class="p">(</span><span class="s2">&quot;RGB&quot;</span><span class="p">)</span>
+            <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">copies</span><span class="p">):</span>
+                <span class="n">aug</span> <span class="o">=</span> <span class="n">augment</span><span class="p">(</span><span class="n">img</span><span class="p">)</span>
+                <span class="n">aug</span><span class="o">.</span><span class="n">save</span><span class="p">(</span><span class="n">out_class</span> <span class="o">/</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">img_path</span><span class="o">.</span><span class="n">stem</span><span class="si">}</span><span class="s2">_aug</span><span class="si">{</span><span class="n">i</span><span class="si">:</span><span class="s2">02d</span><span class="si">}{</span><span class="n">img_path</span><span class="o">.</span><span class="n">suffix</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+                <span class="n">total_aug</span> <span class="o">+=</span> <span class="mi">1</span>
+
+        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span>
+            <span class="s2">&quot;  </span><span class="si">%s</span><span class="s2">: </span><span class="si">%d</span><span class="s2"> originals → </span><span class="si">%d</span><span class="s2"> total&quot;</span><span class="p">,</span>
+            <span class="n">class_dir</span><span class="o">.</span><span class="n">name</span><span class="p">,</span>
+            <span class="nb">len</span><span class="p">(</span><span class="n">images</span><span class="p">),</span>
+            <span class="nb">len</span><span class="p">(</span><span class="n">images</span><span class="p">)</span> <span class="o">*</span> <span class="p">(</span><span class="mi">1</span> <span class="o">+</span> <span class="n">copies</span><span class="p">),</span>
+        <span class="p">)</span>
+
+    <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span>
+        <span class="s2">&quot;Augmentation done — </span><span class="si">%d</span><span class="s2"> originals + </span><span class="si">%d</span><span class="s2"> augmented = </span><span class="si">%d</span><span class="s2"> total&quot;</span><span class="p">,</span>
+        <span class="n">total_orig</span><span class="p">,</span>
+        <span class="n">total_aug</span><span class="p">,</span>
+        <span class="n">total_orig</span> <span class="o">+</span> <span class="n">total_aug</span><span class="p">,</span>
+    <span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="register_split_asset">
+<a class="viewcode-back" href="../../reference/sign_language_training.html#sign_language_training.augmentation.register_split_asset">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">register_split_asset</span><span class="p">(</span>
+    <span class="n">split_dir</span><span class="p">:</span> <span class="n">Path</span><span class="p">,</span>
+    <span class="n">asset_name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+    <span class="n">ngt_raw_version</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+    <span class="n">split_name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Register the split directory as an Azure ML ``URI_FOLDER`` data asset.</span>
+
+<span class="sd">    Tags the registered asset with ``ngt_raw_version`` so the pipeline</span>
+<span class="sd">    submission script can detect whether augmentation needs to be re-run</span>
+<span class="sd">    when the source raw data version changes.</span>
+
+<span class="sd">    Only executes when the ``AZUREML_ARM_SUBSCRIPTION`` environment variable</span>
+<span class="sd">    is present, i.e. inside an Azure ML job. Silently skips in local</span>
+<span class="sd">    environments.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        split_dir: Path to the split directory to register as a data asset.</span>
+<span class="sd">        asset_name: Azure ML data asset name to register under, e.g.</span>
+<span class="sd">            ``&quot;ngt-augmented-train&quot;``.</span>
+<span class="sd">        validation_asset_name: Azure ML data asset name for validation data.</span>
+<span class="sd">        test_asset_name: Azure ML data asset name for test data.</span>
+<span class="sd">        ngt_raw_version: Source raw data version string to store as the</span>
+<span class="sd">            ``ngt_raw_version`` tag on the registered asset.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="kn">import</span><span class="w"> </span><span class="nn">os</span>  <span class="c1"># noqa: PLC0415</span>
+
+    <span class="n">subscription_id</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;AZUREML_ARM_SUBSCRIPTION&quot;</span><span class="p">)</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">subscription_id</span><span class="p">:</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Not in Azure ML job — skipping data asset registration.&quot;</span><span class="p">)</span>
+        <span class="k">return</span>
+
+    <span class="kn">from</span><span class="w"> </span><span class="nn">azure.ai.ml</span><span class="w"> </span><span class="kn">import</span> <span class="n">MLClient</span>  <span class="c1"># noqa: PLC0415</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">azure.ai.ml.constants</span><span class="w"> </span><span class="kn">import</span> <span class="n">AssetTypes</span>  <span class="c1"># noqa: PLC0415</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">azure.ai.ml.entities</span><span class="w"> </span><span class="kn">import</span> <span class="n">Data</span>  <span class="c1"># noqa: PLC0415</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">azure.identity</span><span class="w"> </span><span class="kn">import</span> <span class="n">ManagedIdentityCredential</span>  <span class="c1"># noqa: PLC0415</span>
+
+    <span class="n">ml_client</span> <span class="o">=</span> <span class="n">MLClient</span><span class="p">(</span>
+        <span class="n">credential</span><span class="o">=</span><span class="n">ManagedIdentityCredential</span><span class="p">(),</span>
+        <span class="n">subscription_id</span><span class="o">=</span><span class="n">subscription_id</span><span class="p">,</span>
+        <span class="n">resource_group_name</span><span class="o">=</span><span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="p">[</span><span class="s2">&quot;AZUREML_ARM_RESOURCEGROUP&quot;</span><span class="p">],</span>
+        <span class="n">workspace_name</span><span class="o">=</span><span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="p">[</span><span class="s2">&quot;AZUREML_ARM_WORKSPACE_NAME&quot;</span><span class="p">],</span>
+    <span class="p">)</span>
+
+    <span class="n">data_asset</span> <span class="o">=</span> <span class="n">Data</span><span class="p">(</span>
+        <span class="n">name</span><span class="o">=</span><span class="n">asset_name</span><span class="p">,</span>
+        <span class="n">path</span><span class="o">=</span><span class="nb">str</span><span class="p">(</span><span class="n">split_dir</span><span class="p">),</span>
+        <span class="nb">type</span><span class="o">=</span><span class="n">AssetTypes</span><span class="o">.</span><span class="n">URI_FOLDER</span><span class="p">,</span>
+        <span class="n">description</span><span class="o">=</span><span class="p">(</span>
+            <span class="sa">f</span><span class="s2">&quot;NGT </span><span class="si">{</span><span class="n">split_name</span><span class="si">}</span><span class="s2"> split &quot;</span> <span class="sa">f</span><span class="s2">&quot;(source: ngt-raw v</span><span class="si">{</span><span class="n">ngt_raw_version</span><span class="si">}</span><span class="s2">)&quot;</span>
+        <span class="p">),</span>
+        <span class="n">tags</span><span class="o">=</span><span class="p">{</span>
+            <span class="s2">&quot;ngt_raw_version&quot;</span><span class="p">:</span> <span class="n">ngt_raw_version</span><span class="p">,</span>
+            <span class="s2">&quot;split&quot;</span><span class="p">:</span> <span class="n">split_name</span><span class="p">,</span>
+        <span class="p">},</span>
+    <span class="p">)</span>
+
+    <span class="n">registered</span> <span class="o">=</span> <span class="n">ml_client</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">create_or_update</span><span class="p">(</span><span class="n">data_asset</span><span class="p">)</span>
+    <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span>
+        <span class="s2">&quot;Registered </span><span class="si">%s</span><span class="s2"> dataset &#39;</span><span class="si">%s</span><span class="s2">&#39; version </span><span class="si">%s</span><span class="s2">&quot;</span><span class="p">,</span>
+        <span class="n">registered</span><span class="o">.</span><span class="n">name</span><span class="p">,</span>
+        <span class="n">registered</span><span class="o">.</span><span class="n">version</span><span class="p">,</span>
+    <span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="main">
+<a class="viewcode-back" href="../../reference/sign_language_training.html#sign_language_training.augmentation.main">[docs]</a>
+<span class="nd">@app</span><span class="o">.</span><span class="n">command</span><span class="p">()</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">main</span><span class="p">(</span>
+    <span class="n">input_dir</span><span class="p">:</span> <span class="n">Path</span> <span class="o">=</span> <span class="n">typer</span><span class="o">.</span><span class="n">Option</span><span class="p">(</span>
+        <span class="o">...</span><span class="p">,</span>
+        <span class="s2">&quot;--input-dir&quot;</span><span class="p">,</span>
+        <span class="n">help</span><span class="o">=</span><span class="s2">&quot;Raw ImageFolder dataset root.&quot;</span><span class="p">,</span>
+        <span class="n">exists</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+        <span class="n">file_okay</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+        <span class="n">dir_okay</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+        <span class="n">readable</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+        <span class="n">resolve_path</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+    <span class="p">),</span>
+    <span class="n">output_train_dir</span><span class="p">:</span> <span class="n">Path</span> <span class="o">=</span> <span class="n">typer</span><span class="o">.</span><span class="n">Option</span><span class="p">(</span>
+        <span class="o">...</span><span class="p">,</span>
+        <span class="s2">&quot;--output-train-dir&quot;</span><span class="p">,</span>
+        <span class="n">help</span><span class="o">=</span><span class="s2">&quot;Output directory for augmented train images.&quot;</span><span class="p">,</span>
+        <span class="n">file_okay</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+        <span class="n">dir_okay</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+        <span class="n">resolve_path</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+    <span class="p">),</span>
+    <span class="n">output_val_dir</span><span class="p">:</span> <span class="n">Path</span> <span class="o">=</span> <span class="n">typer</span><span class="o">.</span><span class="n">Option</span><span class="p">(</span>
+        <span class="o">...</span><span class="p">,</span>
+        <span class="s2">&quot;--output-val-dir&quot;</span><span class="p">,</span>
+        <span class="n">help</span><span class="o">=</span><span class="s2">&quot;Output directory for validation images.&quot;</span><span class="p">,</span>
+        <span class="n">file_okay</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+        <span class="n">dir_okay</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+        <span class="n">resolve_path</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+    <span class="p">),</span>
+    <span class="n">output_test_dir</span><span class="p">:</span> <span class="n">Path</span> <span class="o">=</span> <span class="n">typer</span><span class="o">.</span><span class="n">Option</span><span class="p">(</span>
+        <span class="o">...</span><span class="p">,</span>
+        <span class="s2">&quot;--output-test-dir&quot;</span><span class="p">,</span>
+        <span class="n">help</span><span class="o">=</span><span class="s2">&quot;Output directory for test images.&quot;</span><span class="p">,</span>
+        <span class="n">file_okay</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+        <span class="n">dir_okay</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+        <span class="n">resolve_path</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+    <span class="p">),</span>
+    <span class="n">copies</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="n">typer</span><span class="o">.</span><span class="n">Option</span><span class="p">(</span><span class="mi">4</span><span class="p">,</span> <span class="s2">&quot;--copies&quot;</span><span class="p">,</span> <span class="nb">min</span><span class="o">=</span><span class="mi">0</span><span class="p">),</span>
+    <span class="n">img_size</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="n">typer</span><span class="o">.</span><span class="n">Option</span><span class="p">(</span><span class="mi">224</span><span class="p">,</span> <span class="s2">&quot;--img-size&quot;</span><span class="p">,</span> <span class="nb">min</span><span class="o">=</span><span class="mi">1</span><span class="p">),</span>
+    <span class="n">seed</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="n">typer</span><span class="o">.</span><span class="n">Option</span><span class="p">(</span><span class="mi">42</span><span class="p">,</span> <span class="s2">&quot;--seed&quot;</span><span class="p">),</span>
+    <span class="n">train_ratio</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="n">typer</span><span class="o">.</span><span class="n">Option</span><span class="p">(</span><span class="mf">0.8</span><span class="p">,</span> <span class="s2">&quot;--train-ratio&quot;</span><span class="p">,</span> <span class="nb">min</span><span class="o">=</span><span class="mf">0.0</span><span class="p">,</span> <span class="nb">max</span><span class="o">=</span><span class="mf">1.0</span><span class="p">),</span>
+    <span class="n">val_ratio</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="n">typer</span><span class="o">.</span><span class="n">Option</span><span class="p">(</span><span class="mf">0.1</span><span class="p">,</span> <span class="s2">&quot;--val-ratio&quot;</span><span class="p">,</span> <span class="nb">min</span><span class="o">=</span><span class="mf">0.0</span><span class="p">,</span> <span class="nb">max</span><span class="o">=</span><span class="mf">1.0</span><span class="p">),</span>
+    <span class="n">augmented_asset_name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">typer</span><span class="o">.</span><span class="n">Option</span><span class="p">(</span>
+        <span class="s2">&quot;ngt-augmented-train&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;--augmented-asset-name&quot;</span><span class="p">,</span>
+        <span class="n">help</span><span class="o">=</span><span class="s2">&quot;Azure ML data asset name to register the augmented train split under.&quot;</span><span class="p">,</span>
+    <span class="p">),</span>
+    <span class="n">validation_asset_name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">typer</span><span class="o">.</span><span class="n">Option</span><span class="p">(</span>
+        <span class="s2">&quot;ngt-val&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;--validation-asset-name&quot;</span><span class="p">,</span>
+        <span class="n">help</span><span class="o">=</span><span class="s2">&quot;Azure ML data asset name to register the validation split under.&quot;</span><span class="p">,</span>
+    <span class="p">),</span>
+    <span class="n">test_asset_name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">typer</span><span class="o">.</span><span class="n">Option</span><span class="p">(</span>
+        <span class="s2">&quot;ngt-test&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;--test-asset-name&quot;</span><span class="p">,</span>
+        <span class="n">help</span><span class="o">=</span><span class="s2">&quot;Azure ML data asset name to register the test split under.&quot;</span><span class="p">,</span>
+    <span class="p">),</span>
+    <span class="n">ngt_raw_version</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">typer</span><span class="o">.</span><span class="n">Option</span><span class="p">(</span>
+        <span class="s2">&quot;1&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;--ngt-raw-version&quot;</span><span class="p">,</span>
+        <span class="n">help</span><span class="o">=</span><span class="s2">&quot;Version of the ngt-raw source asset used as registration tag.&quot;</span><span class="p">,</span>
+    <span class="p">),</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Split, augment, and register an ImageFolder dataset.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        input_dir: Raw ImageFolder dataset root.</span>
+<span class="sd">        output_train_dir: Destination for augmented training images.</span>
+<span class="sd">        output_val_dir: Destination for clean validation images.</span>
+<span class="sd">        output_test_dir: Destination for clean test images.</span>
+<span class="sd">        copies: Number of augmented copies per training image.</span>
+<span class="sd">        img_size: Square augmentation output size in pixels.</span>
+<span class="sd">        seed: Random seed used for splitting and augmentation.</span>
+<span class="sd">        train_ratio: Fraction of images assigned to training.</span>
+<span class="sd">        val_ratio: Fraction of images assigned to validation.</span>
+<span class="sd">        augmented_asset_name: Azure ML data asset name for augmented training data.</span>
+<span class="sd">        ngt_raw_version: Raw data asset version stored in registration tags.</span>
+
+<span class="sd">    Raises:</span>
+<span class="sd">        typer.BadParameter: If train and validation ratios leave no test split.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">logging</span><span class="o">.</span><span class="n">basicConfig</span><span class="p">(</span>
+        <span class="n">level</span><span class="o">=</span><span class="n">logging</span><span class="o">.</span><span class="n">INFO</span><span class="p">,</span>
+        <span class="nb">format</span><span class="o">=</span><span class="s2">&quot;</span><span class="si">%(asctime)s</span><span class="s2"> [</span><span class="si">%(levelname)s</span><span class="s2">] </span><span class="si">%(name)s</span><span class="s2">: </span><span class="si">%(message)s</span><span class="s2">&quot;</span><span class="p">,</span>
+    <span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">train_ratio</span> <span class="o">+</span> <span class="n">val_ratio</span> <span class="o">&gt;=</span> <span class="mf">1.0</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="n">typer</span><span class="o">.</span><span class="n">BadParameter</span><span class="p">(</span><span class="s2">&quot;train-ratio + val-ratio must be less than 1.&quot;</span><span class="p">)</span>
+
+    <span class="n">raw_train_dir</span> <span class="o">=</span> <span class="n">output_train_dir</span><span class="o">.</span><span class="n">parent</span> <span class="o">/</span> <span class="s2">&quot;_train_raw_tmp&quot;</span>
+
+    <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span>
+        <span class="s2">&quot;Step 1/3 — Stratified split (</span><span class="si">%.0f</span><span class="s2">/</span><span class="si">%.0f</span><span class="s2">/</span><span class="si">%.0f</span><span class="s2">)&quot;</span><span class="p">,</span>
+        <span class="n">train_ratio</span> <span class="o">*</span> <span class="mi">100</span><span class="p">,</span>
+        <span class="n">val_ratio</span> <span class="o">*</span> <span class="mi">100</span><span class="p">,</span>
+        <span class="p">(</span><span class="mi">1</span> <span class="o">-</span> <span class="n">train_ratio</span> <span class="o">-</span> <span class="n">val_ratio</span><span class="p">)</span> <span class="o">*</span> <span class="mi">100</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="n">stratified_split</span><span class="p">(</span>
+        <span class="n">input_dir</span><span class="o">=</span><span class="n">input_dir</span><span class="p">,</span>
+        <span class="n">train_dir</span><span class="o">=</span><span class="n">raw_train_dir</span><span class="p">,</span>
+        <span class="n">val_dir</span><span class="o">=</span><span class="n">output_val_dir</span><span class="p">,</span>
+        <span class="n">test_dir</span><span class="o">=</span><span class="n">output_test_dir</span><span class="p">,</span>
+        <span class="n">train_ratio</span><span class="o">=</span><span class="n">train_ratio</span><span class="p">,</span>
+        <span class="n">val_ratio</span><span class="o">=</span><span class="n">val_ratio</span><span class="p">,</span>
+        <span class="n">seed</span><span class="o">=</span><span class="n">seed</span><span class="p">,</span>
+    <span class="p">)</span>
+
+    <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Step 2/3 — Augmenting train split (</span><span class="si">%d</span><span class="s2"> copies per image)&quot;</span><span class="p">,</span> <span class="n">copies</span><span class="p">)</span>
+
+    <span class="n">augment_dir</span><span class="p">(</span>
+        <span class="n">source_dir</span><span class="o">=</span><span class="n">raw_train_dir</span><span class="p">,</span>
+        <span class="n">output_dir</span><span class="o">=</span><span class="n">output_train_dir</span><span class="p">,</span>
+        <span class="n">copies</span><span class="o">=</span><span class="n">copies</span><span class="p">,</span>
+        <span class="n">img_size</span><span class="o">=</span><span class="n">img_size</span><span class="p">,</span>
+        <span class="n">seed</span><span class="o">=</span><span class="n">seed</span><span class="p">,</span>
+    <span class="p">)</span>
+
+    <span class="n">shutil</span><span class="o">.</span><span class="n">rmtree</span><span class="p">(</span><span class="n">raw_train_dir</span><span class="p">,</span> <span class="n">ignore_errors</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+    <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Step 3/3 — Registering train, validation, and test assets&quot;</span><span class="p">)</span>
+
+    <span class="n">register_split_asset</span><span class="p">(</span>
+        <span class="n">split_dir</span><span class="o">=</span><span class="n">output_train_dir</span><span class="p">,</span>
+        <span class="n">asset_name</span><span class="o">=</span><span class="n">augmented_asset_name</span><span class="p">,</span>
+        <span class="n">ngt_raw_version</span><span class="o">=</span><span class="n">ngt_raw_version</span><span class="p">,</span>
+        <span class="n">split_name</span><span class="o">=</span><span class="s2">&quot;train&quot;</span><span class="p">,</span>
+    <span class="p">)</span>
+
+    <span class="n">register_split_asset</span><span class="p">(</span>
+        <span class="n">split_dir</span><span class="o">=</span><span class="n">output_val_dir</span><span class="p">,</span>
+        <span class="n">asset_name</span><span class="o">=</span><span class="n">validation_asset_name</span><span class="p">,</span>
+        <span class="n">ngt_raw_version</span><span class="o">=</span><span class="n">ngt_raw_version</span><span class="p">,</span>
+        <span class="n">split_name</span><span class="o">=</span><span class="s2">&quot;validation&quot;</span><span class="p">,</span>
+    <span class="p">)</span>
+
+    <span class="n">register_split_asset</span><span class="p">(</span>
+        <span class="n">split_dir</span><span class="o">=</span><span class="n">output_test_dir</span><span class="p">,</span>
+        <span class="n">asset_name</span><span class="o">=</span><span class="n">test_asset_name</span><span class="p">,</span>
+        <span class="n">ngt_raw_version</span><span class="o">=</span><span class="n">ngt_raw_version</span><span class="p">,</span>
+        <span class="n">split_name</span><span class="o">=</span><span class="s2">&quot;test&quot;</span><span class="p">,</span>
+    <span class="p">)</span></div>
+
+
+
+<span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s2">&quot;__main__&quot;</span><span class="p">:</span>
+    <span class="n">app</span><span class="p">()</span>
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2026, Kinga Marchlewska, Raya Kichukova, Ana-Maria Farazică, Maciej Czerniak, Szymon Chirowski.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

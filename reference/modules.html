@@ -1,0 +1,355 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>sign_language &mdash; Sign Language 0.1.0 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../_static/css/theme.css?v=9edc463e" />
+
+  
+      <script src="../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../_static/documentation_options.js?v=01f34227"></script>
+      <script src="../_static/doctools.js?v=9a2dae69"></script>
+      <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../index.html" class="icon icon-home">
+            Sign Language
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Getting Started</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../installation.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../usage.html">Usage</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">API Reference</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="sign_language.html">sign_language package</a></li>
+<li class="toctree-l1"><a class="reference internal" href="sign_language_training.html">sign_language_training package</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">Sign Language</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">sign_language</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../_sources/reference/modules.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="sign-language">
+<h1>sign_language<a class="headerlink" href="#sign-language" title="Link to this heading"></a></h1>
+<div class="toctree-wrapper compound">
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="sign_language.html">sign_language package</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="sign_language.html#module-sign_language.api.app">API</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="sign_language.html#sign_language.api.app.lifespan"><code class="docutils literal notranslate"><span class="pre">lifespan()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="sign_language.html#sign_language.api.app.create_app"><code class="docutils literal notranslate"><span class="pre">create_app()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="sign_language.html#sign_language.api.routes.health"><code class="docutils literal notranslate"><span class="pre">health()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="sign_language.html#sign_language.api.routes.info"><code class="docutils literal notranslate"><span class="pre">info()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="sign_language.html#sign_language.api.routes.predict"><code class="docutils literal notranslate"><span class="pre">predict()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="sign_language.html#sign_language.api.routes.reset"><code class="docutils literal notranslate"><span class="pre">reset()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="sign_language.html#sign_language.api.routes.collect_sample"><code class="docutils literal notranslate"><span class="pre">collect_sample()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="sign_language.html#sign_language.api.schemas.PredictRequest"><code class="docutils literal notranslate"><span class="pre">PredictRequest</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="sign_language.html#sign_language.api.schemas.PredictRequest.image"><code class="docutils literal notranslate"><span class="pre">PredictRequest.image</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="sign_language.html#sign_language.api.schemas.TopKItem"><code class="docutils literal notranslate"><span class="pre">TopKItem</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="sign_language.html#sign_language.api.schemas.TopKItem.letter"><code class="docutils literal notranslate"><span class="pre">TopKItem.letter</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="sign_language.html#sign_language.api.schemas.TopKItem.confidence"><code class="docutils literal notranslate"><span class="pre">TopKItem.confidence</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="sign_language.html#sign_language.api.schemas.PredictResponse"><code class="docutils literal notranslate"><span class="pre">PredictResponse</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="sign_language.html#sign_language.api.schemas.PredictResponse.hand_detected"><code class="docutils literal notranslate"><span class="pre">PredictResponse.hand_detected</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="sign_language.html#sign_language.api.schemas.PredictResponse.predicted_letter"><code class="docutils literal notranslate"><span class="pre">PredictResponse.predicted_letter</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="sign_language.html#sign_language.api.schemas.PredictResponse.confidence"><code class="docutils literal notranslate"><span class="pre">PredictResponse.confidence</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="sign_language.html#sign_language.api.schemas.PredictResponse.top_3"><code class="docutils literal notranslate"><span class="pre">PredictResponse.top_3</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="sign_language.html#sign_language.api.schemas.PredictResponse.stable_letter"><code class="docutils literal notranslate"><span class="pre">PredictResponse.stable_letter</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="sign_language.html#sign_language.api.schemas.PredictResponse.stable_confidence"><code class="docutils literal notranslate"><span class="pre">PredictResponse.stable_confidence</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="sign_language.html#sign_language.api.schemas.PredictResponse.current_word"><code class="docutils literal notranslate"><span class="pre">PredictResponse.current_word</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="sign_language.html#sign_language.api.schemas.PredictResponse.sentence"><code class="docutils literal notranslate"><span class="pre">PredictResponse.sentence</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="sign_language.html#sign_language.api.schemas.PredictResponse.committed_letter"><code class="docutils literal notranslate"><span class="pre">PredictResponse.committed_letter</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="sign_language.html#sign_language.api.schemas.ResetResponse"><code class="docutils literal notranslate"><span class="pre">ResetResponse</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="sign_language.html#sign_language.api.schemas.ResetResponse.ok"><code class="docutils literal notranslate"><span class="pre">ResetResponse.ok</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="sign_language.html#sign_language.api.schemas.InfoResponse"><code class="docutils literal notranslate"><span class="pre">InfoResponse</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="sign_language.html#sign_language.api.schemas.InfoResponse.app_name"><code class="docutils literal notranslate"><span class="pre">InfoResponse.app_name</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="sign_language.html#sign_language.api.schemas.InfoResponse.version"><code class="docutils literal notranslate"><span class="pre">InfoResponse.version</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="sign_language.html#sign_language.api.schemas.InfoResponse.device"><code class="docutils literal notranslate"><span class="pre">InfoResponse.device</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="sign_language.html#sign_language.api.schemas.InfoResponse.num_classes"><code class="docutils literal notranslate"><span class="pre">InfoResponse.num_classes</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="sign_language.html#sign_language.api.schemas.InfoResponse.class_names"><code class="docutils literal notranslate"><span class="pre">InfoResponse.class_names</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="sign_language.html#sign_language.api.schemas.InfoResponse.landmark_model_available"><code class="docutils literal notranslate"><span class="pre">InfoResponse.landmark_model_available</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="sign_language.html#sign_language.api.schemas.InfoResponse.hand_detector_available"><code class="docutils literal notranslate"><span class="pre">InfoResponse.hand_detector_available</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="sign_language.html#sign_language.api.schemas.level_band"><code class="docutils literal notranslate"><span class="pre">level_band()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="sign_language.html#sign_language.api.schemas.StatsResponse"><code class="docutils literal notranslate"><span class="pre">StatsResponse</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="sign_language.html#sign_language.api.schemas.StatsResponse.streak"><code class="docutils literal notranslate"><span class="pre">StatsResponse.streak</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="sign_language.html#sign_language.api.schemas.StatsResponse.letters_learned"><code class="docutils literal notranslate"><span class="pre">StatsResponse.letters_learned</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="sign_language.html#sign_language.api.schemas.StatsResponse.total_letters"><code class="docutils literal notranslate"><span class="pre">StatsResponse.total_letters</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="sign_language.html#sign_language.api.schemas.StatsResponse.points"><code class="docutils literal notranslate"><span class="pre">StatsResponse.points</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="sign_language.html#sign_language.api.schemas.StatsResponse.level"><code class="docutils literal notranslate"><span class="pre">StatsResponse.level</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="sign_language.html#sign_language.api.schemas.StatsResponse.level_name"><code class="docutils literal notranslate"><span class="pre">StatsResponse.level_name</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="sign_language.html#sign_language.api.schemas.StatsResponse.last_played"><code class="docutils literal notranslate"><span class="pre">StatsResponse.last_played</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="sign_language.html#sign_language.api.schemas.StatsResponse.practiced_today"><code class="docutils literal notranslate"><span class="pre">StatsResponse.practiced_today</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="sign_language.html#sign_language.api.schemas.StatsResponse.daily_goal"><code class="docutils literal notranslate"><span class="pre">StatsResponse.daily_goal</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="sign_language.html#sign_language.api.schemas.CollectRequest"><code class="docutils literal notranslate"><span class="pre">CollectRequest</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="sign_language.html#sign_language.api.schemas.CollectRequest.image"><code class="docutils literal notranslate"><span class="pre">CollectRequest.image</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="sign_language.html#sign_language.api.schemas.CollectRequest.letter"><code class="docutils literal notranslate"><span class="pre">CollectRequest.letter</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="sign_language.html#sign_language.api.schemas.CollectRequest.source"><code class="docutils literal notranslate"><span class="pre">CollectRequest.source</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="sign_language.html#sign_language.api.schemas.CollectResponse"><code class="docutils literal notranslate"><span class="pre">CollectResponse</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="sign_language.html#sign_language.api.schemas.CollectResponse.id"><code class="docutils literal notranslate"><span class="pre">CollectResponse.id</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="sign_language.html#sign_language.api.schemas.CollectResponse.letter"><code class="docutils literal notranslate"><span class="pre">CollectResponse.letter</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="sign_language.html#sign_language.api.schemas.CollectResponse.stored"><code class="docutils literal notranslate"><span class="pre">CollectResponse.stored</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="sign_language.html#sign_language.api.schemas.ProgressRequest"><code class="docutils literal notranslate"><span class="pre">ProgressRequest</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="sign_language.html#sign_language.api.schemas.ProgressRequest.letter"><code class="docutils literal notranslate"><span class="pre">ProgressRequest.letter</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="sign_language.html#sign_language.api.schemas.ProgressRequest.correct"><code class="docutils literal notranslate"><span class="pre">ProgressRequest.correct</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="sign_language.html#sign_language.api.schemas.LetterProgressItem"><code class="docutils literal notranslate"><span class="pre">LetterProgressItem</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="sign_language.html#sign_language.api.schemas.LetterProgressItem.letter"><code class="docutils literal notranslate"><span class="pre">LetterProgressItem.letter</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="sign_language.html#sign_language.api.schemas.LetterProgressItem.correct_count"><code class="docutils literal notranslate"><span class="pre">LetterProgressItem.correct_count</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="sign_language.html#sign_language.api.schemas.LetterProgressItem.learned"><code class="docutils literal notranslate"><span class="pre">LetterProgressItem.learned</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="sign_language.html#sign_language.api.schemas.LetterProgressResponse"><code class="docutils literal notranslate"><span class="pre">LetterProgressResponse</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="sign_language.html#sign_language.api.schemas.LetterProgressResponse.threshold"><code class="docutils literal notranslate"><span class="pre">LetterProgressResponse.threshold</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="sign_language.html#sign_language.api.schemas.LetterProgressResponse.total_letters"><code class="docutils literal notranslate"><span class="pre">LetterProgressResponse.total_letters</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="sign_language.html#sign_language.api.schemas.LetterProgressResponse.letters"><code class="docutils literal notranslate"><span class="pre">LetterProgressResponse.letters</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="sign_language.html#sign_language.api.state.AppState"><code class="docutils literal notranslate"><span class="pre">AppState</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="sign_language.html#sign_language.api.state.AppState.models"><code class="docutils literal notranslate"><span class="pre">AppState.models</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="sign_language.html#sign_language.api.state.AppState.smoother"><code class="docutils literal notranslate"><span class="pre">AppState.smoother</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="sign_language.html#sign_language.api.state.AppState.sequence"><code class="docutils literal notranslate"><span class="pre">AppState.sequence</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="sign_language.html#sign_language.api.state.AppState.lock"><code class="docutils literal notranslate"><span class="pre">AppState.lock</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="sign_language.html#sign_language.api.state.AppState.reset"><code class="docutils literal notranslate"><span class="pre">AppState.reset()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="sign_language.html#sign_language.api.ws.HandTracker"><code class="docutils literal notranslate"><span class="pre">HandTracker</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="sign_language.html#sign_language.api.ws.HandTracker.__init__"><code class="docutils literal notranslate"><span class="pre">HandTracker.__init__()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="sign_language.html#sign_language.api.ws.HandTracker.match"><code class="docutils literal notranslate"><span class="pre">HandTracker.match()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="sign_language.html#sign_language.api.ws.HandTracker.clear"><code class="docutils literal notranslate"><span class="pre">HandTracker.clear()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="sign_language.html#module-sign_language.auth.manager">Auth</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="sign_language.html#sign_language.auth.manager.get_user_db"><code class="docutils literal notranslate"><span class="pre">get_user_db()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="sign_language.html#sign_language.auth.manager.UserManager"><code class="docutils literal notranslate"><span class="pre">UserManager</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="sign_language.html#sign_language.auth.manager.UserManager.on_after_register"><code class="docutils literal notranslate"><span class="pre">UserManager.on_after_register()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="sign_language.html#sign_language.auth.manager.UserManager.on_after_login"><code class="docutils literal notranslate"><span class="pre">UserManager.on_after_login()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="sign_language.html#sign_language.auth.manager.get_user_manager"><code class="docutils literal notranslate"><span class="pre">get_user_manager()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="sign_language.html#sign_language.auth.models.User"><code class="docutils literal notranslate"><span class="pre">User</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="sign_language.html#sign_language.auth.models.UserStats"><code class="docutils literal notranslate"><span class="pre">UserStats</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="sign_language.html#sign_language.auth.models.CollectedSample"><code class="docutils literal notranslate"><span class="pre">CollectedSample</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="sign_language.html#sign_language.auth.models.MonitoringEvent"><code class="docutils literal notranslate"><span class="pre">MonitoringEvent</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="sign_language.html#sign_language.auth.models.LetterProgress"><code class="docutils literal notranslate"><span class="pre">LetterProgress</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="sign_language.html#sign_language.auth.models.DailyActivity"><code class="docutils literal notranslate"><span class="pre">DailyActivity</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="sign_language.html#sign_language.auth.schemas.UserRead"><code class="docutils literal notranslate"><span class="pre">UserRead</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="sign_language.html#sign_language.auth.schemas.UserCreate"><code class="docutils literal notranslate"><span class="pre">UserCreate</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="sign_language.html#sign_language.auth.schemas.UserUpdate"><code class="docutils literal notranslate"><span class="pre">UserUpdate</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="sign_language.html#sign_language.auth.users.get_jwt_strategy"><code class="docutils literal notranslate"><span class="pre">get_jwt_strategy()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="sign_language.html#sign_language.auth.ws_auth.get_user_from_ws_token"><code class="docutils literal notranslate"><span class="pre">get_user_from_ws_token()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="sign_language.html#module-sign_language.core.image_transforms">Core</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="sign_language.html#sign_language.core.image_transforms.create_imagenet_transform"><code class="docutils literal notranslate"><span class="pre">create_imagenet_transform()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="sign_language.html#sign_language.core.inference.run_inference"><code class="docutils literal notranslate"><span class="pre">run_inference()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="sign_language.html#sign_language.core.logging.get_logger"><code class="docutils literal notranslate"><span class="pre">get_logger()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="sign_language.html#sign_language.core.logging.get_log_file_handler"><code class="docutils literal notranslate"><span class="pre">get_log_file_handler()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="sign_language.html#sign_language.core.preprocessing.decode_base64_image"><code class="docutils literal notranslate"><span class="pre">decode_base64_image()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="sign_language.html#sign_language.core.preprocessing.CroppedHandDetection"><code class="docutils literal notranslate"><span class="pre">CroppedHandDetection</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="sign_language.html#sign_language.core.preprocessing.CroppedHandDetection.label"><code class="docutils literal notranslate"><span class="pre">CroppedHandDetection.label</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="sign_language.html#sign_language.core.preprocessing.CroppedHandDetection.crop"><code class="docutils literal notranslate"><span class="pre">CroppedHandDetection.crop</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="sign_language.html#sign_language.core.preprocessing.CroppedHandDetection.landmarks"><code class="docutils literal notranslate"><span class="pre">CroppedHandDetection.landmarks</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="sign_language.html#sign_language.core.preprocessing.CroppedHandDetection.wrist_x"><code class="docutils literal notranslate"><span class="pre">CroppedHandDetection.wrist_x</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="sign_language.html#sign_language.core.preprocessing.CroppedHandDetection.wrist_y"><code class="docutils literal notranslate"><span class="pre">CroppedHandDetection.wrist_y</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="sign_language.html#sign_language.core.preprocessing.HandDetection"><code class="docutils literal notranslate"><span class="pre">HandDetection</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="sign_language.html#sign_language.core.preprocessing.HandDetection.tensor"><code class="docutils literal notranslate"><span class="pre">HandDetection.tensor</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="sign_language.html#sign_language.core.preprocessing.detect_and_crop_hand"><code class="docutils literal notranslate"><span class="pre">detect_and_crop_hand()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="sign_language.html#sign_language.core.preprocessing.detect_and_crop_all_hands"><code class="docutils literal notranslate"><span class="pre">detect_and_crop_all_hands()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="sign_language.html#sign_language.core.preprocessing.preprocess_image"><code class="docutils literal notranslate"><span class="pre">preprocess_image()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="sign_language.html#sign_language.core.preprocessing.preprocess_all_hands"><code class="docutils literal notranslate"><span class="pre">preprocess_all_hands()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="sign_language.html#sign_language.core.settings.Settings"><code class="docutils literal notranslate"><span class="pre">Settings</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="sign_language.html#sign_language.core.settings.Settings.normalize_debug_input"><code class="docutils literal notranslate"><span class="pre">Settings.normalize_debug_input()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="sign_language.html#sign_language.core.settings.Settings.set_and_verify_debug_mode"><code class="docutils literal notranslate"><span class="pre">Settings.set_and_verify_debug_mode()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="sign_language.html#sign_language.core.settings.Settings.validate_log_level"><code class="docutils literal notranslate"><span class="pre">Settings.validate_log_level()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="sign_language.html#sign_language.core.settings.Settings.validate_version"><code class="docutils literal notranslate"><span class="pre">Settings.validate_version()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="sign_language.html#sign_language.core.settings.Settings.validate_authors"><code class="docutils literal notranslate"><span class="pre">Settings.validate_authors()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="sign_language.html#sign_language.core.settings.Settings.validate_emails"><code class="docutils literal notranslate"><span class="pre">Settings.validate_emails()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="sign_language.html#sign_language.core.settings.Settings.validate_log_path"><code class="docutils literal notranslate"><span class="pre">Settings.validate_log_path()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="sign_language.html#sign_language.core.settings.Settings.parse_cors_origins"><code class="docutils literal notranslate"><span class="pre">Settings.parse_cors_origins()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="sign_language.html#sign_language.core.settings.Settings.validate_positive_training_ints"><code class="docutils literal notranslate"><span class="pre">Settings.validate_positive_training_ints()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="sign_language.html#sign_language.core.settings.Settings.validate_positive_training_floats"><code class="docutils literal notranslate"><span class="pre">Settings.validate_positive_training_floats()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="sign_language.html#sign_language.core.settings.Settings.validate_training_eta_min"><code class="docutils literal notranslate"><span class="pre">Settings.validate_training_eta_min()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="sign_language.html#sign_language.core.settings.Settings.validate_training_ratios"><code class="docutils literal notranslate"><span class="pre">Settings.validate_training_ratios()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="sign_language.html#sign_language.core.settings.Settings.validate_training_n_splits"><code class="docutils literal notranslate"><span class="pre">Settings.validate_training_n_splits()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="sign_language.html#sign_language.core.settings.Settings.validate_training_num_workers"><code class="docutils literal notranslate"><span class="pre">Settings.validate_training_num_workers()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="sign_language.html#sign_language.core.settings.Settings.validate_img_size"><code class="docutils literal notranslate"><span class="pre">Settings.validate_img_size()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="sign_language.html#sign_language.core.settings.Settings.validate_server_port"><code class="docutils literal notranslate"><span class="pre">Settings.validate_server_port()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="sign_language.html#sign_language.core.settings.Settings.validate_server_host"><code class="docutils literal notranslate"><span class="pre">Settings.validate_server_host()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="sign_language.html#sign_language.core.settings.Settings.validate_unit_interval"><code class="docutils literal notranslate"><span class="pre">Settings.validate_unit_interval()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="sign_language.html#sign_language.core.settings.Settings.validate_positive_durations"><code class="docutils literal notranslate"><span class="pre">Settings.validate_positive_durations()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="sign_language.html#sign_language.core.settings.Settings.validate_positive_smoother_ints"><code class="docutils literal notranslate"><span class="pre">Settings.validate_positive_smoother_ints()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="sign_language.html#sign_language.core.settings.Settings.validate_database_url"><code class="docutils literal notranslate"><span class="pre">Settings.validate_database_url()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="sign_language.html#sign_language.core.settings.Settings.validate_secret_key"><code class="docutils literal notranslate"><span class="pre">Settings.validate_secret_key()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="sign_language.html#sign_language.core.settings.Settings.validate_jwt_lifetime"><code class="docutils literal notranslate"><span class="pre">Settings.validate_jwt_lifetime()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="sign_language.html#sign_language.core.settings.Settings.get_debug_state"><code class="docutils literal notranslate"><span class="pre">Settings.get_debug_state()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="sign_language.html#sign_language.core.settings.Settings.get_log_level"><code class="docutils literal notranslate"><span class="pre">Settings.get_log_level()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="sign_language.html#sign_language.core.settings.Settings.get_app_info"><code class="docutils literal notranslate"><span class="pre">Settings.get_app_info()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="sign_language.html#sign_language.core.settings.Settings.get_authors_with_emails"><code class="docutils literal notranslate"><span class="pre">Settings.get_authors_with_emails()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="sign_language.html#sign_language.core.settings.Settings.get_logging_config"><code class="docutils literal notranslate"><span class="pre">Settings.get_logging_config()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="sign_language.html#sign_language.core.settings.Settings.is_development"><code class="docutils literal notranslate"><span class="pre">Settings.is_development()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="sign_language.html#sign_language.core.settings.Settings.is_production"><code class="docutils literal notranslate"><span class="pre">Settings.is_production()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="sign_language.html#sign_language.core.settings.Settings.get_version_components"><code class="docutils literal notranslate"><span class="pre">Settings.get_version_components()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="sign_language.html#sign_language.core.settings.Settings.as_dict"><code class="docutils literal notranslate"><span class="pre">Settings.as_dict()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="sign_language.html#sign_language.core.settings.Settings.get_environment_info"><code class="docutils literal notranslate"><span class="pre">Settings.get_environment_info()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="sign_language.html#sign_language.core.settings.Settings.get_device"><code class="docutils literal notranslate"><span class="pre">Settings.get_device()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="sign_language.html#sign_language.core.settings.Settings.get_training_data_dir"><code class="docutils literal notranslate"><span class="pre">Settings.get_training_data_dir()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="sign_language.html#sign_language.core.settings.Settings.get_training_config"><code class="docutils literal notranslate"><span class="pre">Settings.get_training_config()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="sign_language.html#sign_language.core.settings.Settings.get_mlflow_config"><code class="docutils literal notranslate"><span class="pre">Settings.get_mlflow_config()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="sign_language.html#sign_language.core.settings.Settings.get_model_config"><code class="docutils literal notranslate"><span class="pre">Settings.get_model_config()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="sign_language.html#sign_language.core.settings.Settings.get_server_config"><code class="docutils literal notranslate"><span class="pre">Settings.get_server_config()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="sign_language.html#sign_language.core.settings.Settings.get_inference_config"><code class="docutils literal notranslate"><span class="pre">Settings.get_inference_config()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="sign_language.html#sign_language.core.settings.Settings.get_sequence_config"><code class="docutils literal notranslate"><span class="pre">Settings.get_sequence_config()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="sign_language.html#sign_language.core.settings.Settings.get_smoother_config"><code class="docutils literal notranslate"><span class="pre">Settings.get_smoother_config()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="sign_language.html#sign_language.core.settings.get_settings"><code class="docutils literal notranslate"><span class="pre">get_settings()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="sign_language.html#module-sign_language.models.architectures">Models</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="sign_language.html#sign_language.models.architectures.build_efficientnet"><code class="docutils literal notranslate"><span class="pre">build_efficientnet()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="sign_language.html#sign_language.models.architectures.build_landmark_mlp"><code class="docutils literal notranslate"><span class="pre">build_landmark_mlp()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="sign_language.html#sign_language.models.loader.download_latest_model_azure"><code class="docutils literal notranslate"><span class="pre">download_latest_model_azure()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="sign_language.html#sign_language.models.loader.download_latest_model_mlflow"><code class="docutils literal notranslate"><span class="pre">download_latest_model_mlflow()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="sign_language.html#sign_language.models.loader.resolve_efficientnet_path"><code class="docutils literal notranslate"><span class="pre">resolve_efficientnet_path()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="sign_language.html#sign_language.models.loader.resolve_landmark_path"><code class="docutils literal notranslate"><span class="pre">resolve_landmark_path()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="sign_language.html#sign_language.models.loader.LoadedModels"><code class="docutils literal notranslate"><span class="pre">LoadedModels</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="sign_language.html#sign_language.models.loader.LoadedModels.device"><code class="docutils literal notranslate"><span class="pre">LoadedModels.device</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="sign_language.html#sign_language.models.loader.LoadedModels.model"><code class="docutils literal notranslate"><span class="pre">LoadedModels.model</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="sign_language.html#sign_language.models.loader.LoadedModels.class_names"><code class="docutils literal notranslate"><span class="pre">LoadedModels.class_names</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="sign_language.html#sign_language.models.loader.LoadedModels.landmark_model"><code class="docutils literal notranslate"><span class="pre">LoadedModels.landmark_model</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="sign_language.html#sign_language.models.loader.LoadedModels.lm_class_names"><code class="docutils literal notranslate"><span class="pre">LoadedModels.lm_class_names</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="sign_language.html#sign_language.models.loader.LoadedModels.hands_detector"><code class="docutils literal notranslate"><span class="pre">LoadedModels.hands_detector</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="sign_language.html#sign_language.models.loader.load_efficientnet"><code class="docutils literal notranslate"><span class="pre">load_efficientnet()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="sign_language.html#sign_language.models.loader.load_landmark_mlp"><code class="docutils literal notranslate"><span class="pre">load_landmark_mlp()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="sign_language.html#sign_language.models.loader.init_hand_detector"><code class="docutils literal notranslate"><span class="pre">init_hand_detector()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="sign_language.html#sign_language.models.loader.load_all"><code class="docutils literal notranslate"><span class="pre">load_all()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="sign_language.html#module-sign_language.features.landmarks">Features</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="sign_language.html#sign_language.features.landmarks.normalize_landmarks"><code class="docutils literal notranslate"><span class="pre">normalize_landmarks()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="sign_language.html#sign_language.features.landmarks.angle_between"><code class="docutils literal notranslate"><span class="pre">angle_between()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="sign_language.html#sign_language.features.landmarks.extract_landmark_features"><code class="docutils literal notranslate"><span class="pre">extract_landmark_features()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="sign_language.html#module-sign_language.utils.sequence">Utils</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="sign_language.html#grace-period">Grace period</a></li>
+<li class="toctree-l3"><a class="reference internal" href="sign_language.html#sign_language.utils.sequence.SequenceBuilder"><code class="docutils literal notranslate"><span class="pre">SequenceBuilder</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="sign_language.html#sign_language.utils.sequence.SequenceBuilder.__init__"><code class="docutils literal notranslate"><span class="pre">SequenceBuilder.__init__()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="sign_language.html#sign_language.utils.sequence.SequenceBuilder.reset"><code class="docutils literal notranslate"><span class="pre">SequenceBuilder.reset()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="sign_language.html#sign_language.utils.sequence.SequenceBuilder.update"><code class="docutils literal notranslate"><span class="pre">SequenceBuilder.update()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="sign_language.html#sign_language.utils.sequence.SequenceBuilder.clear"><code class="docutils literal notranslate"><span class="pre">SequenceBuilder.clear()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="sign_language.html#hysteresis">Hysteresis</a></li>
+<li class="toctree-l3"><a class="reference internal" href="sign_language.html#sign_language.utils.smoothing.PredictionSmoother"><code class="docutils literal notranslate"><span class="pre">PredictionSmoother</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="sign_language.html#sign_language.utils.smoothing.PredictionSmoother.__init__"><code class="docutils literal notranslate"><span class="pre">PredictionSmoother.__init__()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="sign_language.html#sign_language.utils.smoothing.PredictionSmoother.update"><code class="docutils literal notranslate"><span class="pre">PredictionSmoother.update()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="sign_language.html#sign_language.utils.smoothing.PredictionSmoother.clear"><code class="docutils literal notranslate"><span class="pre">PredictionSmoother.clear()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</div>
+</section>
+
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2026, Kinga Marchlewska, Raya Kichukova, Ana-Maria Farazică, Maciej Czerniak, Szymon Chirowski.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

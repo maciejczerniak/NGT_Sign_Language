@@ -1,0 +1,360 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>sign_language.auth.models &mdash; Sign Language 0.1.0 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/css/theme.css?v=9edc463e" />
+
+  
+      <script src="../../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../../_static/documentation_options.js?v=01f34227"></script>
+      <script src="../../../_static/doctools.js?v=9a2dae69"></script>
+      <script src="../../../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../index.html" class="icon icon-home">
+            Sign Language
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Getting Started</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../installation.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../usage.html">Usage</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">API Reference</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../reference/sign_language.html">sign_language package</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../reference/sign_language_training.html">sign_language_training package</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../index.html">Sign Language</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">sign_language.auth.models</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for sign_language.auth.models</h1><div class="highlight"><pre>
+<span></span><span class="sd">&quot;&quot;&quot;SQLAlchemy models — User, per-user stats, collected samples, monitoring.&quot;&quot;&quot;</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">uuid</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">datetime</span><span class="w"> </span><span class="kn">import</span> <span class="n">date</span><span class="p">,</span> <span class="n">datetime</span><span class="p">,</span> <span class="n">timezone</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">sqlalchemy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">sa</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">sqlalchemy</span><span class="w"> </span><span class="kn">import</span> <span class="n">JSON</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">fastapi_users.db</span><span class="w"> </span><span class="kn">import</span> <span class="n">SQLAlchemyBaseUserTableUUID</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">fastapi_users_db_sqlalchemy.generics</span><span class="w"> </span><span class="kn">import</span> <span class="n">GUID</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">sqlalchemy.orm</span><span class="w"> </span><span class="kn">import</span> <span class="n">Mapped</span><span class="p">,</span> <span class="n">mapped_column</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">sign_language.db.engine</span><span class="w"> </span><span class="kn">import</span> <span class="n">Base</span>
+
+
+<div class="viewcode-block" id="User">
+<a class="viewcode-back" href="../../../reference/sign_language.auth.html#sign_language.auth.models.User">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">User</span><span class="p">(</span><span class="n">SQLAlchemyBaseUserTableUUID</span><span class="p">,</span> <span class="n">Base</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;User table.</span>
+
+<span class="sd">    Inherits from SQLAlchemyBaseUserTableUUID, which provides:</span>
+<span class="sd">        id              : UUID primary key</span>
+<span class="sd">        email           : str, unique</span>
+<span class="sd">        hashed_password : str</span>
+<span class="sd">        is_active       : bool (default True)</span>
+<span class="sd">        is_superuser    : bool (default False)  ← used as &quot;admin&quot; flag</span>
+<span class="sd">        is_verified     : bool (default False)</span>
+
+<span class="sd">    Three privilege tiers:</span>
+<span class="sd">        anonymous (no user)         — public endpoints + /predict, /ws/predict</span>
+<span class="sd">        regular  (is_superuser=F)   — anonymous + /stats, /progress (future)</span>
+<span class="sd">        admin    (is_superuser=T)   — everything, incl. /api/admin/*</span>
+<span class="sd">    &quot;&quot;&quot;</span></div>
+
+
+
+<div class="viewcode-block" id="UserStats">
+<a class="viewcode-back" href="../../../reference/sign_language.auth.html#sign_language.auth.models.UserStats">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">UserStats</span><span class="p">(</span><span class="n">Base</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Per-user progress stats shown on the logged-in home page.</span>
+
+<span class="sd">    One row per user, created when they register (see</span>
+<span class="sd">    ``UserManager.on_after_register``). Holds the values the home dashboard</span>
+<span class="sd">    displays. ``level`` is *not* stored — it is computed from ``points`` on</span>
+<span class="sd">    read, so it can never drift out of sync with the points total.</span>
+
+<span class="sd">    Columns</span>
+<span class="sd">    -------</span>
+<span class="sd">    user_id          : FK to ``user.id`` (UUID) — primary key, one row per user.</span>
+<span class="sd">    streak           : Consecutive-day practice streak.</span>
+<span class="sd">    points           : Points earned through practice.</span>
+<span class="sd">    last_played      : Name of the last mode/activity, or NULL if never played.</span>
+<span class="sd">    last_active_date : Date the user last practiced — used to compute the streak.</span>
+<span class="sd">    updated_at       : UTC timestamp of the last update to this row.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">__tablename__</span> <span class="o">=</span> <span class="s2">&quot;user_stats&quot;</span>
+
+    <span class="n">user_id</span><span class="p">:</span> <span class="n">Mapped</span><span class="p">[</span><span class="n">uuid</span><span class="o">.</span><span class="n">UUID</span><span class="p">]</span> <span class="o">=</span> <span class="n">mapped_column</span><span class="p">(</span>
+        <span class="n">GUID</span><span class="p">(),</span>
+        <span class="n">sa</span><span class="o">.</span><span class="n">ForeignKey</span><span class="p">(</span><span class="s2">&quot;user.id&quot;</span><span class="p">,</span> <span class="n">ondelete</span><span class="o">=</span><span class="s2">&quot;CASCADE&quot;</span><span class="p">),</span>
+        <span class="n">primary_key</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="n">streak</span><span class="p">:</span> <span class="n">Mapped</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="n">mapped_column</span><span class="p">(</span><span class="n">sa</span><span class="o">.</span><span class="n">Integer</span><span class="p">,</span> <span class="n">nullable</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+    <span class="n">points</span><span class="p">:</span> <span class="n">Mapped</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="n">mapped_column</span><span class="p">(</span><span class="n">sa</span><span class="o">.</span><span class="n">Integer</span><span class="p">,</span> <span class="n">nullable</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+    <span class="n">last_played</span><span class="p">:</span> <span class="n">Mapped</span><span class="p">[</span><span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span><span class="p">]</span> <span class="o">=</span> <span class="n">mapped_column</span><span class="p">(</span><span class="n">sa</span><span class="o">.</span><span class="n">String</span><span class="p">(</span><span class="mi">50</span><span class="p">),</span> <span class="n">nullable</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="n">last_active_date</span><span class="p">:</span> <span class="n">Mapped</span><span class="p">[</span><span class="n">date</span> <span class="o">|</span> <span class="kc">None</span><span class="p">]</span> <span class="o">=</span> <span class="n">mapped_column</span><span class="p">(</span><span class="n">sa</span><span class="o">.</span><span class="n">Date</span><span class="p">,</span> <span class="n">nullable</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="n">updated_at</span><span class="p">:</span> <span class="n">Mapped</span><span class="p">[</span><span class="n">datetime</span><span class="p">]</span> <span class="o">=</span> <span class="n">mapped_column</span><span class="p">(</span>
+        <span class="n">sa</span><span class="o">.</span><span class="n">DateTime</span><span class="p">(</span><span class="n">timezone</span><span class="o">=</span><span class="kc">True</span><span class="p">),</span>
+        <span class="n">nullable</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+        <span class="n">default</span><span class="o">=</span><span class="k">lambda</span><span class="p">:</span> <span class="n">datetime</span><span class="o">.</span><span class="n">now</span><span class="p">(</span><span class="n">timezone</span><span class="o">.</span><span class="n">utc</span><span class="p">),</span>
+        <span class="n">onupdate</span><span class="o">=</span><span class="k">lambda</span><span class="p">:</span> <span class="n">datetime</span><span class="o">.</span><span class="n">now</span><span class="p">(</span><span class="n">timezone</span><span class="o">.</span><span class="n">utc</span><span class="p">),</span>
+    <span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="CollectedSample">
+<a class="viewcode-back" href="../../../reference/sign_language.auth.html#sign_language.auth.models.CollectedSample">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">CollectedSample</span><span class="p">(</span><span class="n">Base</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;One labelled fingerspelling sample contributed via Collect mode.</span>
+
+<span class="sd">    The image bytes are written to disk under ``settings.collect_storage_dir``;</span>
+<span class="sd">    this row stores the file path plus metadata, not the bytes themselves.</span>
+<span class="sd">    This mirrors how object storage works, so a future move to Azure Blob only</span>
+<span class="sd">    changes ``image_path`` from a local filesystem path to a blob URL — the</span>
+<span class="sd">    table and the rest of the flow stay the same.</span>
+
+<span class="sd">    Authentication is optional for contributing, so ``user_id`` is nullable:</span>
+<span class="sd">    logged-in users are attributed, anonymous/guest contributions have NULL.</span>
+
+<span class="sd">    Columns</span>
+<span class="sd">    -------</span>
+<span class="sd">    id           : UUID primary key — globally unique sample identifier.</span>
+<span class="sd">    user_id      : FK to ``user.id`` (UUID), or NULL for anonymous/guest</span>
+<span class="sd">                   contributions. ON DELETE SET NULL so deleting a user keeps</span>
+<span class="sd">                   their contributed samples (just un-attributes them).</span>
+<span class="sd">    letter       : The labelled letter the sample represents, e.g. ``&quot;A&quot;``.</span>
+<span class="sd">    image_path   : Path to the stored image file (local path now, blob URL later).</span>
+<span class="sd">    source       : How the sample was captured — ``&quot;camera&quot;``, ``&quot;upload&quot;``,</span>
+<span class="sd">                   or ``&quot;auto&quot;``.</span>
+<span class="sd">    language     : Sign language the sample belongs to. Defaults to ``&quot;NGT&quot;``.</span>
+<span class="sd">    created_at   : UTC timestamp when the sample was contributed.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">__tablename__</span> <span class="o">=</span> <span class="s2">&quot;collected_samples&quot;</span>
+
+    <span class="nb">id</span><span class="p">:</span> <span class="n">Mapped</span><span class="p">[</span><span class="n">uuid</span><span class="o">.</span><span class="n">UUID</span><span class="p">]</span> <span class="o">=</span> <span class="n">mapped_column</span><span class="p">(</span>
+        <span class="n">GUID</span><span class="p">(),</span>
+        <span class="n">primary_key</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+        <span class="n">default</span><span class="o">=</span><span class="n">uuid</span><span class="o">.</span><span class="n">uuid4</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="n">user_id</span><span class="p">:</span> <span class="n">Mapped</span><span class="p">[</span><span class="n">uuid</span><span class="o">.</span><span class="n">UUID</span> <span class="o">|</span> <span class="kc">None</span><span class="p">]</span> <span class="o">=</span> <span class="n">mapped_column</span><span class="p">(</span>
+        <span class="n">GUID</span><span class="p">(),</span>
+        <span class="n">sa</span><span class="o">.</span><span class="n">ForeignKey</span><span class="p">(</span><span class="s2">&quot;user.id&quot;</span><span class="p">,</span> <span class="n">ondelete</span><span class="o">=</span><span class="s2">&quot;SET NULL&quot;</span><span class="p">),</span>
+        <span class="n">nullable</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+        <span class="n">index</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="n">letter</span><span class="p">:</span> <span class="n">Mapped</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="n">mapped_column</span><span class="p">(</span><span class="n">sa</span><span class="o">.</span><span class="n">String</span><span class="p">(</span><span class="mi">10</span><span class="p">),</span> <span class="n">nullable</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">index</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="n">image_path</span><span class="p">:</span> <span class="n">Mapped</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="n">mapped_column</span><span class="p">(</span><span class="n">sa</span><span class="o">.</span><span class="n">String</span><span class="p">(</span><span class="mi">500</span><span class="p">),</span> <span class="n">nullable</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+    <span class="n">source</span><span class="p">:</span> <span class="n">Mapped</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="n">mapped_column</span><span class="p">(</span><span class="n">sa</span><span class="o">.</span><span class="n">String</span><span class="p">(</span><span class="mi">20</span><span class="p">),</span> <span class="n">nullable</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+    <span class="n">language</span><span class="p">:</span> <span class="n">Mapped</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="n">mapped_column</span><span class="p">(</span><span class="n">sa</span><span class="o">.</span><span class="n">String</span><span class="p">(</span><span class="mi">10</span><span class="p">),</span> <span class="n">nullable</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="s2">&quot;NGT&quot;</span><span class="p">)</span>
+    <span class="n">created_at</span><span class="p">:</span> <span class="n">Mapped</span><span class="p">[</span><span class="n">datetime</span><span class="p">]</span> <span class="o">=</span> <span class="n">mapped_column</span><span class="p">(</span>
+        <span class="n">sa</span><span class="o">.</span><span class="n">DateTime</span><span class="p">(</span><span class="n">timezone</span><span class="o">=</span><span class="kc">True</span><span class="p">),</span>
+        <span class="n">nullable</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+        <span class="n">default</span><span class="o">=</span><span class="k">lambda</span><span class="p">:</span> <span class="n">datetime</span><span class="o">.</span><span class="n">now</span><span class="p">(</span><span class="n">timezone</span><span class="o">.</span><span class="n">utc</span><span class="p">),</span>
+        <span class="n">index</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+    <span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="MonitoringEvent">
+<a class="viewcode-back" href="../../../reference/sign_language.auth.html#sign_language.auth.models.MonitoringEvent">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">MonitoringEvent</span><span class="p">(</span><span class="n">Base</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Persistent store for one operational event (request or prediction).</span>
+
+<span class="sd">    One row is written per HTTP request by ``MonitoringMiddleware``.</span>
+<span class="sd">    Prediction-specific columns (``predicted_letter``, ``confidence``,</span>
+<span class="sd">    ``endpoint_type``) are populated by ``track_prediction()`` and are</span>
+<span class="sd">    ``NULL`` for non-inference requests.</span>
+
+<span class="sd">    Columns</span>
+<span class="sd">    -------</span>
+<span class="sd">    id              : UUID primary key — globally unique event identifier.</span>
+<span class="sd">    timestamp       : UTC timestamp of the event — used for time-range queries.</span>
+<span class="sd">    path            : Request path, e.g. ``/api/predict``.</span>
+<span class="sd">    method          : HTTP method, e.g. ``GET``, ``POST``.</span>
+<span class="sd">    status_code     : HTTP response status code.</span>
+<span class="sd">    latency_ms      : Wall-clock request duration in milliseconds.</span>
+<span class="sd">    predicted_letter: Top-1 predicted letter, or NULL if no inference occurred.</span>
+<span class="sd">    confidence      : Model confidence score (0–1), or NULL.</span>
+<span class="sd">    endpoint_type   : ``&quot;http&quot;`` or ``&quot;ws&quot;`` — which interface produced the</span>
+<span class="sd">                      prediction. NULL for non-inference requests.</span>
+<span class="sd">    entropy         : Shannon entropy over the normalised top-3 probabilities,</span>
+<span class="sd">                      or NULL when not applicable.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">__tablename__</span> <span class="o">=</span> <span class="s2">&quot;monitoring_events&quot;</span>
+
+    <span class="nb">id</span><span class="p">:</span> <span class="n">Mapped</span><span class="p">[</span><span class="n">uuid</span><span class="o">.</span><span class="n">UUID</span><span class="p">]</span> <span class="o">=</span> <span class="n">mapped_column</span><span class="p">(</span>
+        <span class="n">sa</span><span class="o">.</span><span class="n">UUID</span><span class="p">(</span><span class="n">as_uuid</span><span class="o">=</span><span class="kc">True</span><span class="p">),</span>
+        <span class="n">primary_key</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+        <span class="n">default</span><span class="o">=</span><span class="n">uuid</span><span class="o">.</span><span class="n">uuid4</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="n">timestamp</span><span class="p">:</span> <span class="n">Mapped</span><span class="p">[</span><span class="n">datetime</span><span class="p">]</span> <span class="o">=</span> <span class="n">mapped_column</span><span class="p">(</span>
+        <span class="n">sa</span><span class="o">.</span><span class="n">DateTime</span><span class="p">(</span><span class="n">timezone</span><span class="o">=</span><span class="kc">True</span><span class="p">),</span>
+        <span class="n">nullable</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+        <span class="n">default</span><span class="o">=</span><span class="k">lambda</span><span class="p">:</span> <span class="n">datetime</span><span class="o">.</span><span class="n">now</span><span class="p">(</span><span class="n">timezone</span><span class="o">.</span><span class="n">utc</span><span class="p">),</span>
+        <span class="n">index</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="n">path</span><span class="p">:</span> <span class="n">Mapped</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="n">mapped_column</span><span class="p">(</span><span class="n">sa</span><span class="o">.</span><span class="n">String</span><span class="p">(</span><span class="mi">255</span><span class="p">),</span> <span class="n">nullable</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+    <span class="n">method</span><span class="p">:</span> <span class="n">Mapped</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="n">mapped_column</span><span class="p">(</span><span class="n">sa</span><span class="o">.</span><span class="n">String</span><span class="p">(</span><span class="mi">10</span><span class="p">),</span> <span class="n">nullable</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+    <span class="n">status_code</span><span class="p">:</span> <span class="n">Mapped</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="n">mapped_column</span><span class="p">(</span><span class="n">sa</span><span class="o">.</span><span class="n">Integer</span><span class="p">,</span> <span class="n">nullable</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+    <span class="n">latency_ms</span><span class="p">:</span> <span class="n">Mapped</span><span class="p">[</span><span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="n">mapped_column</span><span class="p">(</span><span class="n">sa</span><span class="o">.</span><span class="n">Float</span><span class="p">,</span> <span class="n">nullable</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+    <span class="n">predicted_letter</span><span class="p">:</span> <span class="n">Mapped</span><span class="p">[</span><span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span><span class="p">]</span> <span class="o">=</span> <span class="n">mapped_column</span><span class="p">(</span><span class="n">sa</span><span class="o">.</span><span class="n">String</span><span class="p">(</span><span class="mi">10</span><span class="p">),</span> <span class="n">nullable</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="n">confidence</span><span class="p">:</span> <span class="n">Mapped</span><span class="p">[</span><span class="nb">float</span> <span class="o">|</span> <span class="kc">None</span><span class="p">]</span> <span class="o">=</span> <span class="n">mapped_column</span><span class="p">(</span><span class="n">sa</span><span class="o">.</span><span class="n">Float</span><span class="p">,</span> <span class="n">nullable</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="n">endpoint_type</span><span class="p">:</span> <span class="n">Mapped</span><span class="p">[</span><span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span><span class="p">]</span> <span class="o">=</span> <span class="n">mapped_column</span><span class="p">(</span><span class="n">sa</span><span class="o">.</span><span class="n">String</span><span class="p">(</span><span class="mi">10</span><span class="p">),</span> <span class="n">nullable</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="n">entropy</span><span class="p">:</span> <span class="n">Mapped</span><span class="p">[</span><span class="nb">float</span> <span class="o">|</span> <span class="kc">None</span><span class="p">]</span> <span class="o">=</span> <span class="n">mapped_column</span><span class="p">(</span><span class="n">sa</span><span class="o">.</span><span class="n">Float</span><span class="p">,</span> <span class="n">nullable</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="LetterProgress">
+<a class="viewcode-back" href="../../../reference/sign_language.auth.html#sign_language.auth.models.LetterProgress">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">LetterProgress</span><span class="p">(</span><span class="n">Base</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Per-user, per-letter practice progress.</span>
+
+<span class="sd">    One row per (user, letter) pair, tracking how many times the user has</span>
+<span class="sd">    signed that letter correctly. A letter counts as &quot;learned&quot; once</span>
+<span class="sd">    ``correct_count`` reaches ``LEARNED_THRESHOLD`` (3). The aggregate</span>
+<span class="sd">    ``letters_learned`` shown to the user is *computed* by counting the rows</span>
+<span class="sd">    at or above that threshold (see the stats endpoint) rather than stored, so</span>
+<span class="sd">    it can never drift out of sync with the underlying counts.</span>
+
+<span class="sd">    Columns</span>
+<span class="sd">    -------</span>
+<span class="sd">    user_id       : FK to ``user.id`` (UUID). Part of the composite PK.</span>
+<span class="sd">    letter        : The letter, e.g. ``&quot;A&quot;``. Part of the composite PK.</span>
+<span class="sd">    correct_count : Number of times the user has signed this letter correctly.</span>
+<span class="sd">    updated_at    : UTC timestamp of the last update to this row.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">__tablename__</span> <span class="o">=</span> <span class="s2">&quot;letter_progress&quot;</span>
+
+    <span class="n">user_id</span><span class="p">:</span> <span class="n">Mapped</span><span class="p">[</span><span class="n">uuid</span><span class="o">.</span><span class="n">UUID</span><span class="p">]</span> <span class="o">=</span> <span class="n">mapped_column</span><span class="p">(</span>
+        <span class="n">GUID</span><span class="p">(),</span>
+        <span class="n">sa</span><span class="o">.</span><span class="n">ForeignKey</span><span class="p">(</span><span class="s2">&quot;user.id&quot;</span><span class="p">,</span> <span class="n">ondelete</span><span class="o">=</span><span class="s2">&quot;CASCADE&quot;</span><span class="p">),</span>
+        <span class="n">primary_key</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="n">letter</span><span class="p">:</span> <span class="n">Mapped</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="n">mapped_column</span><span class="p">(</span><span class="n">sa</span><span class="o">.</span><span class="n">String</span><span class="p">(</span><span class="mi">10</span><span class="p">),</span> <span class="n">primary_key</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="n">correct_count</span><span class="p">:</span> <span class="n">Mapped</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="n">mapped_column</span><span class="p">(</span><span class="n">sa</span><span class="o">.</span><span class="n">Integer</span><span class="p">,</span> <span class="n">nullable</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+    <span class="n">updated_at</span><span class="p">:</span> <span class="n">Mapped</span><span class="p">[</span><span class="n">datetime</span><span class="p">]</span> <span class="o">=</span> <span class="n">mapped_column</span><span class="p">(</span>
+        <span class="n">sa</span><span class="o">.</span><span class="n">DateTime</span><span class="p">(</span><span class="n">timezone</span><span class="o">=</span><span class="kc">True</span><span class="p">),</span>
+        <span class="n">nullable</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+        <span class="n">default</span><span class="o">=</span><span class="k">lambda</span><span class="p">:</span> <span class="n">datetime</span><span class="o">.</span><span class="n">now</span><span class="p">(</span><span class="n">timezone</span><span class="o">.</span><span class="n">utc</span><span class="p">),</span>
+        <span class="n">onupdate</span><span class="o">=</span><span class="k">lambda</span><span class="p">:</span> <span class="n">datetime</span><span class="o">.</span><span class="n">now</span><span class="p">(</span><span class="n">timezone</span><span class="o">.</span><span class="n">utc</span><span class="p">),</span>
+    <span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="DailyActivity">
+<a class="viewcode-back" href="../../../reference/sign_language.auth.html#sign_language.auth.models.DailyActivity">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">DailyActivity</span><span class="p">(</span><span class="n">Base</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Distinct letters a user practiced on a given calendar day.</span>
+
+<span class="sd">    Backs the home-page &quot;daily goal&quot; (practise N distinct letters today).</span>
+<span class="sd">    One row per (user, day). ``letters`` holds the set of distinct letters</span>
+<span class="sd">    practised that day — a letter is added only once no matter how many times</span>
+<span class="sd">    it is signed, so ``len(letters)`` is the distinct-letter count the goal</span>
+<span class="sd">    measures. Resets naturally each day because each day is a new row.</span>
+
+<span class="sd">    Columns</span>
+<span class="sd">    -------</span>
+<span class="sd">    user_id       : FK to ``user.id`` (UUID). Part of the composite PK.</span>
+<span class="sd">    activity_date : The calendar day (server local date). Part of the PK.</span>
+<span class="sd">    letters       : Distinct letters practised that day, e.g. ``[&quot;A&quot;, &quot;C&quot;]``.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">__tablename__</span> <span class="o">=</span> <span class="s2">&quot;daily_activity&quot;</span>
+
+    <span class="n">user_id</span><span class="p">:</span> <span class="n">Mapped</span><span class="p">[</span><span class="n">uuid</span><span class="o">.</span><span class="n">UUID</span><span class="p">]</span> <span class="o">=</span> <span class="n">mapped_column</span><span class="p">(</span>
+        <span class="n">GUID</span><span class="p">(),</span>
+        <span class="n">sa</span><span class="o">.</span><span class="n">ForeignKey</span><span class="p">(</span><span class="s2">&quot;user.id&quot;</span><span class="p">,</span> <span class="n">ondelete</span><span class="o">=</span><span class="s2">&quot;CASCADE&quot;</span><span class="p">),</span>
+        <span class="n">primary_key</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="n">activity_date</span><span class="p">:</span> <span class="n">Mapped</span><span class="p">[</span><span class="n">date</span><span class="p">]</span> <span class="o">=</span> <span class="n">mapped_column</span><span class="p">(</span><span class="n">sa</span><span class="o">.</span><span class="n">Date</span><span class="p">,</span> <span class="n">primary_key</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="c1"># ARRAY on Postgres (production); JSON on SQLite so the test suite,</span>
+    <span class="c1"># which uses an in-memory SQLite DB, can create and query this table.</span>
+    <span class="n">letters</span><span class="p">:</span> <span class="n">Mapped</span><span class="p">[</span><span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="n">mapped_column</span><span class="p">(</span>
+        <span class="n">sa</span><span class="o">.</span><span class="n">ARRAY</span><span class="p">(</span><span class="n">sa</span><span class="o">.</span><span class="n">String</span><span class="p">(</span><span class="mi">10</span><span class="p">))</span><span class="o">.</span><span class="n">with_variant</span><span class="p">(</span><span class="n">JSON</span><span class="p">(),</span> <span class="s2">&quot;sqlite&quot;</span><span class="p">),</span>
+        <span class="n">nullable</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+        <span class="n">default</span><span class="o">=</span><span class="nb">list</span><span class="p">,</span>
+    <span class="p">)</span></div>
+
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2026, Kinga Marchlewska, Raya Kichukova, Ana-Maria Farazică, Maciej Czerniak, Szymon Chirowski.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

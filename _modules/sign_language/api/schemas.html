@@ -1,0 +1,373 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>sign_language.api.schemas &mdash; Sign Language 0.1.0 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/css/theme.css?v=9edc463e" />
+
+  
+      <script src="../../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../../_static/documentation_options.js?v=01f34227"></script>
+      <script src="../../../_static/doctools.js?v=9a2dae69"></script>
+      <script src="../../../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../index.html" class="icon icon-home">
+            Sign Language
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Getting Started</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../installation.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../usage.html">Usage</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">API Reference</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../reference/sign_language.html">sign_language package</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../reference/sign_language_training.html">sign_language_training package</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../index.html">Sign Language</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">sign_language.api.schemas</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for sign_language.api.schemas</h1><div class="highlight"><pre>
+<span></span><span class="sd">&quot;&quot;&quot;Request/response models for the API.&quot;&quot;&quot;</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Optional</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">pydantic</span><span class="w"> </span><span class="kn">import</span> <span class="n">BaseModel</span><span class="p">,</span> <span class="n">Field</span>
+
+
+<div class="viewcode-block" id="PredictRequest">
+<a class="viewcode-back" href="../../../reference/sign_language.api.html#sign_language.api.schemas.PredictRequest">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">PredictRequest</span><span class="p">(</span><span class="n">BaseModel</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Request body for the ``POST /api/predict`` and ``/ws/predict`` endpoints.&quot;&quot;&quot;</span>
+
+    <span class="n">image</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="o">...</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">&quot;Base64-encoded frame (data URL or raw).&quot;</span><span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="TopKItem">
+<a class="viewcode-back" href="../../../reference/sign_language.api.html#sign_language.api.schemas.TopKItem">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">TopKItem</span><span class="p">(</span><span class="n">BaseModel</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;A single entry in the top-k prediction list.</span>
+
+<span class="sd">    :param letter: The predicted class label (e.g. ``&quot;A&quot;``).</span>
+<span class="sd">    :param confidence: The model&#39;s confidence score for this class, in [0, 1].</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">letter</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">confidence</span><span class="p">:</span> <span class="nb">float</span></div>
+
+
+
+<div class="viewcode-block" id="PredictResponse">
+<a class="viewcode-back" href="../../../reference/sign_language.api.html#sign_language.api.schemas.PredictResponse">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">PredictResponse</span><span class="p">(</span><span class="n">BaseModel</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Response body for a single-frame inference request.</span>
+
+<span class="sd">    :param hand_detected: Whether a hand was detected in the input frame.</span>
+<span class="sd">    :param predicted_letter: The top-1 predicted class label, or ``None``</span>
+<span class="sd">        if no hand was detected.</span>
+<span class="sd">    :param confidence: The model&#39;s confidence score for the top-1 prediction.</span>
+<span class="sd">    :param top_3: The top-3 predicted letters with their confidence scores.</span>
+<span class="sd">    :param stable_letter: The smoothed stable prediction from the smoother,</span>
+<span class="sd">        or ``None`` if the smoother has not yet committed to a letter.</span>
+<span class="sd">    :param stable_confidence: Confidence of the stable letter, or ``None``</span>
+<span class="sd">        if no stable letter is available.</span>
+<span class="sd">    :param current_word: The word currently being built from committed letters.</span>
+<span class="sd">    :param sentence: The full sentence accumulated so far.</span>
+<span class="sd">    :param committed_letter: The most recently committed letter, or ``None``</span>
+<span class="sd">        if no letter was committed in this frame.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">hand_detected</span><span class="p">:</span> <span class="nb">bool</span>
+    <span class="n">predicted_letter</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span>
+    <span class="n">confidence</span><span class="p">:</span> <span class="nb">float</span>
+    <span class="n">top_3</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">TopKItem</span><span class="p">]</span>
+    <span class="n">stable_letter</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span>
+    <span class="n">stable_confidence</span><span class="p">:</span> <span class="nb">float</span> <span class="o">|</span> <span class="kc">None</span>
+    <span class="n">current_word</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">sentence</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">committed_letter</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span></div>
+
+
+
+<div class="viewcode-block" id="ResetResponse">
+<a class="viewcode-back" href="../../../reference/sign_language.api.html#sign_language.api.schemas.ResetResponse">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">ResetResponse</span><span class="p">(</span><span class="n">BaseModel</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Response body for the ``POST /api/reset`` endpoint.</span>
+
+<span class="sd">    :param ok: Always ``True``, confirming the reset was applied successfully.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">ok</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span></div>
+
+
+
+<div class="viewcode-block" id="InfoResponse">
+<a class="viewcode-back" href="../../../reference/sign_language.api.html#sign_language.api.schemas.InfoResponse">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">InfoResponse</span><span class="p">(</span><span class="n">BaseModel</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Response body for the ``GET /api/info`` endpoint.</span>
+
+<span class="sd">    :param app_name: The application name from project settings.</span>
+<span class="sd">    :param version: The application version string from project settings.</span>
+<span class="sd">    :param device: The compute device in use, e.g. ``&quot;cpu&quot;`` or ``&quot;cuda:0&quot;``.</span>
+<span class="sd">    :param num_classes: The number of output classes the classifier supports.</span>
+<span class="sd">    :param class_names: Ordered list of class label strings.</span>
+<span class="sd">    :param landmark_model_available: Whether the landmark MLP model is loaded.</span>
+<span class="sd">    :param hand_detector_available: Whether the MediaPipe hand detector is loaded.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">app_name</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">version</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">device</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">num_classes</span><span class="p">:</span> <span class="nb">int</span>
+    <span class="n">class_names</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span>
+    <span class="n">landmark_model_available</span><span class="p">:</span> <span class="nb">bool</span>
+    <span class="n">hand_detector_available</span><span class="p">:</span> <span class="nb">bool</span></div>
+
+
+
+<span class="c1"># ── User stats ───────────────────────────────────────────────────────</span>
+<span class="c1"># Level reflects how much of the 22-letter NGT alphabet the user has</span>
+<span class="c1"># &quot;learned&quot;. A letter counts as learned once it has been signed correctly</span>
+<span class="c1"># 3 times (tracking to be implemented in Phase 2). Points are a separate</span>
+<span class="c1"># score that rewards practice and do NOT affect level.</span>
+<span class="n">TOTAL_LETTERS</span> <span class="o">=</span> <span class="mi">22</span>
+
+<span class="c1"># Distinct letters the user is encouraged to practise each day (home-page goal).</span>
+<span class="n">DAILY_GOAL</span> <span class="o">=</span> <span class="mi">5</span>
+
+<span class="c1"># (min_letters_learned, level_number, level_name) — checked high to low.</span>
+<span class="n">_LEVEL_BANDS</span> <span class="o">=</span> <span class="p">[</span>
+    <span class="p">(</span><span class="mi">22</span><span class="p">,</span> <span class="mi">5</span><span class="p">,</span> <span class="s2">&quot;Alphabet Master&quot;</span><span class="p">),</span>
+    <span class="p">(</span><span class="mi">15</span><span class="p">,</span> <span class="mi">4</span><span class="p">,</span> <span class="s2">&quot;Advanced&quot;</span><span class="p">),</span>
+    <span class="p">(</span><span class="mi">10</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="s2">&quot;Halfway&quot;</span><span class="p">),</span>
+    <span class="p">(</span><span class="mi">5</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="s2">&quot;Learner&quot;</span><span class="p">),</span>
+    <span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="s2">&quot;Beginner&quot;</span><span class="p">),</span>
+<span class="p">]</span>
+
+
+<div class="viewcode-block" id="level_band">
+<a class="viewcode-back" href="../../../reference/sign_language.api.html#sign_language.api.schemas.level_band">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">level_band</span><span class="p">(</span><span class="n">letters_learned</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">str</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Map a letters-learned count to a (level number, level name).</span>
+
+<span class="sd">    Bands (22-letter NGT alphabet):</span>
+<span class="sd">        0–4  → 1 Beginner</span>
+<span class="sd">        5–9  → 2 Learner</span>
+<span class="sd">        10–14 → 3 Halfway</span>
+<span class="sd">        15–21 → 4 Advanced</span>
+<span class="sd">        22   → 5 Alphabet Master</span>
+
+<span class="sd">    :param letters_learned: Number of letters the user has learned (0–22).</span>
+<span class="sd">    :returns: A ``(level, level_name)`` tuple.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">for</span> <span class="n">threshold</span><span class="p">,</span> <span class="n">level</span><span class="p">,</span> <span class="n">name</span> <span class="ow">in</span> <span class="n">_LEVEL_BANDS</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">letters_learned</span> <span class="o">&gt;=</span> <span class="n">threshold</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">level</span><span class="p">,</span> <span class="n">name</span>
+    <span class="c1"># Unreachable in practice (the 0-threshold band always matches); kept as a</span>
+    <span class="c1"># defensive fallback in case the bands are ever edited.</span>
+    <span class="k">return</span> <span class="mi">1</span><span class="p">,</span> <span class="s2">&quot;Beginner&quot;</span></div>
+
+
+
+<div class="viewcode-block" id="StatsResponse">
+<a class="viewcode-back" href="../../../reference/sign_language.api.html#sign_language.api.schemas.StatsResponse">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">StatsResponse</span><span class="p">(</span><span class="n">BaseModel</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Response body for the ``GET /api/stats`` endpoint.</span>
+
+<span class="sd">    The per-user progress shown on the logged-in home page. ``level`` and</span>
+<span class="sd">    ``level_name`` are derived from ``letters_learned`` (see</span>
+<span class="sd">    :func:`level_band`); they are not stored.</span>
+
+<span class="sd">    :param streak: Consecutive-day practice streak.</span>
+<span class="sd">    :param letters_learned: Letters learned so far (signed correctly 3×), 0–22.</span>
+<span class="sd">    :param total_letters: Total letters in the NGT alphabet (22) — lets the</span>
+<span class="sd">        frontend show progress as ``letters_learned / total_letters``.</span>
+<span class="sd">    :param points: Points earned through practice.</span>
+<span class="sd">    :param level: Level number (1–5), derived from ``letters_learned``.</span>
+<span class="sd">    :param level_name: Human-readable level name, e.g. ``&quot;Beginner&quot;``.</span>
+<span class="sd">    :param last_played: Name of the last mode/activity, or ``None``.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">streak</span><span class="p">:</span> <span class="nb">int</span>
+    <span class="n">letters_learned</span><span class="p">:</span> <span class="nb">int</span>
+    <span class="n">total_letters</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="n">TOTAL_LETTERS</span>
+    <span class="n">points</span><span class="p">:</span> <span class="nb">int</span>
+    <span class="n">level</span><span class="p">:</span> <span class="nb">int</span>
+    <span class="n">level_name</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">last_played</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span>
+    <span class="n">practiced_today</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">0</span>
+    <span class="n">daily_goal</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="n">DAILY_GOAL</span></div>
+
+
+
+<span class="c1"># ── Collect mode ─────────────────────────────────────────────────────</span>
+<div class="viewcode-block" id="CollectRequest">
+<a class="viewcode-back" href="../../../reference/sign_language.api.html#sign_language.api.schemas.CollectRequest">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">CollectRequest</span><span class="p">(</span><span class="n">BaseModel</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Request body for ``POST /api/collect`` — one contributed sample.</span>
+
+<span class="sd">    Matches what the Collect-mode frontend produces per sample.</span>
+
+<span class="sd">    :param image: Base64-encoded image (data URL or raw base64).</span>
+<span class="sd">    :param letter: The letter the sample is labelled with, e.g. ``&quot;A&quot;``.</span>
+<span class="sd">    :param source: How it was captured — ``&quot;camera&quot;``, ``&quot;upload&quot;``, or ``&quot;auto&quot;``.</span>
+<span class="sd">    :param language: Sign language the sample belongs to. Defaults to ``&quot;NGT&quot;``.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">image</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="o">...</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">&quot;Base64-encoded image (data URL or raw).&quot;</span><span class="p">)</span>
+    <span class="n">letter</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="o">...</span><span class="p">,</span> <span class="n">min_length</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">max_length</span><span class="o">=</span><span class="mi">10</span><span class="p">)</span>
+    <span class="n">source</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="o">...</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s1">&#39;&quot;camera&quot;, &quot;upload&quot;, or &quot;auto&quot;.&#39;</span><span class="p">)</span>
+    <span class="n">language</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="s2">&quot;NGT&quot;</span><span class="p">,</span> <span class="n">max_length</span><span class="o">=</span><span class="mi">10</span><span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="CollectResponse">
+<a class="viewcode-back" href="../../../reference/sign_language.api.html#sign_language.api.schemas.CollectResponse">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">CollectResponse</span><span class="p">(</span><span class="n">BaseModel</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Response body for ``POST /api/collect``.</span>
+
+<span class="sd">    :param id: The stored sample&#39;s unique identifier.</span>
+<span class="sd">    :param letter: The letter the sample was labelled with.</span>
+<span class="sd">    :param stored: Always ``True`` on success, confirming the sample was saved.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="nb">id</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">letter</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">stored</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span></div>
+
+
+
+<span class="c1"># ── Progress reporting ───────────────────────────────────────────────</span>
+<span class="c1"># A letter counts as &quot;learned&quot; once signed correctly this many times.</span>
+<span class="n">LEARNED_THRESHOLD</span> <span class="o">=</span> <span class="mi">3</span>
+
+
+<div class="viewcode-block" id="ProgressRequest">
+<a class="viewcode-back" href="../../../reference/sign_language.api.html#sign_language.api.schemas.ProgressRequest">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">ProgressRequest</span><span class="p">(</span><span class="n">BaseModel</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Request body for ``POST /api/stats/progress`` — one practice event.</span>
+
+<span class="sd">    Sent by the game / Learn pages each time the user attempts a sign.</span>
+
+<span class="sd">    :param letter: The letter that was attempted, e.g. ``&quot;A&quot;``.</span>
+<span class="sd">    :param correct: Whether the attempt was correct.</span>
+<span class="sd">    :param points: Points earned for this event (the frontend computes these,</span>
+<span class="sd">        accounting for hints/bonuses). Ignored when ``correct`` is False.</span>
+<span class="sd">    :param activity: Optional name of the activity, e.g. ``&quot;Random Letters&quot;``;</span>
+<span class="sd">        stored as ``last_played`` when provided.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">letter</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="o">...</span><span class="p">,</span> <span class="n">min_length</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">max_length</span><span class="o">=</span><span class="mi">10</span><span class="p">)</span>
+    <span class="n">correct</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="o">...</span><span class="p">)</span>
+    <span class="n">points</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">ge</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+    <span class="n">activity</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">max_length</span><span class="o">=</span><span class="mi">50</span><span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="LetterProgressItem">
+<a class="viewcode-back" href="../../../reference/sign_language.api.html#sign_language.api.schemas.LetterProgressItem">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">LetterProgressItem</span><span class="p">(</span><span class="n">BaseModel</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;One letter&#39;s practice progress, for the home-page progress list.</span>
+
+<span class="sd">    :param letter: The letter, e.g. ``&quot;A&quot;``.</span>
+<span class="sd">    :param correct_count: Times the user has signed it correctly.</span>
+<span class="sd">    :param learned: True once ``correct_count`` has reached LEARNED_THRESHOLD.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">letter</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">correct_count</span><span class="p">:</span> <span class="nb">int</span>
+    <span class="n">learned</span><span class="p">:</span> <span class="nb">bool</span></div>
+
+
+
+<div class="viewcode-block" id="LetterProgressResponse">
+<a class="viewcode-back" href="../../../reference/sign_language.api.html#sign_language.api.schemas.LetterProgressResponse">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">LetterProgressResponse</span><span class="p">(</span><span class="n">BaseModel</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Response for ``GET /api/stats/letters``.</span>
+
+<span class="sd">    :param threshold: Correct-count needed to &quot;learn&quot; a letter (LEARNED_THRESHOLD).</span>
+<span class="sd">    :param total_letters: Total letters in the NGT alphabet being tracked.</span>
+<span class="sd">    :param letters: Per-letter progress, ordered most-practiced first.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">threshold</span><span class="p">:</span> <span class="nb">int</span>
+    <span class="n">total_letters</span><span class="p">:</span> <span class="nb">int</span>
+    <span class="n">letters</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">LetterProgressItem</span><span class="p">]</span></div>
+
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2026, Kinga Marchlewska, Raya Kichukova, Ana-Maria Farazică, Maciej Czerniak, Szymon Chirowski.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

@@ -1,0 +1,427 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>sign_language_training.model_registration &mdash; Sign Language 0.1.0 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../../_static/css/theme.css?v=9edc463e" />
+
+  
+      <script src="../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../_static/documentation_options.js?v=01f34227"></script>
+      <script src="../../_static/doctools.js?v=9a2dae69"></script>
+      <script src="../../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../index.html" class="icon icon-home">
+            Sign Language
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Getting Started</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../installation.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../usage.html">Usage</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">API Reference</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../reference/sign_language.html">sign_language package</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../reference/sign_language_training.html">sign_language_training package</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../index.html">Sign Language</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">sign_language_training.model_registration</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for sign_language_training.model_registration</h1><div class="highlight"><pre>
+<span></span><span class="sd">&quot;&quot;&quot;Model gate and Azure ML model registration for the NGT training workflow.</span>
+
+<span class="sd">Registration uses the Azure ML SDK v2 directly (not MLflow) to avoid the</span>
+<span class="sd">``mlflow``/``mlflow-skinny`` version conflict that produces 404 errors on</span>
+<span class="sd">``/api/2.0/mlflow/logged-models/search``.</span>
+
+<span class="sd">Inside Azure ML jobs, ``AZUREML_ARM_*`` environment variables are always</span>
+<span class="sd">present and ``ManagedIdentityCredential`` succeeds without user interaction.</span>
+<span class="sd">&quot;&quot;&quot;</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">logging</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">os</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">dataclasses</span><span class="w"> </span><span class="kn">import</span> <span class="n">dataclass</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">pathlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">Path</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">sign_language_training.model_evaluation</span><span class="w"> </span><span class="kn">import</span> <span class="n">EvaluationSummary</span>
+
+<span class="n">logger</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="vm">__name__</span><span class="p">)</span>
+
+
+<div class="viewcode-block" id="GateResult">
+<a class="viewcode-back" href="../../reference/sign_language_training.html#sign_language_training.model_registration.GateResult">[docs]</a>
+<span class="nd">@dataclass</span><span class="p">(</span><span class="n">frozen</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">GateResult</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Outcome of the model gate check and optional registration.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        passed: Whether the model met both quality thresholds.</span>
+<span class="sd">        accuracy: Validation accuracy achieved by the model.</span>
+<span class="sd">        f1_macro: Macro-averaged F1 score achieved by the model.</span>
+<span class="sd">        accuracy_threshold: Minimum accuracy required to pass the gate.</span>
+<span class="sd">        f1_threshold: Minimum macro F1 score required to pass the gate.</span>
+<span class="sd">        registered_version: The Azure ML model version string if the model</span>
+<span class="sd">            was registered, otherwise ``None``.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">passed</span><span class="p">:</span> <span class="nb">bool</span>
+    <span class="n">accuracy</span><span class="p">:</span> <span class="nb">float</span>
+    <span class="n">f1_macro</span><span class="p">:</span> <span class="nb">float</span>
+    <span class="n">accuracy_threshold</span><span class="p">:</span> <span class="nb">float</span>
+    <span class="n">f1_threshold</span><span class="p">:</span> <span class="nb">float</span>
+    <span class="n">registered_version</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__str__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Return a human-readable summary of the gate result.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            Multi-line string showing pass/fail status, metric values</span>
+<span class="sd">                with thresholds, and the registered version if applicable.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">status</span> <span class="o">=</span> <span class="s2">&quot;PASSED&quot;</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">passed</span> <span class="k">else</span> <span class="s2">&quot;FAILED&quot;</span>
+        <span class="n">lines</span> <span class="o">=</span> <span class="p">[</span>
+            <span class="sa">f</span><span class="s2">&quot;Model gate: </span><span class="si">{</span><span class="n">status</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span>
+            <span class="sa">f</span><span class="s2">&quot;  accuracy : </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">accuracy</span><span class="si">:</span><span class="s2">.4f</span><span class="si">}</span><span class="s2"> (threshold=</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">accuracy_threshold</span><span class="si">:</span><span class="s2">.4f</span><span class="si">}</span><span class="s2">)&quot;</span><span class="p">,</span>
+            <span class="sa">f</span><span class="s2">&quot;  f1_macro : </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">f1_macro</span><span class="si">:</span><span class="s2">.4f</span><span class="si">}</span><span class="s2"> (threshold=</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">f1_threshold</span><span class="si">:</span><span class="s2">.4f</span><span class="si">}</span><span class="s2">)&quot;</span><span class="p">,</span>
+        <span class="p">]</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">registered_version</span><span class="p">:</span>
+            <span class="n">lines</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;  registered version: </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">registered_version</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="k">return</span> <span class="s2">&quot;</span><span class="se">\n</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">lines</span><span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="evaluate_model_gate">
+<a class="viewcode-back" href="../../reference/sign_language_training.html#sign_language_training.model_registration.evaluate_model_gate">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">evaluate_model_gate</span><span class="p">(</span>
+    <span class="n">evaluation_summary</span><span class="p">:</span> <span class="n">EvaluationSummary</span><span class="p">,</span>
+    <span class="n">accuracy_threshold</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
+    <span class="n">f1_threshold</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Return ``True`` when the model meets both quality thresholds.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        evaluation_summary: The :class:`~sign_language_training.model_evaluation.EvaluationSummary`</span>
+<span class="sd">            containing the model&#39;s validation metrics.</span>
+<span class="sd">        accuracy_threshold: Minimum validation accuracy required to pass.</span>
+<span class="sd">        f1_threshold: Minimum macro F1 score required to pass.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        ``True`` if both ``accuracy &gt;= accuracy_threshold`` and</span>
+<span class="sd">            ``f1_macro &gt;= f1_threshold``, ``False`` otherwise.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">accuracy_ok</span> <span class="o">=</span> <span class="n">evaluation_summary</span><span class="o">.</span><span class="n">accuracy</span> <span class="o">&gt;=</span> <span class="n">accuracy_threshold</span>
+    <span class="n">f1_ok</span> <span class="o">=</span> <span class="n">evaluation_summary</span><span class="o">.</span><span class="n">f1_macro</span> <span class="o">&gt;=</span> <span class="n">f1_threshold</span>
+
+    <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span>
+        <span class="s2">&quot;Gate check — accuracy: </span><span class="si">%.4f</span><span class="s2"> &gt;= </span><span class="si">%.4f</span><span class="s2"> ? </span><span class="si">%s</span><span class="s2">&quot;</span><span class="p">,</span>
+        <span class="n">evaluation_summary</span><span class="o">.</span><span class="n">accuracy</span><span class="p">,</span>
+        <span class="n">accuracy_threshold</span><span class="p">,</span>
+        <span class="s2">&quot;YES&quot;</span> <span class="k">if</span> <span class="n">accuracy_ok</span> <span class="k">else</span> <span class="s2">&quot;NO&quot;</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span>
+        <span class="s2">&quot;Gate check — f1_macro: </span><span class="si">%.4f</span><span class="s2"> &gt;= </span><span class="si">%.4f</span><span class="s2"> ? </span><span class="si">%s</span><span class="s2">&quot;</span><span class="p">,</span>
+        <span class="n">evaluation_summary</span><span class="o">.</span><span class="n">f1_macro</span><span class="p">,</span>
+        <span class="n">f1_threshold</span><span class="p">,</span>
+        <span class="s2">&quot;YES&quot;</span> <span class="k">if</span> <span class="n">f1_ok</span> <span class="k">else</span> <span class="s2">&quot;NO&quot;</span><span class="p">,</span>
+    <span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">accuracy_ok</span> <span class="ow">and</span> <span class="n">f1_ok</span></div>
+
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_version_from_run_id</span><span class="p">(</span><span class="n">run_id</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Derive a unique positive integer version string from a run ID.</span>
+
+<span class="sd">    Uses the first 8 hex characters of the SHA-256 digest of ``run_id``,</span>
+<span class="sd">    giving a value in [1, 4_294_967_296]. Collision probability across 4</span>
+<span class="sd">    concurrent trials is approximately 4e-9 — effectively zero.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        run_id: The Azure ML run ID string, e.g.</span>
+<span class="sd">            ``&quot;red_truck_8jccp8n0hs_0&quot;``.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        A deterministic positive integer string derived from the</span>
+<span class="sd">            SHA-256 hash of ``run_id``.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="kn">import</span><span class="w"> </span><span class="nn">hashlib</span>
+
+    <span class="n">digest</span> <span class="o">=</span> <span class="n">hashlib</span><span class="o">.</span><span class="n">sha256</span><span class="p">(</span><span class="n">run_id</span><span class="o">.</span><span class="n">encode</span><span class="p">())</span><span class="o">.</span><span class="n">hexdigest</span><span class="p">()[:</span><span class="mi">8</span><span class="p">]</span>
+    <span class="k">return</span> <span class="nb">str</span><span class="p">(</span><span class="nb">int</span><span class="p">(</span><span class="n">digest</span><span class="p">,</span> <span class="mi">16</span><span class="p">)</span> <span class="ow">or</span> <span class="mi">1</span><span class="p">)</span>
+
+
+<div class="viewcode-block" id="register_model_azure_sdk">
+<a class="viewcode-back" href="../../reference/sign_language_training.html#sign_language_training.model_registration.register_model_azure_sdk">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">register_model_azure_sdk</span><span class="p">(</span>
+    <span class="n">model_path</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="n">Path</span><span class="p">,</span>
+    <span class="n">model_name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+    <span class="n">evaluation_summary</span><span class="p">:</span> <span class="n">EvaluationSummary</span><span class="p">,</span>
+    <span class="n">class_names</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Register the model in Azure ML using the SDK v2 directly.</span>
+
+<span class="sd">    Derives the model version from a SHA-256 hash of ``AZUREML_RUN_ID``,</span>
+<span class="sd">    producing a deterministic positive integer that is unique per trial and</span>
+<span class="sd">    safe for concurrent sweep runs. Attaches evaluation metrics, class names,</span>
+<span class="sd">    and sweep hyperparameters as tags on the registered model version.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        model_path: Path to the ``.pth`` checkpoint file to register.</span>
+<span class="sd">        model_name: Azure ML model registry name, e.g.</span>
+<span class="sd">            ``&quot;ngt-sign-language&quot;``.</span>
+<span class="sd">        evaluation_summary: The :class:`~sign_language_training.model_evaluation.EvaluationSummary`</span>
+<span class="sd">            providing accuracy and F1 metrics to tag the registered model with.</span>
+<span class="sd">        class_names: List of class label strings stored as a tag.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        The registered model version string assigned by Azure ML.</span>
+
+<span class="sd">    Raises:</span>
+<span class="sd">        RuntimeError: If any of the required ``AZUREML_ARM_*``</span>
+<span class="sd">            environment variables are missing.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">azure.ai.ml</span><span class="w"> </span><span class="kn">import</span> <span class="n">MLClient</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">azure.ai.ml.constants</span><span class="w"> </span><span class="kn">import</span> <span class="n">AssetTypes</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">azure.ai.ml.entities</span><span class="w"> </span><span class="kn">import</span> <span class="n">Model</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Any</span>
+
+    <span class="kn">from</span><span class="w"> </span><span class="nn">azure.identity</span><span class="w"> </span><span class="kn">import</span> <span class="n">AzureCliCredential</span><span class="p">,</span> <span class="n">ManagedIdentityCredential</span>
+
+    <span class="n">credential</span><span class="p">:</span> <span class="n">Any</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="n">credential</span> <span class="o">=</span> <span class="n">ManagedIdentityCredential</span><span class="p">()</span>
+    <span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>
+        <span class="n">credential</span> <span class="o">=</span> <span class="n">AzureCliCredential</span><span class="p">()</span>
+
+    <span class="n">required_env</span> <span class="o">=</span> <span class="p">{</span>
+        <span class="s2">&quot;AZUREML_ARM_SUBSCRIPTION&quot;</span><span class="p">:</span> <span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;AZUREML_ARM_SUBSCRIPTION&quot;</span><span class="p">),</span>
+        <span class="s2">&quot;AZUREML_ARM_RESOURCEGROUP&quot;</span><span class="p">:</span> <span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;AZUREML_ARM_RESOURCEGROUP&quot;</span><span class="p">),</span>
+        <span class="s2">&quot;AZUREML_ARM_WORKSPACE_NAME&quot;</span><span class="p">:</span> <span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;AZUREML_ARM_WORKSPACE_NAME&quot;</span><span class="p">),</span>
+    <span class="p">}</span>
+    <span class="n">missing</span> <span class="o">=</span> <span class="p">[</span><span class="n">name</span> <span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">value</span> <span class="ow">in</span> <span class="n">required_env</span><span class="o">.</span><span class="n">items</span><span class="p">()</span> <span class="k">if</span> <span class="ow">not</span> <span class="n">value</span><span class="p">]</span>
+    <span class="k">if</span> <span class="n">missing</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span>
+            <span class="s2">&quot;Azure ML model registration requires these Azure ML job environment &quot;</span>
+            <span class="sa">f</span><span class="s2">&quot;variables: </span><span class="si">{</span><span class="s1">&#39;, &#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">missing</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span>
+        <span class="p">)</span>
+
+    <span class="n">ml_client</span> <span class="o">=</span> <span class="n">MLClient</span><span class="p">(</span>
+        <span class="n">credential</span><span class="o">=</span><span class="n">credential</span><span class="p">,</span>
+        <span class="n">subscription_id</span><span class="o">=</span><span class="n">required_env</span><span class="p">[</span><span class="s2">&quot;AZUREML_ARM_SUBSCRIPTION&quot;</span><span class="p">],</span>
+        <span class="n">resource_group_name</span><span class="o">=</span><span class="n">required_env</span><span class="p">[</span><span class="s2">&quot;AZUREML_ARM_RESOURCEGROUP&quot;</span><span class="p">],</span>
+        <span class="n">workspace_name</span><span class="o">=</span><span class="n">required_env</span><span class="p">[</span><span class="s2">&quot;AZUREML_ARM_WORKSPACE_NAME&quot;</span><span class="p">],</span>
+    <span class="p">)</span>
+
+    <span class="n">run_id</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;AZUREML_RUN_ID&quot;</span><span class="p">,</span> <span class="s2">&quot;local&quot;</span><span class="p">)</span>
+    <span class="n">version</span> <span class="o">=</span> <span class="n">_version_from_run_id</span><span class="p">(</span><span class="n">run_id</span><span class="p">)</span>
+
+    <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span>
+        <span class="s2">&quot;Registering model &#39;</span><span class="si">%s</span><span class="s2">&#39; version </span><span class="si">%s</span><span class="s2"> (derived from run_id=&#39;</span><span class="si">%s</span><span class="s2">&#39;)&quot;</span><span class="p">,</span>
+        <span class="n">model_name</span><span class="p">,</span>
+        <span class="n">version</span><span class="p">,</span>
+        <span class="n">run_id</span><span class="p">,</span>
+    <span class="p">)</span>
+
+    <span class="n">model</span> <span class="o">=</span> <span class="n">Model</span><span class="p">(</span>
+        <span class="n">path</span><span class="o">=</span><span class="nb">str</span><span class="p">(</span><span class="n">model_path</span><span class="p">),</span>
+        <span class="n">name</span><span class="o">=</span><span class="n">model_name</span><span class="p">,</span>
+        <span class="n">version</span><span class="o">=</span><span class="n">version</span><span class="p">,</span>
+        <span class="nb">type</span><span class="o">=</span><span class="n">AssetTypes</span><span class="o">.</span><span class="n">CUSTOM_MODEL</span><span class="p">,</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">&quot;NGT sign language EfficientNet-B0&quot;</span><span class="p">,</span>
+        <span class="n">tags</span><span class="o">=</span><span class="p">{</span>
+            <span class="s2">&quot;accuracy&quot;</span><span class="p">:</span> <span class="nb">str</span><span class="p">(</span><span class="nb">round</span><span class="p">(</span><span class="n">evaluation_summary</span><span class="o">.</span><span class="n">accuracy</span><span class="p">,</span> <span class="mi">4</span><span class="p">)),</span>
+            <span class="s2">&quot;f1_macro&quot;</span><span class="p">:</span> <span class="nb">str</span><span class="p">(</span><span class="nb">round</span><span class="p">(</span><span class="n">evaluation_summary</span><span class="o">.</span><span class="n">f1_macro</span><span class="p">,</span> <span class="mi">4</span><span class="p">)),</span>
+            <span class="s2">&quot;num_classes&quot;</span><span class="p">:</span> <span class="nb">str</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">class_names</span><span class="p">)),</span>
+            <span class="s2">&quot;class_names&quot;</span><span class="p">:</span> <span class="s2">&quot;,&quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">class_names</span><span class="p">),</span>
+            <span class="s2">&quot;run_id&quot;</span><span class="p">:</span> <span class="n">run_id</span><span class="p">,</span>
+            <span class="s2">&quot;learning_rate&quot;</span><span class="p">:</span> <span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;AZUREML_PARAMETER_learning_rate&quot;</span><span class="p">,</span> <span class="s2">&quot;&quot;</span><span class="p">),</span>
+            <span class="s2">&quot;batch_size&quot;</span><span class="p">:</span> <span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;AZUREML_PARAMETER_batch_size&quot;</span><span class="p">,</span> <span class="s2">&quot;&quot;</span><span class="p">),</span>
+            <span class="s2">&quot;patience&quot;</span><span class="p">:</span> <span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;AZUREML_PARAMETER_patience&quot;</span><span class="p">,</span> <span class="s2">&quot;&quot;</span><span class="p">),</span>
+            <span class="s2">&quot;sweep_id&quot;</span><span class="p">:</span> <span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;AZUREML_ROOT_RUN_ID&quot;</span><span class="p">,</span> <span class="s2">&quot;&quot;</span><span class="p">),</span>
+        <span class="p">},</span>
+    <span class="p">)</span>
+
+    <span class="n">registered</span> <span class="o">=</span> <span class="n">ml_client</span><span class="o">.</span><span class="n">models</span><span class="o">.</span><span class="n">create_or_update</span><span class="p">(</span><span class="n">model</span><span class="p">)</span>
+    <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span>
+        <span class="s2">&quot;Registered model &#39;</span><span class="si">%s</span><span class="s2">&#39; version </span><span class="si">%s</span><span class="s2"> in Azure ML workspace&quot;</span><span class="p">,</span>
+        <span class="n">model_name</span><span class="p">,</span>
+        <span class="n">registered</span><span class="o">.</span><span class="n">version</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="k">return</span> <span class="nb">str</span><span class="p">(</span><span class="n">registered</span><span class="o">.</span><span class="n">version</span><span class="p">)</span></div>
+
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_is_azure_ml_environment</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Return ``True`` when running inside an Azure ML job.</span>
+
+<span class="sd">    Detected by the presence of the ``AZUREML_RUN_ID`` environment variable,</span>
+<span class="sd">    which is always set by the Azure ML job runtime.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        ``True`` if ``AZUREML_RUN_ID`` is set and non-empty.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="nb">bool</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;AZUREML_RUN_ID&quot;</span><span class="p">))</span>
+
+
+<div class="viewcode-block" id="run_model_gate_and_register">
+<a class="viewcode-back" href="../../reference/sign_language_training.html#sign_language_training.model_registration.run_model_gate_and_register">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">run_model_gate_and_register</span><span class="p">(</span>
+    <span class="n">evaluation_summary</span><span class="p">:</span> <span class="n">EvaluationSummary</span><span class="p">,</span>
+    <span class="n">model_path</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="n">Path</span><span class="p">,</span>
+    <span class="n">model_name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+    <span class="n">class_names</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span>
+    <span class="n">accuracy_threshold</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
+    <span class="n">f1_threshold</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">GateResult</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Run the model gate check and conditionally register the model in Azure ML.</span>
+
+<span class="sd">    Registration only runs inside Azure ML jobs, detected via the</span>
+<span class="sd">    ``AZUREML_RUN_ID`` environment variable. Local runs log a message and</span>
+<span class="sd">    return ``registered_version=None``.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        evaluation_summary: The :class:`~sign_language_training.model_evaluation.EvaluationSummary`</span>
+<span class="sd">            containing the model&#39;s validation metrics.</span>
+<span class="sd">        model_path: Path to the best ``.pth`` checkpoint to register if</span>
+<span class="sd">            the gate passes.</span>
+<span class="sd">        model_name: Azure ML model registry name.</span>
+<span class="sd">        class_names: Ordered list of class label strings.</span>
+<span class="sd">        accuracy_threshold: Minimum validation accuracy required to pass</span>
+<span class="sd">            the gate and trigger registration.</span>
+<span class="sd">        f1_threshold: Minimum macro F1 score required to pass the gate</span>
+<span class="sd">            and trigger registration.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        A :class:`GateResult` describing whether the gate passed and,</span>
+<span class="sd">            if inside an Azure ML job and the gate passed, the registered model</span>
+<span class="sd">            version string.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">passed</span> <span class="o">=</span> <span class="n">evaluate_model_gate</span><span class="p">(</span>
+        <span class="n">evaluation_summary</span><span class="o">=</span><span class="n">evaluation_summary</span><span class="p">,</span>
+        <span class="n">accuracy_threshold</span><span class="o">=</span><span class="n">accuracy_threshold</span><span class="p">,</span>
+        <span class="n">f1_threshold</span><span class="o">=</span><span class="n">f1_threshold</span><span class="p">,</span>
+    <span class="p">)</span>
+
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">passed</span><span class="p">:</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span>
+            <span class="s2">&quot;Model gate FAILED — model will NOT be registered. &quot;</span>
+            <span class="s2">&quot;accuracy=</span><span class="si">%.4f</span><span class="s2"> (threshold=</span><span class="si">%.4f</span><span class="s2">), f1_macro=</span><span class="si">%.4f</span><span class="s2"> (threshold=</span><span class="si">%.4f</span><span class="s2">)&quot;</span><span class="p">,</span>
+            <span class="n">evaluation_summary</span><span class="o">.</span><span class="n">accuracy</span><span class="p">,</span>
+            <span class="n">accuracy_threshold</span><span class="p">,</span>
+            <span class="n">evaluation_summary</span><span class="o">.</span><span class="n">f1_macro</span><span class="p">,</span>
+            <span class="n">f1_threshold</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="k">return</span> <span class="n">GateResult</span><span class="p">(</span>
+            <span class="n">passed</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+            <span class="n">accuracy</span><span class="o">=</span><span class="n">evaluation_summary</span><span class="o">.</span><span class="n">accuracy</span><span class="p">,</span>
+            <span class="n">f1_macro</span><span class="o">=</span><span class="n">evaluation_summary</span><span class="o">.</span><span class="n">f1_macro</span><span class="p">,</span>
+            <span class="n">accuracy_threshold</span><span class="o">=</span><span class="n">accuracy_threshold</span><span class="p">,</span>
+            <span class="n">f1_threshold</span><span class="o">=</span><span class="n">f1_threshold</span><span class="p">,</span>
+            <span class="n">registered_version</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+        <span class="p">)</span>
+
+    <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Model gate PASSED — proceeding with registration&quot;</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">_is_azure_ml_environment</span><span class="p">():</span>
+        <span class="n">version</span> <span class="o">=</span> <span class="n">register_model_azure_sdk</span><span class="p">(</span>
+            <span class="n">model_path</span><span class="o">=</span><span class="n">model_path</span><span class="p">,</span>
+            <span class="n">model_name</span><span class="o">=</span><span class="n">model_name</span><span class="p">,</span>
+            <span class="n">evaluation_summary</span><span class="o">=</span><span class="n">evaluation_summary</span><span class="p">,</span>
+            <span class="n">class_names</span><span class="o">=</span><span class="n">class_names</span><span class="p">,</span>
+        <span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span>
+            <span class="s2">&quot;Local run — skipping Azure ML model registration. &quot;</span>
+            <span class="s2">&quot;Best checkpoint saved at: </span><span class="si">%s</span><span class="s2">&quot;</span><span class="p">,</span>
+            <span class="n">model_path</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="n">version</span> <span class="o">=</span> <span class="kc">None</span>
+
+    <span class="k">return</span> <span class="n">GateResult</span><span class="p">(</span>
+        <span class="n">passed</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+        <span class="n">accuracy</span><span class="o">=</span><span class="n">evaluation_summary</span><span class="o">.</span><span class="n">accuracy</span><span class="p">,</span>
+        <span class="n">f1_macro</span><span class="o">=</span><span class="n">evaluation_summary</span><span class="o">.</span><span class="n">f1_macro</span><span class="p">,</span>
+        <span class="n">accuracy_threshold</span><span class="o">=</span><span class="n">accuracy_threshold</span><span class="p">,</span>
+        <span class="n">f1_threshold</span><span class="o">=</span><span class="n">f1_threshold</span><span class="p">,</span>
+        <span class="n">registered_version</span><span class="o">=</span><span class="n">version</span><span class="p">,</span>
+    <span class="p">)</span></div>
+
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2026, Kinga Marchlewska, Raya Kichukova, Ana-Maria Farazică, Maciej Czerniak, Szymon Chirowski.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

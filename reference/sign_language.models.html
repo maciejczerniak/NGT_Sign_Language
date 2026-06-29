@@ -1,0 +1,440 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>sign_language.models package &mdash; Sign Language 0.1.0 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../_static/css/theme.css?v=9edc463e" />
+
+  
+      <script src="../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../_static/documentation_options.js?v=01f34227"></script>
+      <script src="../_static/doctools.js?v=9a2dae69"></script>
+      <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../index.html" class="icon icon-home">
+            Sign Language
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Getting Started</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../installation.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../usage.html">Usage</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">API Reference</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="sign_language.html">sign_language package</a></li>
+<li class="toctree-l1"><a class="reference internal" href="sign_language_training.html">sign_language_training package</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">Sign Language</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">sign_language.models package</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../_sources/reference/sign_language.models.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="sign-language-models-package">
+<h1>sign_language.models package<a class="headerlink" href="#sign-language-models-package" title="Link to this heading"></a></h1>
+<section id="submodules">
+<h2>Submodules<a class="headerlink" href="#submodules" title="Link to this heading"></a></h2>
+</section>
+<section id="module-sign_language.models.architectures">
+<span id="sign-language-models-architectures-module"></span><h2>sign_language.models.architectures module<a class="headerlink" href="#module-sign_language.models.architectures" title="Link to this heading"></a></h2>
+<p>Neural network architecture definitions.</p>
+<p>Contains the EfficientNet-B0 image classifier and the Landmark MLP
+used as a fallback when image confidence is low.</p>
+<dl class="py function">
+<dt class="sig sig-object py" id="sign_language.models.architectures.build_efficientnet">
+<span class="sig-prename descclassname"><span class="pre">sign_language.models.architectures.</span></span><span class="sig-name descname"><span class="pre">build_efficientnet</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">num_classes</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><span class="pre">int</span></a></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference external" href="https://docs.pytorch.org/docs/stable/generated/torch.nn.Module.html#torch.nn.Module" title="(in PyTorch v2.12)"><span class="pre">torch.nn.Module</span></a></span></span><a class="reference internal" href="../_modules/sign_language/models/architectures.html#build_efficientnet"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#sign_language.models.architectures.build_efficientnet" title="Link to this definition"></a></dt>
+<dd><p>Build an EfficientNet-B0 model with a custom classification head.</p>
+<p>Loads EfficientNet-B0 without pretrained weights and replaces the
+default classifier with a dropout + linear head sized to <code class="docutils literal notranslate"><span class="pre">num_classes</span></code>.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>num_classes</strong> – Number of output classes (sign language letters).</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>An <a class="reference external" href="https://docs.pytorch.org/docs/stable/generated/torch.nn.Module.html#torch.nn.Module" title="(in PyTorch v2.12)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Module</span></code></a> EfficientNet-B0 with the replaced
+classifier head.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="sign_language.models.architectures.build_landmark_mlp">
+<span class="sig-prename descclassname"><span class="pre">sign_language.models.architectures.</span></span><span class="sig-name descname"><span class="pre">build_landmark_mlp</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">input_dim</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><span class="pre">int</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">num_classes</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><span class="pre">int</span></a></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference external" href="https://docs.pytorch.org/docs/stable/generated/torch.nn.Module.html#torch.nn.Module" title="(in PyTorch v2.12)"><span class="pre">torch.nn.Module</span></a></span></span><a class="reference internal" href="../_modules/sign_language/models/architectures.html#build_landmark_mlp"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#sign_language.models.architectures.build_landmark_mlp" title="Link to this definition"></a></dt>
+<dd><p>Build a multi-layer perceptron for hand landmark feature classification.</p>
+<p>Architecture: Linear(256) → BN → ReLU → Dropout(0.3) →
+Linear(128) → BN → ReLU → Dropout(0.2) → Linear(64) → ReLU →
+Linear(num_classes).</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>input_dim</strong> – Dimensionality of the input landmark feature vector,
+must match the output of
+<a class="reference internal" href="sign_language.features.html#sign_language.features.landmarks.extract_landmark_features" title="sign_language.features.landmarks.extract_landmark_features"><code class="xref py py-func docutils literal notranslate"><span class="pre">extract_landmark_features()</span></code></a>.</p></li>
+<li><p><strong>num_classes</strong> – Number of output classes.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>A <a class="reference external" href="https://docs.pytorch.org/docs/stable/generated/torch.nn.Sequential.html#torch.nn.Sequential" title="(in PyTorch v2.12)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Sequential</span></code></a> MLP model.</p>
+</dd>
+</dl>
+</dd></dl>
+
+</section>
+<section id="module-sign_language.models.loader">
+<span id="sign-language-models-loader-module"></span><h2>sign_language.models.loader module<a class="headerlink" href="#module-sign_language.models.loader" title="Link to this heading"></a></h2>
+<p>Model loading and initialisation.</p>
+<p>Loads EfficientNet and Landmark MLP checkpoints from disk, selects the
+compute device, and initialises the MediaPipe hand landmarker.</p>
+<p>The EfficientNet checkpoint source is selected by <code class="docutils literal notranslate"><span class="pre">settings.deploy_target</span></code>:</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">&quot;local&quot;</span></code>: read from <code class="docutils literal notranslate"><span class="pre">settings.model_path</span></code> on disk.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">&quot;onprem&quot;</span></code>: fetch the version aliased <code class="docutils literal notranslate"><span class="pre">&#64;champion</span></code> from the self-hosted
+MLflow model registry at <code class="docutils literal notranslate"><span class="pre">settings.mlflow_tracking_uri</span></code>.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">&quot;azure&quot;</span></code>: fetch the latest promoted version from the Azure ML model
+registry under <code class="docutils literal notranslate"><span class="pre">settings.azure_subscription_id</span></code> /
+<code class="docutils literal notranslate"><span class="pre">settings.azure_resource_group</span></code> / <code class="docutils literal notranslate"><span class="pre">settings.azure_workspace</span></code>.</p></li>
+</ul>
+<p>Both remote paths cache downloaded checkpoints under
+<code class="docutils literal notranslate"><span class="pre">settings.model_cache_dir</span></code> keyed by version, so repeated container
+restarts do not re-download unchanged models.</p>
+<dl class="py function">
+<dt class="sig sig-object py" id="sign_language.models.loader.download_latest_model_azure">
+<span class="sig-prename descclassname"><span class="pre">sign_language.models.loader.</span></span><span class="sig-name descname"><span class="pre">download_latest_model_azure</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model_name</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><span class="pre">str</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">download_dir</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/pathlib.html#pathlib.Path" title="(in Python v3.14)"><span class="pre">Path</span></a></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference external" href="https://docs.python.org/3/library/pathlib.html#pathlib.Path" title="(in Python v3.14)"><span class="pre">Path</span></a></span></span><a class="reference internal" href="../_modules/sign_language/models/loader.html#download_latest_model_azure"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#sign_language.models.loader.download_latest_model_azure" title="Link to this definition"></a></dt>
+<dd><p>Download the latest registered EfficientNet checkpoint from Azure ML.</p>
+<p>Prefers the version explicitly tagged <code class="docutils literal notranslate"><span class="pre">promoted=true</span></code>, selecting the
+one with the highest <code class="docutils literal notranslate"><span class="pre">f1_macro</span></code> (with <code class="docutils literal notranslate"><span class="pre">accuracy</span></code> as tiebreaker).
+Falls back to <code class="docutils literal notranslate"><span class="pre">label=&quot;latest&quot;</span></code> when no promoted version exists.</p>
+<p>Downloaded assets are cached under <code class="docutils literal notranslate"><span class="pre">download_dir</span></code> keyed by version
+number. On subsequent startups the cached file is reused if the version
+has not changed.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>model_name</strong> – Registry name, e.g. <code class="docutils literal notranslate"><span class="pre">&quot;ngt-sign-language&quot;</span></code>.</p></li>
+<li><p><strong>download_dir</strong> – Local directory to cache the downloaded checkpoint.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><a class="reference external" href="https://docs.python.org/3/library/pathlib.html#pathlib.Path" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Path</span></code></a> to the downloaded <code class="docutils literal notranslate"><span class="pre">.pth</span></code> file.</p>
+</dd>
+<dt class="field-odd">Raises<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><a class="reference external" href="https://docs.python.org/3/library/exceptions.html#RuntimeError" title="(in Python v3.14)"><strong>RuntimeError</strong></a> – If Azure ML dependencies are not installed, or if
+any required Azure settings (subscription ID, resource group,
+workspace) are missing.</p></li>
+<li><p><a class="reference external" href="https://docs.python.org/3/library/exceptions.html#FileNotFoundError" title="(in Python v3.14)"><strong>FileNotFoundError</strong></a> – If no <code class="docutils literal notranslate"><span class="pre">.pth</span></code> file is found in the download
+directory after the download completes.</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="sign_language.models.loader.download_latest_model_mlflow">
+<span class="sig-prename descclassname"><span class="pre">sign_language.models.loader.</span></span><span class="sig-name descname"><span class="pre">download_latest_model_mlflow</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model_name</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><span class="pre">str</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">download_dir</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/pathlib.html#pathlib.Path" title="(in Python v3.14)"><span class="pre">Path</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">alias</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><span class="pre">str</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'champion'</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference external" href="https://docs.python.org/3/library/pathlib.html#pathlib.Path" title="(in Python v3.14)"><span class="pre">Path</span></a></span></span><a class="reference internal" href="../_modules/sign_language/models/loader.html#download_latest_model_mlflow"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#sign_language.models.loader.download_latest_model_mlflow" title="Link to this definition"></a></dt>
+<dd><p>Download the EfficientNet checkpoint aliased <code class="docutils literal notranslate"><span class="pre">&#64;&lt;alias&gt;</span></code> from MLflow.</p>
+<p>Resolves <code class="docutils literal notranslate"><span class="pre">models:/&lt;model_name&gt;&#64;&lt;alias&gt;</span></code> against the MLflow registry
+configured by <code class="docutils literal notranslate"><span class="pre">settings.mlflow_tracking_uri</span></code>. Downloads the artifact
+directory to a version-keyed local cache; on subsequent startups the
+cached <code class="docutils literal notranslate"><span class="pre">.pth</span></code> file is reused if the aliased version has not changed.</p>
+<p>The MLflow server is expected to run with <code class="docutils literal notranslate"><span class="pre">--serve-artifacts</span></code> (the
+BUaS on-prem reference configuration), so the client only needs the
+tracking URI — no MinIO / S3 credentials.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>model_name</strong> – Registered model name, e.g. <code class="docutils literal notranslate"><span class="pre">&quot;ngt-sign-language&quot;</span></code>.</p></li>
+<li><p><strong>download_dir</strong> – Local directory to cache the downloaded checkpoint.</p></li>
+<li><p><strong>alias</strong> – Registry alias to resolve. Defaults to <code class="docutils literal notranslate"><span class="pre">&quot;champion&quot;</span></code>.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><a class="reference external" href="https://docs.python.org/3/library/pathlib.html#pathlib.Path" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Path</span></code></a> to the downloaded <code class="docutils literal notranslate"><span class="pre">.pth</span></code> file.</p>
+</dd>
+<dt class="field-odd">Raises<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><a class="reference external" href="https://docs.python.org/3/library/exceptions.html#RuntimeError" title="(in Python v3.14)"><strong>RuntimeError</strong></a> – If MLflow is not installed, or if
+<code class="docutils literal notranslate"><span class="pre">MLFLOW_TRACKING_URI</span></code> is not configured.</p></li>
+<li><p><a class="reference external" href="https://docs.python.org/3/library/exceptions.html#FileNotFoundError" title="(in Python v3.14)"><strong>FileNotFoundError</strong></a> – If no <code class="docutils literal notranslate"><span class="pre">.pth</span></code> file is present in the
+downloaded artifact directory.</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="sign_language.models.loader.resolve_efficientnet_path">
+<span class="sig-prename descclassname"><span class="pre">sign_language.models.loader.</span></span><span class="sig-name descname"><span class="pre">resolve_efficientnet_path</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference external" href="https://docs.python.org/3/library/pathlib.html#pathlib.Path" title="(in Python v3.14)"><span class="pre">Path</span></a></span></span><a class="reference internal" href="../_modules/sign_language/models/loader.html#resolve_efficientnet_path"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#sign_language.models.loader.resolve_efficientnet_path" title="Link to this definition"></a></dt>
+<dd><p>Return the EfficientNet checkpoint path to load at startup.</p>
+<p>Dispatches on <code class="xref py py-attr docutils literal notranslate"><span class="pre">settings.deploy_target</span></code>:</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">&quot;local&quot;</span></code>: returns <code class="docutils literal notranslate"><span class="pre">settings.model_path</span></code> unchanged.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">&quot;onprem&quot;</span></code>: downloads the version aliased <code class="docutils literal notranslate"><span class="pre">&#64;champion</span></code> from the
+self-hosted MLflow registry via <a class="reference internal" href="#sign_language.models.loader.download_latest_model_mlflow" title="sign_language.models.loader.download_latest_model_mlflow"><code class="xref py py-func docutils literal notranslate"><span class="pre">download_latest_model_mlflow()</span></code></a>.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">&quot;azure&quot;</span></code>: downloads the latest promoted version from the Azure ML
+registry via <a class="reference internal" href="#sign_language.models.loader.download_latest_model_azure" title="sign_language.models.loader.download_latest_model_azure"><code class="xref py py-func docutils literal notranslate"><span class="pre">download_latest_model_azure()</span></code></a>.</p></li>
+</ul>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3/library/pathlib.html#pathlib.Path" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Path</span></code></a> to the EfficientNet <code class="docutils literal notranslate"><span class="pre">.pth</span></code> checkpoint.</p>
+</dd>
+<dt class="field-even">Raises<span class="colon">:</span></dt>
+<dd class="field-even"><ul class="simple">
+<li><p><a class="reference external" href="https://docs.python.org/3/library/exceptions.html#RuntimeError" title="(in Python v3.14)"><strong>RuntimeError</strong></a> – If the selected target’s required dependencies or
+settings are missing.</p></li>
+<li><p><a class="reference external" href="https://docs.python.org/3/library/exceptions.html#FileNotFoundError" title="(in Python v3.14)"><strong>FileNotFoundError</strong></a> – If a remote download completes but no
+<code class="docutils literal notranslate"><span class="pre">.pth</span></code> file is found in the cache directory.</p></li>
+<li><p><a class="reference external" href="https://docs.python.org/3/library/exceptions.html#ValueError" title="(in Python v3.14)"><strong>ValueError</strong></a> – If <code class="docutils literal notranslate"><span class="pre">settings.deploy_target</span></code> is set to an unknown
+value (should be unreachable due to the <code class="docutils literal notranslate"><span class="pre">Literal</span></code> constraint).</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="sign_language.models.loader.resolve_landmark_path">
+<span class="sig-prename descclassname"><span class="pre">sign_language.models.loader.</span></span><span class="sig-name descname"><span class="pre">resolve_landmark_path</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference external" href="https://docs.python.org/3/library/pathlib.html#pathlib.Path" title="(in Python v3.14)"><span class="pre">Path</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.14)"><span class="pre">None</span></a></span></span><a class="reference internal" href="../_modules/sign_language/models/loader.html#resolve_landmark_path"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#sign_language.models.loader.resolve_landmark_path" title="Link to this definition"></a></dt>
+<dd><p>Return the Landmark MLP checkpoint path to load at startup, if available.</p>
+<p>Dispatches on <code class="xref py py-attr docutils literal notranslate"><span class="pre">settings.deploy_target</span></code>, mirroring
+<a class="reference internal" href="#sign_language.models.loader.resolve_efficientnet_path" title="sign_language.models.loader.resolve_efficientnet_path"><code class="xref py py-func docutils literal notranslate"><span class="pre">resolve_efficientnet_path()</span></code></a>:</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">&quot;local&quot;</span></code>: returns <code class="docutils literal notranslate"><span class="pre">settings.lm_model_path</span></code> unchanged. If the file
+doesn’t exist, <code class="docutils literal notranslate"><span class="pre">load_landmark_mlp</span></code> will skip it gracefully — same
+behaviour as before.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">&quot;onprem&quot;</span></code> / <code class="docutils literal notranslate"><span class="pre">&quot;azure&quot;</span></code>: attempts to download the version aliased
+<code class="docutils literal notranslate"><span class="pre">&#64;champion</span></code> from the corresponding registry. Returns <code class="docutils literal notranslate"><span class="pre">None</span></code> if the
+model isn’t registered, the registry is unreachable, or the download
+fails — the landmark MLP is a fallback, not a hard requirement, so we
+degrade gracefully rather than blocking app startup.</p></li>
+</ul>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3/library/pathlib.html#pathlib.Path" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Path</span></code></a> to the Landmark MLP <code class="docutils literal notranslate"><span class="pre">.pth</span></code> file, or
+<code class="docutils literal notranslate"><span class="pre">None</span></code> if no checkpoint could be resolved.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="sign_language.models.loader.LoadedModels">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">sign_language.models.loader.</span></span><span class="sig-name descname"><span class="pre">LoadedModels</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="pre">device:</span> <span class="pre">torch.device,</span> <span class="pre">model:</span> <span class="pre">torch.nn.Module,</span> <span class="pre">class_names:</span> <span class="pre">list[str],</span> <span class="pre">landmark_model:</span> <span class="pre">torch.nn.Module</span> <span class="pre">|</span> <span class="pre">None</span> <span class="pre">=</span> <span class="pre">None,</span> <span class="pre">lm_class_names:</span> <span class="pre">list[str]</span> <span class="pre">=</span> <span class="pre">&lt;factory&gt;,</span> <span class="pre">hands_detector:</span> <span class="pre">object</span> <span class="pre">|</span> <span class="pre">None</span> <span class="pre">=</span> <span class="pre">None</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/sign_language/models/loader.html#LoadedModels"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#sign_language.models.loader.LoadedModels" title="Link to this definition"></a></dt>
+<dd><p>Bases: <a class="reference external" href="https://docs.python.org/3/library/functions.html#object" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></a></p>
+<p>Container holding all loaded models and associated metadata.</p>
+<p>Populated by <a class="reference internal" href="#sign_language.models.loader.load_all" title="sign_language.models.loader.load_all"><code class="xref py py-func docutils literal notranslate"><span class="pre">load_all()</span></code></a> at application startup and stored on
+<code class="docutils literal notranslate"><span class="pre">app.state.app_state</span></code> for access during inference.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>device</strong> – The torch device all models are loaded onto.</p></li>
+<li><p><strong>model</strong> – The loaded EfficientNet-B0 classifier in eval mode.</p></li>
+<li><p><strong>class_names</strong> – Ordered list of class label strings matching the
+EfficientNet output head.</p></li>
+<li><p><strong>landmark_model</strong> – The loaded Landmark MLP in eval mode, or <code class="docutils literal notranslate"><span class="pre">None</span></code>
+if the checkpoint was not found.</p></li>
+<li><p><strong>lm_class_names</strong> – Ordered list of class label strings matching the
+MLP output head. Empty if the landmark model is not loaded.</p></li>
+<li><p><strong>hands_detector</strong> – The initialised MediaPipe <code class="docutils literal notranslate"><span class="pre">HandLandmarker</span></code>
+instance, or <code class="docutils literal notranslate"><span class="pre">None</span></code> if the task file was not found or MediaPipe
+is unavailable.</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="sign_language.models.loader.LoadedModels.device">
+<span class="sig-name descname"><span class="pre">device</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.pytorch.org/docs/stable/tensor_attributes.html#torch.device" title="(in PyTorch v2.12)"><span class="pre">torch.device</span></a></em><a class="headerlink" href="#sign_language.models.loader.LoadedModels.device" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="sign_language.models.loader.LoadedModels.model">
+<span class="sig-name descname"><span class="pre">model</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.pytorch.org/docs/stable/generated/torch.nn.Module.html#torch.nn.Module" title="(in PyTorch v2.12)"><span class="pre">torch.nn.Module</span></a></em><a class="headerlink" href="#sign_language.models.loader.LoadedModels.model" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="sign_language.models.loader.LoadedModels.class_names">
+<span class="sig-name descname"><span class="pre">class_names</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#list" title="(in Python v3.14)"><span class="pre">list</span></a><span class="p"><span class="pre">[</span></span><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><span class="pre">str</span></a><span class="p"><span class="pre">]</span></span></em><a class="headerlink" href="#sign_language.models.loader.LoadedModels.class_names" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="sign_language.models.loader.LoadedModels.landmark_model">
+<span class="sig-name descname"><span class="pre">landmark_model</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.pytorch.org/docs/stable/generated/torch.nn.Module.html#torch.nn.Module" title="(in PyTorch v2.12)"><span class="pre">torch.nn.Module</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.14)"><span class="pre">None</span></a></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">None</span></em><a class="headerlink" href="#sign_language.models.loader.LoadedModels.landmark_model" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="sign_language.models.loader.LoadedModels.lm_class_names">
+<span class="sig-name descname"><span class="pre">lm_class_names</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#list" title="(in Python v3.14)"><span class="pre">list</span></a><span class="p"><span class="pre">[</span></span><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><span class="pre">str</span></a><span class="p"><span class="pre">]</span></span></em><a class="headerlink" href="#sign_language.models.loader.LoadedModels.lm_class_names" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="sign_language.models.loader.LoadedModels.hands_detector">
+<span class="sig-name descname"><span class="pre">hands_detector</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/functions.html#object" title="(in Python v3.14)"><span class="pre">object</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.14)"><span class="pre">None</span></a></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">None</span></em><a class="headerlink" href="#sign_language.models.loader.LoadedModels.hands_detector" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="sign_language.models.loader.load_efficientnet">
+<span class="sig-prename descclassname"><span class="pre">sign_language.models.loader.</span></span><span class="sig-name descname"><span class="pre">load_efficientnet</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model_path</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/pathlib.html#pathlib.Path" title="(in Python v3.14)"><span class="pre">Path</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">device</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.pytorch.org/docs/stable/tensor_attributes.html#torch.device" title="(in PyTorch v2.12)"><span class="pre">torch.device</span></a></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#tuple" title="(in Python v3.14)"><span class="pre">tuple</span></a><span class="p"><span class="pre">[</span></span><a class="reference external" href="https://docs.pytorch.org/docs/stable/generated/torch.nn.Module.html#torch.nn.Module" title="(in PyTorch v2.12)"><span class="pre">torch.nn.Module</span></a><span class="p"><span class="pre">,</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#list" title="(in Python v3.14)"><span class="pre">list</span></a><span class="p"><span class="pre">[</span></span><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><span class="pre">str</span></a><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#dict" title="(in Python v3.14)"><span class="pre">dict</span></a><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="../_modules/sign_language/models/loader.html#load_efficientnet"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#sign_language.models.loader.load_efficientnet" title="Link to this definition"></a></dt>
+<dd><p>Load an EfficientNet-B0 checkpoint from disk.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>model_path</strong> – Path to the <code class="docutils literal notranslate"><span class="pre">.pth</span></code> checkpoint file containing
+<code class="docutils literal notranslate"><span class="pre">model_state</span></code>, <code class="docutils literal notranslate"><span class="pre">class_names</span></code>, <code class="docutils literal notranslate"><span class="pre">val_acc</span></code>, and <code class="docutils literal notranslate"><span class="pre">epoch</span></code> keys.</p></li>
+<li><p><strong>device</strong> – Torch device to map the weights onto.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>A three-tuple of <code class="docutils literal notranslate"><span class="pre">(model,</span> <span class="pre">class_names,</span> <span class="pre">checkpoint_dict)</span></code>
+where <code class="docutils literal notranslate"><span class="pre">model</span></code> is in eval mode on <code class="docutils literal notranslate"><span class="pre">device</span></code>.</p>
+</dd>
+<dt class="field-odd">Raises<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3/library/exceptions.html#FileNotFoundError" title="(in Python v3.14)"><strong>FileNotFoundError</strong></a> – If <code class="docutils literal notranslate"><span class="pre">model_path</span></code> does not exist on disk.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="sign_language.models.loader.load_landmark_mlp">
+<span class="sig-prename descclassname"><span class="pre">sign_language.models.loader.</span></span><span class="sig-name descname"><span class="pre">load_landmark_mlp</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model_path</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/pathlib.html#pathlib.Path" title="(in Python v3.14)"><span class="pre">Path</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">device</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.pytorch.org/docs/stable/tensor_attributes.html#torch.device" title="(in PyTorch v2.12)"><span class="pre">torch.device</span></a></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#tuple" title="(in Python v3.14)"><span class="pre">tuple</span></a><span class="p"><span class="pre">[</span></span><a class="reference external" href="https://docs.pytorch.org/docs/stable/generated/torch.nn.Module.html#torch.nn.Module" title="(in PyTorch v2.12)"><span class="pre">torch.nn.Module</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.14)"><span class="pre">None</span></a><span class="p"><span class="pre">,</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#list" title="(in Python v3.14)"><span class="pre">list</span></a><span class="p"><span class="pre">[</span></span><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><span class="pre">str</span></a><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="../_modules/sign_language/models/loader.html#load_landmark_mlp"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#sign_language.models.loader.load_landmark_mlp" title="Link to this definition"></a></dt>
+<dd><p>Load the Landmark MLP checkpoint from disk.</p>
+<p>Returns <code class="docutils literal notranslate"><span class="pre">(None,</span> <span class="pre">[])</span></code> gracefully when the checkpoint file is missing,
+allowing the application to start without the landmark fallback model.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>model_path</strong> – Path to the <code class="docutils literal notranslate"><span class="pre">.pth</span></code> checkpoint file containing
+<code class="docutils literal notranslate"><span class="pre">model_state</span></code>, <code class="docutils literal notranslate"><span class="pre">class_names</span></code>, <code class="docutils literal notranslate"><span class="pre">input_dim</span></code>, and <code class="docutils literal notranslate"><span class="pre">val_acc</span></code> keys.</p></li>
+<li><p><strong>device</strong> – Torch device to map the weights onto.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>A two-tuple of <code class="docutils literal notranslate"><span class="pre">(model,</span> <span class="pre">class_names)</span></code> where <code class="docutils literal notranslate"><span class="pre">model</span></code> is in
+eval mode on <code class="docutils literal notranslate"><span class="pre">device</span></code>, or <code class="docutils literal notranslate"><span class="pre">(None,</span> <span class="pre">[])</span></code> if the checkpoint is missing.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="sign_language.models.loader.init_hand_detector">
+<span class="sig-prename descclassname"><span class="pre">sign_language.models.loader.</span></span><span class="sig-name descname"><span class="pre">init_hand_detector</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">landmarker_path</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/pathlib.html#pathlib.Path" title="(in Python v3.14)"><span class="pre">Path</span></a></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference external" href="https://docs.python.org/3/library/functions.html#object" title="(in Python v3.14)"><span class="pre">object</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.14)"><span class="pre">None</span></a></span></span><a class="reference internal" href="../_modules/sign_language/models/loader.html#init_hand_detector"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#sign_language.models.loader.init_hand_detector" title="Link to this definition"></a></dt>
+<dd><p>Initialise the MediaPipe hand landmarker from a task file.</p>
+<p>Returns <code class="docutils literal notranslate"><span class="pre">None</span></code> gracefully if the task file is missing or if MediaPipe
+is unavailable, allowing the application to start without hand detection.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>landmarker_path</strong> – Path to the <code class="docutils literal notranslate"><span class="pre">hand_landmarker.task</span></code> file.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>A MediaPipe <code class="docutils literal notranslate"><span class="pre">HandLandmarker</span></code> instance configured for up to
+two hands, or <code class="docutils literal notranslate"><span class="pre">None</span></code> if the task file is missing or an error occurs.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="sign_language.models.loader.load_all">
+<span class="sig-prename descclassname"><span class="pre">sign_language.models.loader.</span></span><span class="sig-name descname"><span class="pre">load_all</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model_path</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/pathlib.html#pathlib.Path" title="(in Python v3.14)"><span class="pre">Path</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.14)"><span class="pre">None</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">lm_model_path</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/pathlib.html#pathlib.Path" title="(in Python v3.14)"><span class="pre">Path</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.14)"><span class="pre">None</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">landmarker_path</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/pathlib.html#pathlib.Path" title="(in Python v3.14)"><span class="pre">Path</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.14)"><span class="pre">None</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="#sign_language.models.loader.LoadedModels" title="sign_language.models.loader.LoadedModels"><span class="pre">LoadedModels</span></a></span></span><a class="reference internal" href="../_modules/sign_language/models/loader.html#load_all"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#sign_language.models.loader.load_all" title="Link to this definition"></a></dt>
+<dd><p>Load every model and return them in a single <a class="reference internal" href="#sign_language.models.loader.LoadedModels" title="sign_language.models.loader.LoadedModels"><code class="xref py py-class docutils literal notranslate"><span class="pre">LoadedModels</span></code></a> container.</p>
+<p>When <code class="docutils literal notranslate"><span class="pre">model_path</span></code> is <code class="docutils literal notranslate"><span class="pre">None</span></code>, <a class="reference internal" href="#sign_language.models.loader.resolve_efficientnet_path" title="sign_language.models.loader.resolve_efficientnet_path"><code class="xref py py-func docutils literal notranslate"><span class="pre">resolve_efficientnet_path()</span></code></a> is
+called, which dispatches on <code class="docutils literal notranslate"><span class="pre">settings.deploy_target</span></code> to either return
+the local on-disk path, download from MLflow (<code class="docutils literal notranslate"><span class="pre">onprem</span></code>), or download
+from the Azure ML registry (<code class="docutils literal notranslate"><span class="pre">azure</span></code>).</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>model_path</strong> – Path to the EfficientNet <code class="docutils literal notranslate"><span class="pre">.pth</span></code> checkpoint, or
+<code class="docutils literal notranslate"><span class="pre">None</span></code> to resolve automatically via <a class="reference internal" href="#sign_language.models.loader.resolve_efficientnet_path" title="sign_language.models.loader.resolve_efficientnet_path"><code class="xref py py-func docutils literal notranslate"><span class="pre">resolve_efficientnet_path()</span></code></a>.</p></li>
+<li><p><strong>lm_model_path</strong> – Path to the Landmark MLP <code class="docutils literal notranslate"><span class="pre">.pth</span></code> checkpoint, or
+<code class="docutils literal notranslate"><span class="pre">None</span></code> to resolve automatically via <a class="reference internal" href="#sign_language.models.loader.resolve_landmark_path" title="sign_language.models.loader.resolve_landmark_path"><code class="xref py py-func docutils literal notranslate"><span class="pre">resolve_landmark_path()</span></code></a>.</p></li>
+<li><p><strong>landmarker_path</strong> – Path to the MediaPipe <code class="docutils literal notranslate"><span class="pre">hand_landmarker.task</span></code>
+file. Defaults to <code class="docutils literal notranslate"><span class="pre">settings.hand_landmarker_path</span></code>.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>A <a class="reference internal" href="#sign_language.models.loader.LoadedModels" title="sign_language.models.loader.LoadedModels"><code class="xref py py-class docutils literal notranslate"><span class="pre">LoadedModels</span></code></a> dataclass with all models loaded and
+ready for inference.</p>
+</dd>
+</dl>
+</dd></dl>
+
+</section>
+<section id="module-sign_language.models">
+<span id="module-contents"></span><h2>Module contents<a class="headerlink" href="#module-sign_language.models" title="Link to this heading"></a></h2>
+<p>sign_language.models sub-package.</p>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2026, Kinga Marchlewska, Raya Kichukova, Ana-Maria Farazică, Maciej Czerniak, Szymon Chirowski.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

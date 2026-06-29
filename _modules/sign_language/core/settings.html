@@ -1,0 +1,1334 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>sign_language.core.settings &mdash; Sign Language 0.1.0 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/css/theme.css?v=9edc463e" />
+
+  
+      <script src="../../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../../_static/documentation_options.js?v=01f34227"></script>
+      <script src="../../../_static/doctools.js?v=9a2dae69"></script>
+      <script src="../../../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../index.html" class="icon icon-home">
+            Sign Language
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Getting Started</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../installation.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../usage.html">Usage</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">API Reference</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../reference/sign_language.html">sign_language package</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../reference/sign_language_training.html">sign_language_training package</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../index.html">Sign Language</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">sign_language.core.settings</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for sign_language.core.settings</h1><div class="highlight"><pre>
+<span></span><span class="sd">&quot;&quot;&quot;Application settings loaded from environment variables and the ``.env`` file.</span>
+
+<span class="sd">Provides a single :class:`Settings` instance (``settings``) used throughout</span>
+<span class="sd">the application for configuration. All fields are overridable via environment</span>
+<span class="sd">variables or the ``.env`` file at the repository root.</span>
+
+<span class="sd">Torch is imported lazily via :class:`_LazyTorch` to avoid pulling it in on</span>
+<span class="sd">import in environments where it is not needed (e.g. Windows CPU-only scripts).</span>
+<span class="sd">&quot;&quot;&quot;</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">json</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">logging</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">re</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">sys</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">pathlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">Path</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Literal</span><span class="p">,</span> <span class="n">List</span><span class="p">,</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">Dict</span><span class="p">,</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Union</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">pydantic</span><span class="w"> </span><span class="kn">import</span> <span class="n">Field</span><span class="p">,</span> <span class="n">ValidationInfo</span><span class="p">,</span> <span class="n">field_validator</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">pydantic_settings</span><span class="w"> </span><span class="kn">import</span> <span class="n">BaseSettings</span><span class="p">,</span> <span class="n">SettingsConfigDict</span>
+
+
+<span class="k">class</span><span class="w"> </span><span class="nc">_LazyTorch</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Proxy that imports :mod:`torch` only when a device helper first accesses it.</span>
+
+<span class="sd">    Replaces the module-level ``torch`` name so that importing this settings</span>
+<span class="sd">    module never triggers a torch import on its own.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__getattr__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Any</span><span class="p">:</span>
+        <span class="kn">import</span><span class="w"> </span><span class="nn">torch</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">torch_module</span>
+
+        <span class="nb">globals</span><span class="p">()[</span><span class="s2">&quot;torch&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">torch_module</span>
+        <span class="k">return</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">torch_module</span><span class="p">,</span> <span class="n">name</span><span class="p">)</span>
+
+
+<span class="n">torch</span><span class="p">:</span> <span class="n">Any</span> <span class="o">=</span> <span class="n">_LazyTorch</span><span class="p">()</span>
+
+<span class="c1"># ---------------------------------------------------------------------------</span>
+<span class="c1"># Base directory — supports both normal run and bundled exe (PyInstaller)</span>
+<span class="c1"># ---------------------------------------------------------------------------</span>
+<span class="n">BASE_DIR</span><span class="p">:</span> <span class="n">Path</span> <span class="o">=</span> <span class="p">(</span>
+    <span class="n">Path</span><span class="p">(</span><span class="n">sys</span><span class="o">.</span><span class="n">_MEIPASS</span><span class="p">)</span>  <span class="c1"># type: ignore[attr-defined]</span>
+    <span class="k">if</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">sys</span><span class="p">,</span> <span class="s2">&quot;frozen&quot;</span><span class="p">,</span> <span class="kc">False</span><span class="p">)</span>
+    <span class="k">else</span> <span class="n">Path</span><span class="p">(</span><span class="vm">__file__</span><span class="p">)</span><span class="o">.</span><span class="n">resolve</span><span class="p">()</span><span class="o">.</span><span class="n">parent</span><span class="o">.</span><span class="n">parent</span><span class="o">.</span><span class="n">parent</span><span class="o">.</span><span class="n">parent</span>
+<span class="p">)</span>
+
+<span class="n">DOTENV</span><span class="p">:</span> <span class="n">Path</span> <span class="o">=</span> <span class="n">BASE_DIR</span> <span class="o">/</span> <span class="s2">&quot;.env&quot;</span>
+
+
+<div class="viewcode-block" id="Settings">
+<a class="viewcode-back" href="../../../reference/sign_language.core.html#sign_language.core.settings.Settings">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">Settings</span><span class="p">(</span><span class="n">BaseSettings</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Application-wide configuration loaded from environment variables and ``.env``.</span>
+
+<span class="sd">    All fields map directly to environment variables (case-insensitive).</span>
+<span class="sd">    Unknown variables in ``.env`` are silently ignored. Sensible defaults are</span>
+<span class="sd">    provided for every field so the application starts without a ``.env`` file,</span>
+<span class="sd">    but production deployments must override ``secret_key``, ``database_url``,</span>
+<span class="sd">    and any Azure/MLflow fields they use.</span>
+
+<span class="sd">    Sections:</span>
+
+<span class="sd">    - **Application identity**: name, version, authors, environment status.</span>
+<span class="sd">    - **Debug / logging**: debug flag, log level, log file path.</span>
+<span class="sd">    - **CORS**: allowed origins for the FastAPI CORS middleware.</span>
+<span class="sd">    - **Auth / database**: PostgreSQL URL, JWT secret, token lifetime.</span>
+<span class="sd">    - **Training**: hyperparameters, file names, dataset paths.</span>
+<span class="sd">    - **MLflow**: experiment tracking configuration.</span>
+<span class="sd">    - **Azure ML**: workspace, compute, environment, and asset settings.</span>
+<span class="sd">    - **Model paths**: local paths to model checkpoints and MediaPipe assets.</span>
+<span class="sd">    - **Server**: Uvicorn host and port.</span>
+<span class="sd">    - **Inference thresholds**: EfficientNet and landmark MLP confidence gates.</span>
+<span class="sd">    - **Sequence builder**: timing parameters for letter commit and spacing.</span>
+<span class="sd">    - **Prediction smoother**: majority-vote window and threshold settings.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">model_config</span> <span class="o">=</span> <span class="n">SettingsConfigDict</span><span class="p">(</span>
+        <span class="n">env_file</span><span class="o">=</span><span class="n">DOTENV</span><span class="p">,</span>
+        <span class="n">env_file_encoding</span><span class="o">=</span><span class="s2">&quot;utf-8&quot;</span><span class="p">,</span>
+        <span class="n">case_sensitive</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+        <span class="n">extra</span><span class="o">=</span><span class="s2">&quot;ignore&quot;</span><span class="p">,</span>
+    <span class="p">)</span>
+
+    <span class="c1"># -------------------------------------------------------------------------</span>
+    <span class="c1"># Application identity</span>
+    <span class="c1"># -------------------------------------------------------------------------</span>
+    <span class="n">app_name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="s2">&quot;Sign Language&quot;</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">&quot;Application name&quot;</span><span class="p">)</span>
+    <span class="n">version</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="s2">&quot;0.1.0&quot;</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">&quot;Application version&quot;</span><span class="p">)</span>
+    <span class="n">authors</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="n">default</span><span class="o">=</span><span class="p">[</span>
+            <span class="s2">&quot;Szymon Chirowski&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;Maciej Czerniak&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;Ana Farazică&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;Raya Kichukova&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;Kinga Marchlewska&quot;</span><span class="p">,</span>
+        <span class="p">],</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">&quot;List of authors&quot;</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="n">authors_email</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="n">default</span><span class="o">=</span><span class="p">[</span>
+            <span class="s2">&quot;242621@buas.nl&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;243552@buas.nl&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;242845@buas.nl&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;241329@buas.nl&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;241290@buas.nl&quot;</span><span class="p">,</span>
+        <span class="p">],</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">&quot;Author emails&quot;</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="n">status</span><span class="p">:</span> <span class="n">Literal</span><span class="p">[</span><span class="s2">&quot;DEVELOPMENT&quot;</span><span class="p">,</span> <span class="s2">&quot;PRODUCTION&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="n">default</span><span class="o">=</span><span class="s2">&quot;DEVELOPMENT&quot;</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">&quot;Application environment&quot;</span>
+    <span class="p">)</span>
+
+    <span class="c1"># -------------------------------------------------------------------------</span>
+    <span class="c1"># Deployment target — selects model resolution strategy at startup</span>
+    <span class="c1"># -------------------------------------------------------------------------</span>
+    <span class="n">deploy_target</span><span class="p">:</span> <span class="n">Literal</span><span class="p">[</span><span class="s2">&quot;local&quot;</span><span class="p">,</span> <span class="s2">&quot;onprem&quot;</span><span class="p">,</span> <span class="s2">&quot;azure&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="n">default</span><span class="o">=</span><span class="s2">&quot;local&quot;</span><span class="p">,</span>
+        <span class="n">description</span><span class="o">=</span><span class="p">(</span>
+            <span class="s2">&quot;Deployment target. Selects how the EfficientNet checkpoint is &quot;</span>
+            <span class="s2">&quot;resolved at startup: &#39;local&#39; uses the on-disk model_path; &quot;</span>
+            <span class="s2">&quot;&#39;onprem&#39; downloads from the self-hosted MLflow registry via &quot;</span>
+            <span class="s2">&quot;MLFLOW_TRACKING_URI; &#39;azure&#39; downloads from the Azure ML model &quot;</span>
+            <span class="s2">&quot;registry. Set DEPLOY_TARGET=onprem|azure in deployed environments.&quot;</span>
+        <span class="p">),</span>
+    <span class="p">)</span>
+
+    <span class="c1"># -------------------------------------------------------------------------</span>
+    <span class="c1"># Debug</span>
+    <span class="c1"># -------------------------------------------------------------------------</span>
+    <span class="n">debug</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">bool</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">&quot;Enable debug mode&quot;</span><span class="p">)</span>
+
+    <span class="c1"># -------------------------------------------------------------------------</span>
+    <span class="c1"># Logger</span>
+    <span class="c1"># -------------------------------------------------------------------------</span>
+    <span class="n">log_level</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">&quot;Logging level&quot;</span><span class="p">)</span>
+    <span class="n">log_path</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Path</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="n">default</span><span class="o">=</span><span class="n">Path</span><span class="p">(</span><span class="s2">&quot;logs/app.log&quot;</span><span class="p">),</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">&quot;Path to log file; create parent directories during app startup when configuring logging&quot;</span><span class="p">,</span>
+    <span class="p">)</span>
+
+    <span class="c1"># -------------------------------------------------------------------------</span>
+    <span class="c1"># CORS</span>
+    <span class="c1"># -------------------------------------------------------------------------</span>
+    <span class="n">cors_origins</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Union</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span> <span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">&quot;Allowed CORS origins&quot;</span>
+    <span class="p">)</span>
+
+    <span class="c1"># -------------------------------------------------------------------------</span>
+    <span class="c1"># Auth / Database</span>
+    <span class="c1"># -------------------------------------------------------------------------</span>
+    <span class="n">database_url</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="n">default</span><span class="o">=</span><span class="s2">&quot;postgresql+asyncpg://changeme:changeme@localhost:5432/signlang&quot;</span><span class="p">,</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">&quot;Async PostgreSQL connection string for SQLAlchemy&quot;</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="n">require_ssl</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="n">default</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">&quot;Require SSL to connect to DB.&quot;</span>
+    <span class="p">)</span>
+    <span class="n">secret_key</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="n">default</span><span class="o">=</span><span class="s2">&quot;change-me-in-production&quot;</span><span class="p">,</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">&quot;JWT signing secret — override via SECRET_KEY env var&quot;</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="n">jwt_lifetime_seconds</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="n">default</span><span class="o">=</span><span class="mi">3600</span><span class="p">,</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">&quot;JWT token lifetime in seconds&quot;</span><span class="p">,</span>
+    <span class="p">)</span>
+
+    <span class="c1"># Training defaults</span>
+    <span class="n">training_best_checkpoint_name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="n">default</span><span class="o">=</span><span class="s2">&quot;model.pth&quot;</span><span class="p">,</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">&quot;Filename for the best training checkpoint&quot;</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="n">training_history_filename</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="n">default</span><span class="o">=</span><span class="s2">&quot;training_history.json&quot;</span><span class="p">,</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">&quot;Filename for saved training history&quot;</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="n">training_metrics_filename</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="n">default</span><span class="o">=</span><span class="s2">&quot;metrics.json&quot;</span><span class="p">,</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">&quot;Filename for saved evaluation metrics&quot;</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="n">training_report_filename</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="n">default</span><span class="o">=</span><span class="s2">&quot;classification_report.txt&quot;</span><span class="p">,</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">&quot;Filename for saved classification report&quot;</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="n">training_class_names_filename</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="n">default</span><span class="o">=</span><span class="s2">&quot;class_names.json&quot;</span><span class="p">,</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">&quot;Filename for saved class names&quot;</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="n">training_img_size</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="n">default</span><span class="o">=</span><span class="mi">224</span><span class="p">,</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">&quot;Input image size used by training transforms&quot;</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="n">training_batch_size</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="mi">16</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">&quot;Training batch size&quot;</span><span class="p">)</span>
+    <span class="n">training_learning_rate</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="n">default</span><span class="o">=</span><span class="mf">1e-4</span><span class="p">,</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">&quot;Training optimizer learning rate&quot;</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="n">training_epochs</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="mi">30</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">&quot;Maximum training epochs&quot;</span><span class="p">)</span>
+    <span class="n">training_patience</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="mi">7</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">&quot;Early stopping patience&quot;</span><span class="p">)</span>
+    <span class="n">training_val_split</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="n">default</span><span class="o">=</span><span class="mf">0.2</span><span class="p">,</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">&quot;Validation split ratio&quot;</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="n">training_target_accuracy</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="n">default</span><span class="o">=</span><span class="mf">0.85</span><span class="p">,</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">&quot;Target validation accuracy&quot;</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="n">training_seed</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="mi">42</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">&quot;Random seed for training&quot;</span><span class="p">)</span>
+    <span class="n">training_n_splits</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="n">default</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">&quot;Number of stratified splits used by the training workflow&quot;</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="n">training_num_workers</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="n">default</span><span class="o">=</span><span class="mi">4</span><span class="p">,</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">&quot;DataLoader worker process count&quot;</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="n">training_pin_memory</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="n">default</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">&quot;Whether DataLoader should pin memory&quot;</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="n">training_eta_min</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="n">default</span><span class="o">=</span><span class="mf">1e-6</span><span class="p">,</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">&quot;Minimum learning rate for the scheduler&quot;</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="n">training_expected_num_classes</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="n">default</span><span class="o">=</span><span class="mi">22</span><span class="p">,</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">&quot;Expected number of NGT classes in the training dataset&quot;</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="n">training_local_data_dir</span><span class="p">:</span> <span class="n">Path</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="n">default</span><span class="o">=</span><span class="n">Path</span><span class="p">(</span><span class="s2">&quot;data/raw&quot;</span><span class="p">),</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">&quot;Local ImageFolder training dataset root&quot;</span><span class="p">,</span>
+    <span class="p">)</span>
+
+    <span class="c1"># -------------------------------------------------------------------------</span>
+    <span class="c1"># MLflow</span>
+    <span class="c1"># -------------------------------------------------------------------------</span>
+    <span class="n">mlflow_enabled</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="n">default</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">&quot;Enable MLflow experiment tracking for training&quot;</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="n">mlflow_tracking_uri</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">&quot;MLflow tracking URI; leave empty for local ./mlruns tracking&quot;</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="n">mlflow_experiment_name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="n">default</span><span class="o">=</span><span class="s2">&quot;sign-language&quot;</span><span class="p">,</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">&quot;MLflow experiment name&quot;</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="n">mlflow_run_name</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">&quot;Optional MLflow run name&quot;</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="n">mlflow_autolog</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="n">default</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">&quot;Enable MLflow PyTorch autologging before manual training starts&quot;</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="n">mlflow_log_artifacts</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="n">default</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">&quot;Log training outputs and checkpoints as MLflow artifacts&quot;</span><span class="p">,</span>
+    <span class="p">)</span>
+
+    <span class="c1"># -------------------------------------------------------------------------</span>
+    <span class="c1"># Azure ML</span>
+    <span class="c1"># -------------------------------------------------------------------------</span>
+    <span class="n">azure_subscription_id</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">&quot;Azure subscription ID&quot;</span>
+    <span class="p">)</span>
+    <span class="n">azure_resource_group</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">&quot;Azure resource group name&quot;</span>
+    <span class="p">)</span>
+    <span class="n">azure_workspace</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">&quot;Azure ML workspace name&quot;</span>
+    <span class="p">)</span>
+    <span class="n">azure_compute_target</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">&quot;Target Azure ML compute cluster name&quot;</span>
+    <span class="p">)</span>
+    <span class="n">azure_environment_name</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">&quot;Azure ML environment asset name&quot;</span>
+    <span class="p">)</span>
+    <span class="n">azure_environment_version</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">&quot;Azure ML environment asset version&quot;</span>
+    <span class="p">)</span>
+    <span class="n">azure_raw_data_asset_name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="n">default</span><span class="o">=</span><span class="s2">&quot;ngt-raw&quot;</span><span class="p">,</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">&quot;Azure ML raw ImageFolder data asset name&quot;</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="n">azure_raw_data_asset_version</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="n">default</span><span class="o">=</span><span class="s2">&quot;1&quot;</span><span class="p">,</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">&quot;Azure ML raw ImageFolder data asset version&quot;</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="n">azure_pretrained_checkpoint_asset_name</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">&quot;Optional Azure ML data/model asset name for the pretrained checkpoint&quot;</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="n">azure_pretrained_checkpoint_asset_version</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">&quot;Optional Azure ML asset version for the pretrained checkpoint&quot;</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="n">azure_instance_type</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+        <span class="n">description</span><span class="o">=</span><span class="p">(</span>
+            <span class="s2">&quot;Optional Azure ML Kubernetes instance type. &quot;</span>
+            <span class="s2">&quot;Examples: gpu, cpu-xl, cpu-large, cpu-med, cpu-small, defaultinstancetype.&quot;</span>
+        <span class="p">),</span>
+    <span class="p">)</span>
+    <span class="n">azure_prefer_gpu</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="n">default</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+        <span class="n">description</span><span class="o">=</span><span class="p">(</span>
+            <span class="s2">&quot;If true and AZURE_INSTANCE_TYPE is not set, prefer the &#39;gpu&#39; instance type. &quot;</span>
+            <span class="s2">&quot;Otherwise prefer the strongest CPU instance type.&quot;</span>
+        <span class="p">),</span>
+    <span class="p">)</span>
+    <span class="n">model_registry_name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="n">default</span><span class="o">=</span><span class="s2">&quot;ngt-sign-language&quot;</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">&quot;Name for the model registration&quot;</span>
+    <span class="p">)</span>
+    <span class="n">lm_model_registry_name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="n">default</span><span class="o">=</span><span class="s2">&quot;ngt-landmark-mlp&quot;</span><span class="p">,</span>
+        <span class="n">description</span><span class="o">=</span><span class="p">(</span>
+            <span class="s2">&quot;Registry name for the landmark MLP fallback model. Used when &quot;</span>
+            <span class="s2">&quot;deploy_target is &#39;onprem&#39; or &#39;azure&#39;. Local mode reads &quot;</span>
+            <span class="s2">&quot;lm_model_path from disk and ignores this field.&quot;</span>
+        <span class="p">),</span>
+    <span class="p">)</span>
+    <span class="n">model_cache_dir</span><span class="p">:</span> <span class="n">Path</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="n">default_factory</span><span class="o">=</span><span class="k">lambda</span><span class="p">:</span> <span class="n">BASE_DIR</span> <span class="o">/</span> <span class="s2">&quot;models&quot;</span> <span class="o">/</span> <span class="s2">&quot;registry_cache&quot;</span><span class="p">,</span>
+        <span class="n">description</span><span class="o">=</span><span class="p">(</span>
+            <span class="s2">&quot;Local cache directory for models downloaded from a remote &quot;</span>
+            <span class="s2">&quot;registry (Azure ML or self-hosted MLflow). Versioned subdirectories &quot;</span>
+            <span class="s2">&quot;keyed by version number; on startup the cached file is reused if &quot;</span>
+            <span class="s2">&quot;the latest version has not changed.&quot;</span>
+        <span class="p">),</span>
+    <span class="p">)</span>
+    <span class="n">training_f1_threshold</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="n">default</span><span class="o">=</span><span class="mf">0.80</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">&quot;A threshold when the model will be registered&quot;</span>
+    <span class="p">)</span>
+
+    <span class="c1"># -------------------------------------------------------------------------</span>
+    <span class="c1"># Model &amp; asset paths</span>
+    <span class="c1"># -------------------------------------------------------------------------</span>
+    <span class="n">img_size</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="mi">224</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">&quot;Input image size for the model&quot;</span><span class="p">)</span>
+    <span class="n">model_path</span><span class="p">:</span> <span class="n">Path</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="n">default_factory</span><span class="o">=</span><span class="k">lambda</span><span class="p">:</span> <span class="n">BASE_DIR</span> <span class="o">/</span> <span class="s2">&quot;models&quot;</span> <span class="o">/</span> <span class="s2">&quot;best_ngt_model_v2.pth&quot;</span><span class="p">,</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">&quot;Path to the main NGT recognition model&quot;</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="n">lm_model_path</span><span class="p">:</span> <span class="n">Path</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="n">default_factory</span><span class="o">=</span><span class="k">lambda</span><span class="p">:</span> <span class="n">BASE_DIR</span> <span class="o">/</span> <span class="s2">&quot;models&quot;</span> <span class="o">/</span> <span class="s2">&quot;best_landmark_mlp.pth&quot;</span><span class="p">,</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">&quot;Path to the landmark MLP model&quot;</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="n">hand_landmarker_path</span><span class="p">:</span> <span class="n">Path</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="n">default_factory</span><span class="o">=</span><span class="k">lambda</span><span class="p">:</span> <span class="n">BASE_DIR</span> <span class="o">/</span> <span class="s2">&quot;models&quot;</span> <span class="o">/</span> <span class="s2">&quot;hand_landmarker.task&quot;</span><span class="p">,</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">&quot;Path to the MediaPipe hand landmarker task file&quot;</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="n">frontend_build_dir</span><span class="p">:</span> <span class="n">Path</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="n">default_factory</span><span class="o">=</span><span class="k">lambda</span><span class="p">:</span> <span class="n">BASE_DIR</span><span class="o">.</span><span class="n">parent</span> <span class="o">/</span> <span class="s2">&quot;frontend&quot;</span> <span class="o">/</span> <span class="s2">&quot;dist&quot;</span><span class="p">,</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">&quot;Path to the compiled frontend build directory&quot;</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="n">recordings_dir</span><span class="p">:</span> <span class="n">Path</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="n">default_factory</span><span class="o">=</span><span class="k">lambda</span><span class="p">:</span> <span class="n">BASE_DIR</span> <span class="o">/</span> <span class="s2">&quot;recordings&quot;</span><span class="p">,</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">&quot;Directory where sign-language session recordings are stored&quot;</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="n">collect_storage_dir</span><span class="p">:</span> <span class="n">Path</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="n">default_factory</span><span class="o">=</span><span class="k">lambda</span><span class="p">:</span> <span class="n">BASE_DIR</span> <span class="o">/</span> <span class="s2">&quot;collected_samples&quot;</span><span class="p">,</span>
+        <span class="n">description</span><span class="o">=</span><span class="p">(</span>
+            <span class="s2">&quot;Directory where Collect-mode training samples are written. Local &quot;</span>
+            <span class="s2">&quot;filesystem for now; a future deployment can point this elsewhere &quot;</span>
+            <span class="s2">&quot;(or swap the storage layer for Azure Blob).&quot;</span>
+        <span class="p">),</span>
+    <span class="p">)</span>
+
+    <span class="c1"># -------------------------------------------------------------------------</span>
+    <span class="c1"># Server</span>
+    <span class="c1"># -------------------------------------------------------------------------</span>
+    <span class="n">server_host</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="n">default</span><span class="o">=</span><span class="s2">&quot;0.0.0.0&quot;</span><span class="p">,</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">&quot;Host address for the uvicorn server&quot;</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="n">server_port</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="n">default</span><span class="o">=</span><span class="mi">8000</span><span class="p">,</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">&quot;Port for the uvicorn server&quot;</span><span class="p">,</span>
+    <span class="p">)</span>
+
+    <span class="c1"># -------------------------------------------------------------------------</span>
+    <span class="c1"># Inference thresholds</span>
+    <span class="c1"># -------------------------------------------------------------------------</span>
+    <span class="n">efficientnet_confidence_threshold</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="n">default</span><span class="o">=</span><span class="mf">0.70</span><span class="p">,</span>
+        <span class="n">description</span><span class="o">=</span><span class="p">(</span>
+            <span class="s2">&quot;Minimum EfficientNet softmax confidence required before considering the &quot;</span>
+            <span class="s2">&quot;landmark MLP fallback; predictions above this threshold skip the MLP entirely&quot;</span>
+        <span class="p">),</span>
+    <span class="p">)</span>
+    <span class="n">landmark_override_threshold</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="n">default</span><span class="o">=</span><span class="mf">0.90</span><span class="p">,</span>
+        <span class="n">description</span><span class="o">=</span><span class="p">(</span>
+            <span class="s2">&quot;Minimum landmark MLP confidence required to override the EfficientNet &quot;</span>
+            <span class="s2">&quot;prediction when EfficientNet confidence is below the primary threshold&quot;</span>
+        <span class="p">),</span>
+    <span class="p">)</span>
+
+    <span class="c1"># -------------------------------------------------------------------------</span>
+    <span class="c1"># Sequence builder  (seconds)</span>
+    <span class="c1"># -------------------------------------------------------------------------</span>
+    <span class="n">sequence_letter_hold_sec</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="n">default</span><span class="o">=</span><span class="mf">1.0</span><span class="p">,</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">&quot;How long a stable prediction must be held before it is committed as a letter&quot;</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="n">sequence_cooldown_sec</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="n">default</span><span class="o">=</span><span class="mf">1.0</span><span class="p">,</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">&quot;Minimum gap required between two consecutive committed letters&quot;</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="n">sequence_space_pause_sec</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="n">default</span><span class="o">=</span><span class="mf">1.5</span><span class="p">,</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">&quot;Duration of hand-absent silence that triggers an automatic space insertion&quot;</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="n">sequence_stable_grace_sec</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="n">default</span><span class="o">=</span><span class="mf">0.4</span><span class="p">,</span>
+        <span class="n">description</span><span class="o">=</span><span class="p">(</span>
+            <span class="s2">&quot;Maximum gap duration for which a briefly-missing stable prediction is &quot;</span>
+            <span class="s2">&quot;treated as a noisy frame rather than a genuine loss of tracking; &quot;</span>
+            <span class="s2">&quot;keeps the hold timer running across single-frame smoother blips&quot;</span>
+        <span class="p">),</span>
+    <span class="p">)</span>
+
+    <span class="c1"># -------------------------------------------------------------------------</span>
+    <span class="c1"># Prediction smoother</span>
+    <span class="c1"># -------------------------------------------------------------------------</span>
+    <span class="n">smoother_window_size</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="n">default</span><span class="o">=</span><span class="mi">15</span><span class="p">,</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">&quot;Number of recent frames kept in the majority-vote smoothing window&quot;</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="n">smoother_acquire_threshold</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="n">default</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span>
+        <span class="n">description</span><span class="o">=</span><span class="p">(</span>
+            <span class="s2">&quot;Minimum vote count within the window required to acquire stability &quot;</span>
+            <span class="s2">&quot;(strict bar — 10/15 ≈ 66 </span><span class="si">%%</span><span class="s2"> with defaults)&quot;</span>
+        <span class="p">),</span>
+    <span class="p">)</span>
+    <span class="n">smoother_sticky_threshold</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="n">default</span><span class="o">=</span><span class="mi">7</span><span class="p">,</span>
+        <span class="n">description</span><span class="o">=</span><span class="p">(</span>
+            <span class="s2">&quot;Minimum vote count within the window required to keep an already-stable &quot;</span>
+            <span class="s2">&quot;letter stable (lenient bar — 7/15 ≈ 46 </span><span class="si">%%</span><span class="s2"> with defaults)&quot;</span>
+        <span class="p">),</span>
+    <span class="p">)</span>
+    <span class="n">smoother_min_confidence</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="n">default</span><span class="o">=</span><span class="mf">0.55</span><span class="p">,</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">&quot;Per-frame confidence floor; frames below this value are excluded from smoothing&quot;</span><span class="p">,</span>
+    <span class="p">)</span>
+
+    <span class="c1"># =========================================================================</span>
+    <span class="c1"># VALIDATORS</span>
+    <span class="c1"># =========================================================================</span>
+
+    <span class="nd">@field_validator</span><span class="p">(</span><span class="s2">&quot;debug&quot;</span><span class="p">,</span> <span class="n">mode</span><span class="o">=</span><span class="s2">&quot;before&quot;</span><span class="p">)</span>
+    <span class="nd">@classmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">normalize_debug_input</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">v</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">bool</span> <span class="o">|</span> <span class="nb">str</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">bool</span> <span class="o">|</span> <span class="nb">str</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Normalise string representations of the debug flag to booleans.</span>
+
+<span class="sd">        Accepts common truthy/falsy string values including environment-style</span>
+<span class="sd">        words such as ``&quot;development&quot;`` and ``&quot;production&quot;``.</span>
+
+<span class="sd">        :param v: Raw input value from the environment or ``.env`` file.</span>
+<span class="sd">        :returns: ``True``, ``False``, or the original value if no normalisation</span>
+<span class="sd">            applies.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">v</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
+            <span class="n">normalized</span> <span class="o">=</span> <span class="n">v</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span>
+            <span class="k">if</span> <span class="n">normalized</span> <span class="ow">in</span> <span class="p">{</span><span class="s2">&quot;release&quot;</span><span class="p">,</span> <span class="s2">&quot;production&quot;</span><span class="p">,</span> <span class="s2">&quot;prod&quot;</span><span class="p">,</span> <span class="s2">&quot;false&quot;</span><span class="p">,</span> <span class="s2">&quot;0&quot;</span><span class="p">,</span> <span class="s2">&quot;off&quot;</span><span class="p">}:</span>
+                <span class="k">return</span> <span class="kc">False</span>
+            <span class="k">if</span> <span class="n">normalized</span> <span class="ow">in</span> <span class="p">{</span><span class="s2">&quot;development&quot;</span><span class="p">,</span> <span class="s2">&quot;dev&quot;</span><span class="p">,</span> <span class="s2">&quot;true&quot;</span><span class="p">,</span> <span class="s2">&quot;1&quot;</span><span class="p">,</span> <span class="s2">&quot;on&quot;</span><span class="p">}:</span>
+                <span class="k">return</span> <span class="kc">True</span>
+        <span class="k">return</span> <span class="n">v</span>
+
+    <span class="nd">@field_validator</span><span class="p">(</span><span class="s2">&quot;debug&quot;</span><span class="p">)</span>
+    <span class="nd">@classmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">set_and_verify_debug_mode</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">v</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">bool</span><span class="p">],</span> <span class="n">info</span><span class="p">:</span> <span class="n">ValidationInfo</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Derive and validate the debug flag against the application status.</span>
+
+<span class="sd">        If ``debug`` is ``None``, infers ``True`` for ``DEVELOPMENT`` and</span>
+<span class="sd">        ``False`` for ``PRODUCTION``. Raises if debug is explicitly enabled</span>
+<span class="sd">        in a production environment.</span>
+
+<span class="sd">        :param v: The normalised debug value, or ``None`` if not set.</span>
+<span class="sd">        :param info: Pydantic validation context providing access to already</span>
+<span class="sd">            validated fields.</span>
+<span class="sd">        :returns: The resolved boolean debug flag.</span>
+<span class="sd">        :raises ValueError: If ``debug=True`` is set while ``status`` is</span>
+<span class="sd">            ``&quot;PRODUCTION&quot;``.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">status</span> <span class="o">=</span> <span class="n">info</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;status&quot;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">v</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">status</span> <span class="o">==</span> <span class="s2">&quot;DEVELOPMENT&quot;</span>
+        <span class="k">if</span> <span class="n">status</span> <span class="o">==</span> <span class="s2">&quot;PRODUCTION&quot;</span> <span class="ow">and</span> <span class="n">v</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Debug mode cannot be enabled in PRODUCTION environment&quot;</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">v</span>
+
+    <span class="nd">@field_validator</span><span class="p">(</span><span class="s2">&quot;log_level&quot;</span><span class="p">)</span>
+    <span class="nd">@classmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">validate_log_level</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">v</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span> <span class="n">info</span><span class="p">:</span> <span class="n">ValidationInfo</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Validate and resolve the log level string.</span>
+
+<span class="sd">        If ``None``, defaults to ``&quot;DEBUG&quot;`` in development and ``&quot;INFO&quot;``</span>
+<span class="sd">        in production.</span>
+
+<span class="sd">        :param v: The raw log level string, or ``None``.</span>
+<span class="sd">        :param info: Pydantic validation context.</span>
+<span class="sd">        :returns: A valid uppercase log level string.</span>
+<span class="sd">        :raises ValueError: If the provided string is not a recognised</span>
+<span class="sd">            Python logging level name.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="n">v</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">return</span> <span class="s2">&quot;DEBUG&quot;</span> <span class="k">if</span> <span class="n">info</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;debug&quot;</span><span class="p">,</span> <span class="kc">False</span><span class="p">)</span> <span class="k">else</span> <span class="s2">&quot;INFO&quot;</span>
+        <span class="n">valid_levels</span> <span class="o">=</span> <span class="p">[</span>
+            <span class="s2">&quot;CRITICAL&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;FATAL&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;ERROR&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;WARNING&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;WARN&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;INFO&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;DEBUG&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;NOTSET&quot;</span><span class="p">,</span>
+        <span class="p">]</span>
+        <span class="k">if</span> <span class="n">v</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">valid_levels</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">&quot;Invalid log level. Must be one of: </span><span class="si">{</span><span class="s1">&#39;, &#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">valid_levels</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span>
+            <span class="p">)</span>
+        <span class="k">return</span> <span class="n">v</span>
+
+    <span class="nd">@field_validator</span><span class="p">(</span><span class="s2">&quot;version&quot;</span><span class="p">)</span>
+    <span class="nd">@classmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">validate_version</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">v</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Validate that the version string follows semantic versioning.</span>
+
+<span class="sd">        :param v: The raw version string.</span>
+<span class="sd">        :returns: The version string unchanged if valid.</span>
+<span class="sd">        :raises ValueError: If the string does not match the semver pattern.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">re</span><span class="o">.</span><span class="n">match</span><span class="p">(</span><span class="sa">r</span><span class="s2">&quot;^\d+\.\d+\.\d+(-[a-zA-Z0-9.-]+)?(\+[a-zA-Z0-9.-]+)?$&quot;</span><span class="p">,</span> <span class="n">v</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="s2">&quot;Version must follow semantic versioning (e.g., 1.0.0 or 1.0.0-rc2)&quot;</span>
+            <span class="p">)</span>
+        <span class="k">return</span> <span class="n">v</span>
+
+    <span class="nd">@field_validator</span><span class="p">(</span><span class="s2">&quot;authors&quot;</span><span class="p">)</span>
+    <span class="nd">@classmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">validate_authors</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">authors</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Validate that at least one non-empty author name is provided.</span>
+
+<span class="sd">        :param authors: List of author name strings.</span>
+<span class="sd">        :returns: The list unchanged if valid.</span>
+<span class="sd">        :raises ValueError: If the list is empty or any name is blank.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">authors</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;At least one author must be specified&quot;</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">author</span> <span class="ow">in</span> <span class="n">authors</span><span class="p">:</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">author</span><span class="o">.</span><span class="n">strip</span><span class="p">():</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Author names cannot be empty&quot;</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">authors</span>
+
+    <span class="nd">@field_validator</span><span class="p">(</span><span class="s2">&quot;authors_email&quot;</span><span class="p">)</span>
+    <span class="nd">@classmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">validate_emails</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">emails</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span> <span class="n">info</span><span class="p">:</span> <span class="n">ValidationInfo</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Validate that email count matches author count and all emails are valid.</span>
+
+<span class="sd">        :param emails: List of author email strings.</span>
+<span class="sd">        :param info: Pydantic validation context providing access to ``authors``.</span>
+<span class="sd">        :returns: The list unchanged if valid.</span>
+<span class="sd">        :raises ValueError: If the email count does not match the author count,</span>
+<span class="sd">            or if any email does not match the expected format.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">authors_count</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">info</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;authors&quot;</span><span class="p">,</span> <span class="p">[]))</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">emails</span><span class="p">)</span> <span class="o">!=</span> <span class="n">authors_count</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">&quot;Number of emails (</span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">emails</span><span class="p">)</span><span class="si">}</span><span class="s2">) must match number of authors (</span><span class="si">{</span><span class="n">authors_count</span><span class="si">}</span><span class="s2">)&quot;</span>
+            <span class="p">)</span>
+        <span class="n">email_pattern</span> <span class="o">=</span> <span class="sa">r</span><span class="s2">&quot;^[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+$&quot;</span>
+        <span class="k">for</span> <span class="n">email</span> <span class="ow">in</span> <span class="n">emails</span><span class="p">:</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">re</span><span class="o">.</span><span class="n">match</span><span class="p">(</span><span class="n">email_pattern</span><span class="p">,</span> <span class="n">email</span><span class="p">):</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Invalid email format: </span><span class="si">{</span><span class="n">email</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">emails</span>
+
+    <span class="nd">@field_validator</span><span class="p">(</span><span class="s2">&quot;log_path&quot;</span><span class="p">)</span>
+    <span class="nd">@classmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">validate_log_path</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">path</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Path</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Path</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Pass through the log path unchanged.</span>
+
+<span class="sd">        :param path: The raw log path value, or ``None``.</span>
+<span class="sd">        :returns: The path unchanged.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="n">path</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">return</span> <span class="kc">None</span>
+        <span class="k">return</span> <span class="n">path</span>
+
+    <span class="nd">@field_validator</span><span class="p">(</span><span class="s2">&quot;cors_origins&quot;</span><span class="p">,</span> <span class="n">mode</span><span class="o">=</span><span class="s2">&quot;before&quot;</span><span class="p">)</span>
+    <span class="nd">@classmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">parse_cors_origins</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">v</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]]])</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Parse CORS origins from a list, JSON array string, or comma-separated string.</span>
+
+<span class="sd">        :param v: Raw input — a list, a JSON array string, a comma-separated</span>
+<span class="sd">            string, or ``None``.</span>
+<span class="sd">        :returns: A list of origin strings. Returns an empty list for ``None``.</span>
+<span class="sd">        :raises ValueError: If the input type is not supported.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="n">v</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">return</span> <span class="p">[]</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">v</span><span class="p">,</span> <span class="nb">list</span><span class="p">):</span>
+            <span class="k">return</span> <span class="n">v</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">v</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
+            <span class="n">stripped</span> <span class="o">=</span> <span class="n">v</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
+            <span class="k">if</span> <span class="n">stripped</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s2">&quot;[&quot;</span><span class="p">):</span>
+                <span class="k">try</span><span class="p">:</span>
+                    <span class="n">parsed</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">loads</span><span class="p">(</span><span class="n">stripped</span><span class="p">)</span>
+                    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">parsed</span><span class="p">,</span> <span class="nb">list</span><span class="p">):</span>
+                        <span class="k">return</span> <span class="p">[</span><span class="nb">str</span><span class="p">(</span><span class="n">item</span><span class="p">)</span> <span class="k">for</span> <span class="n">item</span> <span class="ow">in</span> <span class="n">parsed</span><span class="p">]</span>
+                <span class="k">except</span> <span class="n">json</span><span class="o">.</span><span class="n">JSONDecodeError</span><span class="p">:</span>
+                    <span class="k">pass</span>
+            <span class="k">return</span> <span class="p">[</span><span class="n">origin</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span> <span class="k">for</span> <span class="n">origin</span> <span class="ow">in</span> <span class="n">stripped</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot;,&quot;</span><span class="p">)]</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+            <span class="s2">&quot;cors_origins must be a list of strings, a comma-separated string, or null&quot;</span>
+        <span class="p">)</span>
+
+    <span class="nd">@field_validator</span><span class="p">(</span>
+        <span class="s2">&quot;training_img_size&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;training_batch_size&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;training_epochs&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;training_patience&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;training_expected_num_classes&quot;</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="nd">@classmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">validate_positive_training_ints</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">v</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Validate that core training integer settings are positive.</span>
+
+<span class="sd">        :param v: The integer value to validate.</span>
+<span class="sd">        :returns: The value unchanged if positive.</span>
+<span class="sd">        :raises ValueError: If the value is zero or negative.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="n">v</span> <span class="o">&lt;=</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Training integer settings must be positive&quot;</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">v</span>
+
+    <span class="nd">@field_validator</span><span class="p">(</span><span class="s2">&quot;training_learning_rate&quot;</span><span class="p">)</span>
+    <span class="nd">@classmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">validate_positive_training_floats</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">v</span><span class="p">:</span> <span class="nb">float</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Validate that the learning rate is strictly positive.</span>
+
+<span class="sd">        :param v: The learning rate value.</span>
+<span class="sd">        :returns: The value unchanged if positive.</span>
+<span class="sd">        :raises ValueError: If the value is zero or negative.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="n">v</span> <span class="o">&lt;=</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Training float settings must be positive&quot;</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">v</span>
+
+    <span class="nd">@field_validator</span><span class="p">(</span><span class="s2">&quot;training_eta_min&quot;</span><span class="p">)</span>
+    <span class="nd">@classmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">validate_training_eta_min</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">v</span><span class="p">:</span> <span class="nb">float</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Validate that the minimum learning rate is non-negative.</span>
+
+<span class="sd">        :param v: The eta_min value.</span>
+<span class="sd">        :returns: The value unchanged if non-negative.</span>
+<span class="sd">        :raises ValueError: If the value is negative.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="n">v</span> <span class="o">&lt;</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;TRAINING_ETA_MIN cannot be negative&quot;</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">v</span>
+
+    <span class="nd">@field_validator</span><span class="p">(</span><span class="s2">&quot;training_val_split&quot;</span><span class="p">,</span> <span class="s2">&quot;training_target_accuracy&quot;</span><span class="p">)</span>
+    <span class="nd">@classmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">validate_training_ratios</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">v</span><span class="p">:</span> <span class="nb">float</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Validate that training ratio settings are strictly between 0 and 1.</span>
+
+<span class="sd">        :param v: The ratio value.</span>
+<span class="sd">        :returns: The value unchanged if in (0, 1).</span>
+<span class="sd">        :raises ValueError: If the value is outside the open interval (0, 1).</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="mi">0</span> <span class="o">&lt;</span> <span class="n">v</span> <span class="o">&lt;</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Training ratio settings must be between 0 and 1&quot;</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">v</span>
+
+    <span class="nd">@field_validator</span><span class="p">(</span><span class="s2">&quot;training_n_splits&quot;</span><span class="p">)</span>
+    <span class="nd">@classmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">validate_training_n_splits</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">v</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Validate that the number of training splits is exactly 1.</span>
+
+<span class="sd">        :param v: The n_splits value.</span>
+<span class="sd">        :returns: The value unchanged if equal to 1.</span>
+<span class="sd">        :raises ValueError: If the value is not 1.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="n">v</span> <span class="o">!=</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="s2">&quot;Number of splits must be exactly 1 for the current training workflow&quot;</span>
+            <span class="p">)</span>
+        <span class="k">return</span> <span class="n">v</span>
+
+    <span class="nd">@field_validator</span><span class="p">(</span><span class="s2">&quot;training_num_workers&quot;</span><span class="p">)</span>
+    <span class="nd">@classmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">validate_training_num_workers</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">v</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Validate that the DataLoader worker count is non-negative.</span>
+
+<span class="sd">        :param v: The num_workers value.</span>
+<span class="sd">        :returns: The value unchanged if non-negative.</span>
+<span class="sd">        :raises ValueError: If the value is negative.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="n">v</span> <span class="o">&lt;</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Number of workers cannot be negative&quot;</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">v</span>
+
+    <span class="nd">@field_validator</span><span class="p">(</span><span class="s2">&quot;img_size&quot;</span><span class="p">)</span>
+    <span class="nd">@classmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">validate_img_size</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">v</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Validate that the inference image size is a positive integer.</span>
+
+<span class="sd">        :param v: The img_size value.</span>
+<span class="sd">        :returns: The value unchanged if positive.</span>
+<span class="sd">        :raises ValueError: If the value is zero or negative.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="n">v</span> <span class="o">&lt;=</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;IMG_SIZE must be a positive integer&quot;</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">v</span>
+
+    <span class="nd">@field_validator</span><span class="p">(</span><span class="s2">&quot;server_port&quot;</span><span class="p">)</span>
+    <span class="nd">@classmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">validate_server_port</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">v</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Validate that the server port is in the valid TCP range.</span>
+
+<span class="sd">        :param v: The port number.</span>
+<span class="sd">        :returns: The value unchanged if in [1, 65535].</span>
+<span class="sd">        :raises ValueError: If the port is outside the valid range.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="mi">1</span> <span class="o">&lt;=</span> <span class="n">v</span> <span class="o">&lt;=</span> <span class="mi">65535</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;server_port must be between 1 and 65535&quot;</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">v</span>
+
+    <span class="nd">@field_validator</span><span class="p">(</span><span class="s2">&quot;server_host&quot;</span><span class="p">)</span>
+    <span class="nd">@classmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">validate_server_host</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">v</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Validate that the server host string is not blank.</span>
+
+<span class="sd">        :param v: The host string.</span>
+<span class="sd">        :returns: The value unchanged if non-empty.</span>
+<span class="sd">        :raises ValueError: If the string is empty or whitespace only.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">v</span><span class="o">.</span><span class="n">strip</span><span class="p">():</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;server_host cannot be empty&quot;</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">v</span>
+
+    <span class="nd">@field_validator</span><span class="p">(</span>
+        <span class="s2">&quot;efficientnet_confidence_threshold&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;landmark_override_threshold&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;smoother_min_confidence&quot;</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="nd">@classmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">validate_unit_interval</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">v</span><span class="p">:</span> <span class="nb">float</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Validate that confidence and threshold values are in the open interval (0, 1).</span>
+
+<span class="sd">        :param v: The threshold value.</span>
+<span class="sd">        :returns: The value unchanged if in (0, 1).</span>
+<span class="sd">        :raises ValueError: If the value is outside the open interval.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="mf">0.0</span> <span class="o">&lt;</span> <span class="n">v</span> <span class="o">&lt;</span> <span class="mf">1.0</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="s2">&quot;Confidence/threshold values must be between 0 and 1 (exclusive)&quot;</span>
+            <span class="p">)</span>
+        <span class="k">return</span> <span class="n">v</span>
+
+    <span class="nd">@field_validator</span><span class="p">(</span>
+        <span class="s2">&quot;sequence_letter_hold_sec&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;sequence_cooldown_sec&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;sequence_space_pause_sec&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;sequence_stable_grace_sec&quot;</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="nd">@classmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">validate_positive_durations</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">v</span><span class="p">:</span> <span class="nb">float</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Validate that sequence timing values are strictly positive.</span>
+
+<span class="sd">        :param v: The duration in seconds.</span>
+<span class="sd">        :returns: The value unchanged if positive.</span>
+<span class="sd">        :raises ValueError: If the value is zero or negative.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="n">v</span> <span class="o">&lt;=</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Timing values must be positive&quot;</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">v</span>
+
+    <span class="nd">@field_validator</span><span class="p">(</span>
+        <span class="s2">&quot;smoother_window_size&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;smoother_acquire_threshold&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;smoother_sticky_threshold&quot;</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="nd">@classmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">validate_positive_smoother_ints</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">v</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Validate that smoother integer settings are at least 1.</span>
+
+<span class="sd">        :param v: The smoother integer value.</span>
+<span class="sd">        :returns: The value unchanged if &gt;= 1.</span>
+<span class="sd">        :raises ValueError: If the value is less than 1.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="n">v</span> <span class="o">&lt;</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Smoother integer settings must be at least 1&quot;</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">v</span>
+
+    <span class="nd">@field_validator</span><span class="p">(</span><span class="s2">&quot;database_url&quot;</span><span class="p">)</span>
+    <span class="nd">@classmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">validate_database_url</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">v</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Validate that the database URL uses the asyncpg scheme.</span>
+
+<span class="sd">        :param v: The raw database URL string.</span>
+<span class="sd">        :returns: The URL unchanged if valid.</span>
+<span class="sd">        :raises ValueError: If the URL does not start with</span>
+<span class="sd">            ``postgresql+asyncpg://``.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">v</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s2">&quot;postgresql+asyncpg://&quot;</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="s2">&quot;DATABASE_URL must use the postgresql+asyncpg:// scheme. &quot;</span> <span class="sa">f</span><span class="s2">&quot;Got: </span><span class="si">{</span><span class="n">v</span><span class="si">!r}</span><span class="s2">&quot;</span>
+            <span class="p">)</span>
+        <span class="k">return</span> <span class="n">v</span>
+
+    <span class="nd">@field_validator</span><span class="p">(</span><span class="s2">&quot;secret_key&quot;</span><span class="p">)</span>
+    <span class="nd">@classmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">validate_secret_key</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">v</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Validate the JWT secret key length and warn if using the default placeholder.</span>
+
+<span class="sd">        Allows the default ``&quot;change-me-in-production&quot;`` placeholder through</span>
+<span class="sd">        with a warning so development environments start without configuration.</span>
+<span class="sd">        In all other cases, enforces a minimum length of 32 characters.</span>
+
+<span class="sd">        :param v: The raw secret key string.</span>
+<span class="sd">        :returns: The key unchanged if valid.</span>
+<span class="sd">        :raises ValueError: If the key is not the default placeholder and is</span>
+<span class="sd">            shorter than 32 characters.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="kn">import</span><span class="w"> </span><span class="nn">logging</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">_logging</span>
+
+        <span class="n">_log</span> <span class="o">=</span> <span class="n">_logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="vm">__name__</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">v</span> <span class="o">==</span> <span class="s2">&quot;change-me-in-production&quot;</span><span class="p">:</span>
+            <span class="n">_log</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span>
+                <span class="s2">&quot;SECRET_KEY is set to the default placeholder — &quot;</span>
+                <span class="s2">&quot;override it in .env before deploying.&quot;</span>
+            <span class="p">)</span>
+            <span class="k">return</span> <span class="n">v</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">v</span><span class="p">)</span> <span class="o">&lt;</span> <span class="mi">32</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">&quot;SECRET_KEY must be at least 32 characters, got </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">v</span><span class="p">)</span><span class="si">}</span><span class="s2">.&quot;</span>
+            <span class="p">)</span>
+        <span class="k">return</span> <span class="n">v</span>
+
+    <span class="nd">@field_validator</span><span class="p">(</span><span class="s2">&quot;jwt_lifetime_seconds&quot;</span><span class="p">)</span>
+    <span class="nd">@classmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">validate_jwt_lifetime</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">v</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Validate that the JWT token lifetime is a positive integer.</span>
+
+<span class="sd">        :param v: The lifetime in seconds.</span>
+<span class="sd">        :returns: The value unchanged if positive.</span>
+<span class="sd">        :raises ValueError: If the value is zero or negative.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="n">v</span> <span class="o">&lt;=</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;JWT_LIFETIME_SECONDS must be a positive integer.&quot;</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">v</span>
+
+    <span class="c1"># =========================================================================</span>
+    <span class="c1"># GETTERS — application</span>
+    <span class="c1"># =========================================================================</span>
+
+<div class="viewcode-block" id="Settings.get_debug_state">
+<a class="viewcode-back" href="../../../reference/sign_language.core.html#sign_language.core.settings.Settings.get_debug_state">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_debug_state</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Return the debug flag as a boolean.</span>
+
+<span class="sd">        :returns: ``True`` if debug mode is active, ``False`` otherwise.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="nb">bool</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">debug</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="Settings.get_log_level">
+<a class="viewcode-back" href="../../../reference/sign_language.core.html#sign_language.core.settings.Settings.get_log_level">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_log_level</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Convert the string log level to its corresponding integer value.</span>
+
+<span class="sd">        :returns: The integer logging level constant from the :mod:`logging`</span>
+<span class="sd">            module corresponding to ``self.log_level``.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">level_map</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="s2">&quot;CRITICAL&quot;</span><span class="p">:</span> <span class="n">logging</span><span class="o">.</span><span class="n">CRITICAL</span><span class="p">,</span>
+            <span class="s2">&quot;FATAL&quot;</span><span class="p">:</span> <span class="n">logging</span><span class="o">.</span><span class="n">FATAL</span><span class="p">,</span>
+            <span class="s2">&quot;ERROR&quot;</span><span class="p">:</span> <span class="n">logging</span><span class="o">.</span><span class="n">ERROR</span><span class="p">,</span>
+            <span class="s2">&quot;WARNING&quot;</span><span class="p">:</span> <span class="n">logging</span><span class="o">.</span><span class="n">WARNING</span><span class="p">,</span>
+            <span class="s2">&quot;WARN&quot;</span><span class="p">:</span> <span class="n">logging</span><span class="o">.</span><span class="n">WARNING</span><span class="p">,</span>
+            <span class="s2">&quot;INFO&quot;</span><span class="p">:</span> <span class="n">logging</span><span class="o">.</span><span class="n">INFO</span><span class="p">,</span>
+            <span class="s2">&quot;DEBUG&quot;</span><span class="p">:</span> <span class="n">logging</span><span class="o">.</span><span class="n">DEBUG</span><span class="p">,</span>
+            <span class="s2">&quot;NOTSET&quot;</span><span class="p">:</span> <span class="n">logging</span><span class="o">.</span><span class="n">NOTSET</span><span class="p">,</span>
+        <span class="p">}</span>
+        <span class="k">return</span> <span class="n">level_map</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">log_level</span> <span class="ow">or</span> <span class="s2">&quot;INFO&quot;</span><span class="p">]</span></div>
+
+
+<div class="viewcode-block" id="Settings.get_app_info">
+<a class="viewcode-back" href="../../../reference/sign_language.core.html#sign_language.core.settings.Settings.get_app_info">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_app_info</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Return a dictionary with basic application identity information.</span>
+
+<span class="sd">        :returns: Dict containing ``name``, ``version``, ``environment``,</span>
+<span class="sd">            and ``debug`` keys.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="p">{</span>
+            <span class="s2">&quot;name&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">app_name</span><span class="p">,</span>
+            <span class="s2">&quot;version&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">version</span><span class="p">,</span>
+            <span class="s2">&quot;environment&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">status</span><span class="p">,</span>
+            <span class="s2">&quot;debug&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">debug</span><span class="p">,</span>
+        <span class="p">}</span></div>
+
+
+<div class="viewcode-block" id="Settings.get_authors_with_emails">
+<a class="viewcode-back" href="../../../reference/sign_language.core.html#sign_language.core.settings.Settings.get_authors_with_emails">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_authors_with_emails</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Return a list of authors paired with their email addresses.</span>
+
+<span class="sd">        :returns: List of dicts each containing ``name`` and ``email`` keys,</span>
+<span class="sd">            zipped from ``authors`` and ``authors_email``.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="p">[</span>
+            <span class="p">{</span><span class="s2">&quot;name&quot;</span><span class="p">:</span> <span class="n">author</span><span class="p">,</span> <span class="s2">&quot;email&quot;</span><span class="p">:</span> <span class="n">email</span><span class="p">}</span>
+            <span class="k">for</span> <span class="n">author</span><span class="p">,</span> <span class="n">email</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">authors</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">authors_email</span><span class="p">)</span>
+        <span class="p">]</span></div>
+
+
+<div class="viewcode-block" id="Settings.get_logging_config">
+<a class="viewcode-back" href="../../../reference/sign_language.core.html#sign_language.core.settings.Settings.get_logging_config">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_logging_config</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Return logging configuration as a dictionary.</span>
+
+<span class="sd">        :returns: Dict containing ``level``, ``level_int``, ``path``,</span>
+<span class="sd">            and ``directory`` keys.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="p">{</span>
+            <span class="s2">&quot;level&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">log_level</span><span class="p">,</span>
+            <span class="s2">&quot;level_int&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_log_level</span><span class="p">(),</span>
+            <span class="s2">&quot;path&quot;</span><span class="p">:</span> <span class="nb">str</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">log_path</span><span class="p">)</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">log_path</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="kc">None</span><span class="p">,</span>
+            <span class="s2">&quot;directory&quot;</span><span class="p">:</span> <span class="p">(</span>
+                <span class="nb">str</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">log_path</span><span class="o">.</span><span class="n">parent</span><span class="p">)</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">log_path</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="kc">None</span>
+            <span class="p">),</span>
+        <span class="p">}</span></div>
+
+
+<div class="viewcode-block" id="Settings.is_development">
+<a class="viewcode-back" href="../../../reference/sign_language.core.html#sign_language.core.settings.Settings.is_development">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">is_development</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Return ``True`` if the application is running in development mode.</span>
+
+<span class="sd">        :returns: ``True`` when ``status`` is ``&quot;DEVELOPMENT&quot;``.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">status</span> <span class="o">==</span> <span class="s2">&quot;DEVELOPMENT&quot;</span></div>
+
+
+<div class="viewcode-block" id="Settings.is_production">
+<a class="viewcode-back" href="../../../reference/sign_language.core.html#sign_language.core.settings.Settings.is_production">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">is_production</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Return ``True`` if the application is running in production mode.</span>
+
+<span class="sd">        :returns: ``True`` when ``status`` is ``&quot;PRODUCTION&quot;``.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">status</span> <span class="o">==</span> <span class="s2">&quot;PRODUCTION&quot;</span></div>
+
+
+<div class="viewcode-block" id="Settings.get_version_components">
+<a class="viewcode-back" href="../../../reference/sign_language.core.html#sign_language.core.settings.Settings.get_version_components">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_version_components</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Parse and return the individual components of the semantic version string.</span>
+
+<span class="sd">        :returns: Dict with ``major``, ``minor``, ``patch``, ``prerelease``,</span>
+<span class="sd">            and ``build`` keys. All values are strings; ``prerelease`` and</span>
+<span class="sd">            ``build`` are empty strings when not present.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">match</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">match</span><span class="p">(</span>
+            <span class="sa">r</span><span class="s2">&quot;^(\d+)\.(\d+)\.(\d+)(?:-([a-zA-Z0-9.-]+))?(?:\+([a-zA-Z0-9.-]+))?$&quot;</span><span class="p">,</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">version</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="k">if</span> <span class="n">match</span><span class="p">:</span>
+            <span class="n">major</span><span class="p">,</span> <span class="n">minor</span><span class="p">,</span> <span class="n">patch</span><span class="p">,</span> <span class="n">prerelease</span><span class="p">,</span> <span class="n">build</span> <span class="o">=</span> <span class="n">match</span><span class="o">.</span><span class="n">groups</span><span class="p">()</span>
+            <span class="k">return</span> <span class="p">{</span>
+                <span class="s2">&quot;major&quot;</span><span class="p">:</span> <span class="n">major</span><span class="p">,</span>
+                <span class="s2">&quot;minor&quot;</span><span class="p">:</span> <span class="n">minor</span><span class="p">,</span>
+                <span class="s2">&quot;patch&quot;</span><span class="p">:</span> <span class="n">patch</span><span class="p">,</span>
+                <span class="s2">&quot;prerelease&quot;</span><span class="p">:</span> <span class="n">prerelease</span> <span class="ow">or</span> <span class="s2">&quot;&quot;</span><span class="p">,</span>
+                <span class="s2">&quot;build&quot;</span><span class="p">:</span> <span class="n">build</span> <span class="ow">or</span> <span class="s2">&quot;&quot;</span><span class="p">,</span>
+            <span class="p">}</span>
+        <span class="k">return</span> <span class="p">{</span><span class="s2">&quot;major&quot;</span><span class="p">:</span> <span class="s2">&quot;&quot;</span><span class="p">,</span> <span class="s2">&quot;minor&quot;</span><span class="p">:</span> <span class="s2">&quot;&quot;</span><span class="p">,</span> <span class="s2">&quot;patch&quot;</span><span class="p">:</span> <span class="s2">&quot;&quot;</span><span class="p">,</span> <span class="s2">&quot;prerelease&quot;</span><span class="p">:</span> <span class="s2">&quot;&quot;</span><span class="p">,</span> <span class="s2">&quot;build&quot;</span><span class="p">:</span> <span class="s2">&quot;&quot;</span><span class="p">}</span></div>
+
+
+<div class="viewcode-block" id="Settings.as_dict">
+<a class="viewcode-back" href="../../../reference/sign_language.core.html#sign_language.core.settings.Settings.as_dict">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">as_dict</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Return core settings as a flat dictionary.</span>
+
+<span class="sd">        :returns: Dict containing app identity, status, debug, log settings,</span>
+<span class="sd">            training config, and model config.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="p">{</span>
+            <span class="s2">&quot;app_name&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">app_name</span><span class="p">,</span>
+            <span class="s2">&quot;version&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">version</span><span class="p">,</span>
+            <span class="s2">&quot;authors&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">authors</span><span class="p">,</span>
+            <span class="s2">&quot;authors_email&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">authors_email</span><span class="p">,</span>
+            <span class="s2">&quot;status&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">status</span><span class="p">,</span>
+            <span class="s2">&quot;debug&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">debug</span><span class="p">,</span>
+            <span class="s2">&quot;log_level&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">log_level</span><span class="p">,</span>
+            <span class="s2">&quot;log_path&quot;</span><span class="p">:</span> <span class="nb">str</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">log_path</span><span class="p">)</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">log_path</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="kc">None</span><span class="p">,</span>
+            <span class="s2">&quot;training&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_training_config</span><span class="p">(),</span>
+            <span class="s2">&quot;model&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_model_config</span><span class="p">(),</span>
+        <span class="p">}</span></div>
+
+
+<div class="viewcode-block" id="Settings.get_environment_info">
+<a class="viewcode-back" href="../../../reference/sign_language.core.html#sign_language.core.settings.Settings.get_environment_info">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_environment_info</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Return runtime environment information.</span>
+
+<span class="sd">        :returns: Dict containing ``status``, ``debug``, ``is_development``,</span>
+<span class="sd">            ``is_production``, ``python_version``, and ``platform`` keys.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="p">{</span>
+            <span class="s2">&quot;status&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">status</span><span class="p">,</span>
+            <span class="s2">&quot;debug&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">debug</span><span class="p">,</span>
+            <span class="s2">&quot;is_development&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">is_development</span><span class="p">(),</span>
+            <span class="s2">&quot;is_production&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">is_production</span><span class="p">(),</span>
+            <span class="s2">&quot;python_version&quot;</span><span class="p">:</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">sys</span><span class="o">.</span><span class="n">version_info</span><span class="o">.</span><span class="n">major</span><span class="si">}</span><span class="s2">.</span><span class="si">{</span><span class="n">sys</span><span class="o">.</span><span class="n">version_info</span><span class="o">.</span><span class="n">minor</span><span class="si">}</span><span class="s2">.</span><span class="si">{</span><span class="n">sys</span><span class="o">.</span><span class="n">version_info</span><span class="o">.</span><span class="n">micro</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;platform&quot;</span><span class="p">:</span> <span class="n">sys</span><span class="o">.</span><span class="n">platform</span><span class="p">,</span>
+        <span class="p">}</span></div>
+
+
+    <span class="c1"># =========================================================================</span>
+    <span class="c1"># GETTERS — model / device</span>
+    <span class="c1"># =========================================================================</span>
+
+<div class="viewcode-block" id="Settings.get_device">
+<a class="viewcode-back" href="../../../reference/sign_language.core.html#sign_language.core.settings.Settings.get_device">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_device</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Any</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Detect and return the best available torch device.</span>
+
+<span class="sd">        Selection priority: CUDA &gt; MPS &gt; CPU.</span>
+
+<span class="sd">        :returns: A :class:`torch.device` instance for the best available</span>
+<span class="sd">            compute backend.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">logger</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="vm">__name__</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">torch</span><span class="o">.</span><span class="n">cuda</span><span class="o">.</span><span class="n">is_available</span><span class="p">():</span>
+            <span class="n">device</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">device</span><span class="p">(</span><span class="s2">&quot;cuda&quot;</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="n">torch</span><span class="o">.</span><span class="n">backends</span><span class="o">.</span><span class="n">mps</span><span class="o">.</span><span class="n">is_available</span><span class="p">():</span>
+            <span class="n">device</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">device</span><span class="p">(</span><span class="s2">&quot;mps&quot;</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">device</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">device</span><span class="p">(</span><span class="s2">&quot;cpu&quot;</span><span class="p">)</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Using device: </span><span class="si">%s</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">device</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">device</span></div>
+
+
+<div class="viewcode-block" id="Settings.get_training_data_dir">
+<a class="viewcode-back" href="../../../reference/sign_language.core.html#sign_language.core.settings.Settings.get_training_data_dir">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_training_data_dir</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Path</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Return the default local training dataset root path.</span>
+
+<span class="sd">        :returns: The :class:`~pathlib.Path` from ``training_local_data_dir``.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">training_local_data_dir</span></div>
+
+
+<div class="viewcode-block" id="Settings.get_training_config">
+<a class="viewcode-back" href="../../../reference/sign_language.core.html#sign_language.core.settings.Settings.get_training_config">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_training_config</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Return all training-related settings as a dictionary.</span>
+
+<span class="sd">        :returns: Dict containing hyperparameters, file name constants,</span>
+<span class="sd">            dataset paths, and Azure ML asset references.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="p">{</span>
+            <span class="s2">&quot;best_checkpoint_name&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">training_best_checkpoint_name</span><span class="p">,</span>
+            <span class="s2">&quot;history_filename&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">training_history_filename</span><span class="p">,</span>
+            <span class="s2">&quot;metrics_filename&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">training_metrics_filename</span><span class="p">,</span>
+            <span class="s2">&quot;report_filename&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">training_report_filename</span><span class="p">,</span>
+            <span class="s2">&quot;class_names_filename&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">training_class_names_filename</span><span class="p">,</span>
+            <span class="s2">&quot;img_size&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">training_img_size</span><span class="p">,</span>
+            <span class="s2">&quot;batch_size&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">training_batch_size</span><span class="p">,</span>
+            <span class="s2">&quot;learning_rate&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">training_learning_rate</span><span class="p">,</span>
+            <span class="s2">&quot;epochs&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">training_epochs</span><span class="p">,</span>
+            <span class="s2">&quot;patience&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">training_patience</span><span class="p">,</span>
+            <span class="s2">&quot;val_split&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">training_val_split</span><span class="p">,</span>
+            <span class="s2">&quot;target_accuracy&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">training_target_accuracy</span><span class="p">,</span>
+            <span class="s2">&quot;seed&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">training_seed</span><span class="p">,</span>
+            <span class="s2">&quot;n_splits&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">training_n_splits</span><span class="p">,</span>
+            <span class="s2">&quot;num_workers&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">training_num_workers</span><span class="p">,</span>
+            <span class="s2">&quot;pin_memory&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">training_pin_memory</span><span class="p">,</span>
+            <span class="s2">&quot;eta_min&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">training_eta_min</span><span class="p">,</span>
+            <span class="s2">&quot;expected_num_classes&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">training_expected_num_classes</span><span class="p">,</span>
+            <span class="s2">&quot;data_dir&quot;</span><span class="p">:</span> <span class="nb">str</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">training_local_data_dir</span><span class="p">),</span>
+            <span class="s2">&quot;azure_raw_data_asset_name&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">azure_raw_data_asset_name</span><span class="p">,</span>
+            <span class="s2">&quot;azure_raw_data_asset_version&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">azure_raw_data_asset_version</span><span class="p">,</span>
+            <span class="s2">&quot;azure_pretrained_checkpoint_asset_name&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">azure_pretrained_checkpoint_asset_name</span><span class="p">,</span>
+            <span class="s2">&quot;azure_pretrained_checkpoint_asset_version&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">azure_pretrained_checkpoint_asset_version</span><span class="p">,</span>
+            <span class="s2">&quot;azure_instance_type&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">azure_instance_type</span><span class="p">,</span>
+            <span class="s2">&quot;azure_prefer_gpu&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">azure_prefer_gpu</span><span class="p">,</span>
+        <span class="p">}</span></div>
+
+
+<div class="viewcode-block" id="Settings.get_mlflow_config">
+<a class="viewcode-back" href="../../../reference/sign_language.core.html#sign_language.core.settings.Settings.get_mlflow_config">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_mlflow_config</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Return MLflow experiment tracking settings as a dictionary.</span>
+
+<span class="sd">        :returns: Dict containing ``enabled``, ``tracking_uri``,</span>
+<span class="sd">            ``experiment_name``, ``run_name``, ``autolog``, and</span>
+<span class="sd">            ``log_artifacts`` keys.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="p">{</span>
+            <span class="s2">&quot;enabled&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">mlflow_enabled</span><span class="p">,</span>
+            <span class="s2">&quot;tracking_uri&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">mlflow_tracking_uri</span><span class="p">,</span>
+            <span class="s2">&quot;experiment_name&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">mlflow_experiment_name</span><span class="p">,</span>
+            <span class="s2">&quot;run_name&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">mlflow_run_name</span><span class="p">,</span>
+            <span class="s2">&quot;autolog&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">mlflow_autolog</span><span class="p">,</span>
+            <span class="s2">&quot;log_artifacts&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">mlflow_log_artifacts</span><span class="p">,</span>
+        <span class="p">}</span></div>
+
+
+<div class="viewcode-block" id="Settings.get_model_config">
+<a class="viewcode-back" href="../../../reference/sign_language.core.html#sign_language.core.settings.Settings.get_model_config">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_model_config</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Return all model-related paths and constants as a dictionary.</span>
+
+<span class="sd">        :returns: Dict containing ``img_size``, ``model_path``,</span>
+<span class="sd">            ``lm_model_path``, ``hand_landmarker_path``,</span>
+<span class="sd">            ``frontend_build_dir``, and ``recordings_dir`` keys.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="p">{</span>
+            <span class="s2">&quot;img_size&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">img_size</span><span class="p">,</span>
+            <span class="s2">&quot;model_path&quot;</span><span class="p">:</span> <span class="nb">str</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">model_path</span><span class="p">),</span>
+            <span class="s2">&quot;lm_model_path&quot;</span><span class="p">:</span> <span class="nb">str</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">lm_model_path</span><span class="p">),</span>
+            <span class="s2">&quot;hand_landmarker_path&quot;</span><span class="p">:</span> <span class="nb">str</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">hand_landmarker_path</span><span class="p">),</span>
+            <span class="s2">&quot;frontend_build_dir&quot;</span><span class="p">:</span> <span class="nb">str</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">frontend_build_dir</span><span class="p">),</span>
+            <span class="s2">&quot;recordings_dir&quot;</span><span class="p">:</span> <span class="nb">str</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">recordings_dir</span><span class="p">),</span>
+        <span class="p">}</span></div>
+
+
+<div class="viewcode-block" id="Settings.get_server_config">
+<a class="viewcode-back" href="../../../reference/sign_language.core.html#sign_language.core.settings.Settings.get_server_config">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_server_config</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Return Uvicorn server settings as a dictionary.</span>
+
+<span class="sd">        :returns: Dict containing ``host``, ``port``, and ``reload`` keys.</span>
+<span class="sd">            ``reload`` is ``True`` in development mode.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="p">{</span>
+            <span class="s2">&quot;host&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">server_host</span><span class="p">,</span>
+            <span class="s2">&quot;port&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">server_port</span><span class="p">,</span>
+            <span class="s2">&quot;reload&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">is_development</span><span class="p">(),</span>
+        <span class="p">}</span></div>
+
+
+<div class="viewcode-block" id="Settings.get_inference_config">
+<a class="viewcode-back" href="../../../reference/sign_language.core.html#sign_language.core.settings.Settings.get_inference_config">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_inference_config</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Return inference threshold settings as a dictionary.</span>
+
+<span class="sd">        :returns: Dict containing ``efficientnet_confidence_threshold`` and</span>
+<span class="sd">            ``landmark_override_threshold`` keys.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="p">{</span>
+            <span class="s2">&quot;efficientnet_confidence_threshold&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">efficientnet_confidence_threshold</span><span class="p">,</span>
+            <span class="s2">&quot;landmark_override_threshold&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">landmark_override_threshold</span><span class="p">,</span>
+        <span class="p">}</span></div>
+
+
+<div class="viewcode-block" id="Settings.get_sequence_config">
+<a class="viewcode-back" href="../../../reference/sign_language.core.html#sign_language.core.settings.Settings.get_sequence_config">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_sequence_config</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Return sequence-builder timing settings as a dictionary.</span>
+
+<span class="sd">        :returns: Dict containing ``letter_hold_sec``, ``cooldown_sec``,</span>
+<span class="sd">            ``space_pause_sec``, and ``stable_grace_sec`` keys.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="p">{</span>
+            <span class="s2">&quot;letter_hold_sec&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">sequence_letter_hold_sec</span><span class="p">,</span>
+            <span class="s2">&quot;cooldown_sec&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">sequence_cooldown_sec</span><span class="p">,</span>
+            <span class="s2">&quot;space_pause_sec&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">sequence_space_pause_sec</span><span class="p">,</span>
+            <span class="s2">&quot;stable_grace_sec&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">sequence_stable_grace_sec</span><span class="p">,</span>
+        <span class="p">}</span></div>
+
+
+<div class="viewcode-block" id="Settings.get_smoother_config">
+<a class="viewcode-back" href="../../../reference/sign_language.core.html#sign_language.core.settings.Settings.get_smoother_config">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_smoother_config</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Return prediction-smoother settings as a dictionary.</span>
+
+<span class="sd">        :returns: Dict containing ``window_size``, ``acquire_threshold``,</span>
+<span class="sd">            ``sticky_threshold``, and ``min_confidence`` keys.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="p">{</span>
+            <span class="s2">&quot;window_size&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">smoother_window_size</span><span class="p">,</span>
+            <span class="s2">&quot;acquire_threshold&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">smoother_acquire_threshold</span><span class="p">,</span>
+            <span class="s2">&quot;sticky_threshold&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">smoother_sticky_threshold</span><span class="p">,</span>
+            <span class="s2">&quot;min_confidence&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">smoother_min_confidence</span><span class="p">,</span>
+        <span class="p">}</span></div>
+</div>
+
+
+
+<div class="viewcode-block" id="get_settings">
+<a class="viewcode-back" href="../../../reference/sign_language.core.html#sign_language.core.settings.get_settings">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">get_settings</span><span class="p">(</span><span class="n">use_test_env</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Settings</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Create and return a :class:`Settings` instance.</span>
+
+<span class="sd">    When ``use_test_env`` is ``True``, loads from ``.env.test`` in the same</span>
+<span class="sd">    directory as the main ``.env`` file instead of the default ``.env``.</span>
+
+<span class="sd">    :param use_test_env: If ``True``, load settings from ``.env.test``</span>
+<span class="sd">        for use in the test suite.</span>
+<span class="sd">    :returns: A fully validated :class:`Settings` instance.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="n">use_test_env</span><span class="p">:</span>
+        <span class="n">env_test_path</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="n">DOTENV</span><span class="p">)</span><span class="o">.</span><span class="n">resolve</span><span class="p">()</span><span class="o">.</span><span class="n">parent</span> <span class="o">/</span> <span class="s2">&quot;.env.test&quot;</span>
+
+        <span class="k">class</span><span class="w"> </span><span class="nc">TestSettings</span><span class="p">(</span><span class="n">Settings</span><span class="p">):</span>
+            <span class="n">model_config</span> <span class="o">=</span> <span class="n">SettingsConfigDict</span><span class="p">(</span>
+                <span class="o">**</span><span class="p">{</span><span class="o">**</span><span class="n">Settings</span><span class="o">.</span><span class="n">model_config</span><span class="p">,</span> <span class="s2">&quot;env_file&quot;</span><span class="p">:</span> <span class="nb">str</span><span class="p">(</span><span class="n">env_test_path</span><span class="p">)}</span>
+            <span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">TestSettings</span><span class="p">()</span>
+    <span class="k">return</span> <span class="n">Settings</span><span class="p">()</span></div>
+
+
+
+<span class="n">settings</span> <span class="o">=</span> <span class="n">get_settings</span><span class="p">()</span>
+
+<span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s2">&quot;__main__&quot;</span><span class="p">:</span>
+    <span class="nb">print</span><span class="p">(</span><span class="n">settings</span><span class="p">)</span>
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2026, Kinga Marchlewska, Raya Kichukova, Ana-Maria Farazică, Maciej Czerniak, Szymon Chirowski.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

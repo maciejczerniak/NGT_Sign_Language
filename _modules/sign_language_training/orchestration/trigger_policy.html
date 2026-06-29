@@ -1,0 +1,748 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>sign_language_training.orchestration.trigger_policy &mdash; Sign Language 0.1.0 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/css/theme.css?v=9edc463e" />
+
+  
+      <script src="../../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../../_static/documentation_options.js?v=01f34227"></script>
+      <script src="../../../_static/doctools.js?v=9a2dae69"></script>
+      <script src="../../../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../index.html" class="icon icon-home">
+            Sign Language
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Getting Started</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../installation.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../usage.html">Usage</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">API Reference</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../reference/sign_language.html">sign_language package</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../reference/sign_language_training.html">sign_language_training package</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../index.html">Sign Language</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">sign_language_training.orchestration.trigger_policy</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for sign_language_training.orchestration.trigger_policy</h1><div class="highlight"><pre>
+<span></span><span class="sd">&quot;&quot;&quot;Retraining trigger policy.</span>
+
+<span class="sd">Decides whether an Azure ML retraining pipeline should be submitted based</span>
+<span class="sd">on the configured trigger reason and the current dataset state. Supports</span>
+<span class="sd">three trigger reasons:</span>
+
+<span class="sd">- ``manual``: submits only when ``force=True``.</span>
+<span class="sd">- ``data_change``: submits when new or removed image count meets the</span>
+<span class="sd">  configured threshold.</span>
+<span class="sd">- ``scheduled``: submits when the last submission is older than the</span>
+<span class="sd">  configured interval.</span>
+<span class="sd">&quot;&quot;&quot;</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">dataclasses</span><span class="w"> </span><span class="kn">import</span> <span class="n">dataclass</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">datetime</span><span class="w"> </span><span class="kn">import</span> <span class="n">datetime</span><span class="p">,</span> <span class="n">timedelta</span><span class="p">,</span> <span class="n">timezone</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">logging</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">pathlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">Path</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Literal</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">sign_language_training.azure_config</span><span class="w"> </span><span class="kn">import</span> <span class="n">get_client</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">sign_language_training.orchestration.dataset_inventory</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">DatasetInventory</span><span class="p">,</span>
+    <span class="n">build_dataset_inventory</span><span class="p">,</span>
+    <span class="n">count_new_images</span><span class="p">,</span>
+    <span class="n">count_removed_images</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">sign_language_training.orchestration.pipeline_submitter</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">SubmittedPipeline</span><span class="p">,</span>
+    <span class="n">submit_retraining_pipeline</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">sign_language_training.orchestration.training_state</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">LastTrainingState</span><span class="p">,</span>
+    <span class="n">TrainingTriggerState</span><span class="p">,</span>
+    <span class="n">load_state</span><span class="p">,</span>
+    <span class="n">save_state</span><span class="p">,</span>
+    <span class="n">utc_now_iso</span><span class="p">,</span>
+<span class="p">)</span>
+
+<span class="n">TriggerReason</span> <span class="o">=</span> <span class="n">Literal</span><span class="p">[</span><span class="s2">&quot;manual&quot;</span><span class="p">,</span> <span class="s2">&quot;data_change&quot;</span><span class="p">,</span> <span class="s2">&quot;scheduled&quot;</span><span class="p">]</span>
+<span class="n">ACTIVE_JOB_STATUSES</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="s2">&quot;notstarted&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;not started&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;preparing&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;queued&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;starting&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;running&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;finalizing&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;provisioning&quot;</span><span class="p">,</span>
+<span class="p">}</span>
+<span class="n">COMPLETED_JOB_STATUSES</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;completed&quot;</span><span class="p">}</span>
+<span class="n">RETRAINING_JOB_TAG_PURPOSE</span> <span class="o">=</span> <span class="s2">&quot;retraining&quot;</span>
+<span class="n">RETRAINING_SWEEP_TAG_PURPOSE</span> <span class="o">=</span> <span class="s2">&quot;retraining-sweep&quot;</span>
+<span class="n">RETRAINING_JOB_PURPOSES</span> <span class="o">=</span> <span class="p">{</span><span class="n">RETRAINING_JOB_TAG_PURPOSE</span><span class="p">,</span> <span class="n">RETRAINING_SWEEP_TAG_PURPOSE</span><span class="p">}</span>
+<span class="n">RAW_DATA_IMAGE_COUNT_TAG</span> <span class="o">=</span> <span class="s2">&quot;image_count&quot;</span>
+<span class="n">RAW_DATA_MANIFEST_HASH_TAG</span> <span class="o">=</span> <span class="s2">&quot;manifest_hash&quot;</span>
+<span class="n">JOB_RAW_DATA_ASSET_TAG</span> <span class="o">=</span> <span class="s2">&quot;raw_data_asset&quot;</span>
+<span class="n">JOB_RAW_DATA_VERSION_TAG</span> <span class="o">=</span> <span class="s2">&quot;raw_data_version&quot;</span>
+<span class="n">JOB_TRIGGER_IMAGE_COUNT_TAG</span> <span class="o">=</span> <span class="s2">&quot;trigger_image_count&quot;</span>
+<span class="n">JOB_TRIGGER_REASON_TAG</span> <span class="o">=</span> <span class="s2">&quot;trigger_reason&quot;</span>
+<span class="n">JOB_PURPOSE_TAG</span> <span class="o">=</span> <span class="s2">&quot;purpose&quot;</span>
+
+<span class="n">logger</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="vm">__name__</span><span class="p">)</span>
+
+
+<div class="viewcode-block" id="TriggerDecision">
+<a class="viewcode-back" href="../../../reference/sign_language_training.html#sign_language_training.orchestration.trigger_policy.TriggerDecision">[docs]</a>
+<span class="nd">@dataclass</span><span class="p">(</span><span class="n">frozen</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">TriggerDecision</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Result produced by the trigger policy evaluation.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        should_submit: Whether a retraining pipeline was submitted.</span>
+<span class="sd">        reason: The trigger reason that was evaluated.</span>
+<span class="sd">        message: Human-readable summary of the policy decision.</span>
+<span class="sd">        current_image_count: Total number of images in the dataset at</span>
+<span class="sd">            evaluation time.</span>
+<span class="sd">        new_image_count: Number of images added since the last recorded</span>
+<span class="sd">            submission state.</span>
+<span class="sd">        submitted_job_name: The Azure ML job name if a pipeline was</span>
+<span class="sd">            submitted, otherwise ``None``.</span>
+<span class="sd">        studio_url: The Azure ML Studio URL for the submitted job, or</span>
+<span class="sd">            ``None`` if no job was submitted.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">should_submit</span><span class="p">:</span> <span class="nb">bool</span>
+    <span class="n">reason</span><span class="p">:</span> <span class="n">TriggerReason</span>
+    <span class="n">message</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">current_image_count</span><span class="p">:</span> <span class="nb">int</span>
+    <span class="n">new_image_count</span><span class="p">:</span> <span class="nb">int</span>
+    <span class="n">submitted_job_name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">studio_url</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span></div>
+
+
+
+<div class="viewcode-block" id="TriggerPolicyConfig">
+<a class="viewcode-back" href="../../../reference/sign_language_training.html#sign_language_training.orchestration.trigger_policy.TriggerPolicyConfig">[docs]</a>
+<span class="nd">@dataclass</span><span class="p">(</span><span class="n">frozen</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">TriggerPolicyConfig</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Configuration for retraining trigger policy decisions.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        data_dir: Local ImageFolder dataset root used to build the</span>
+<span class="sd">            current dataset inventory.</span>
+<span class="sd">        state_path: Local path persisting the last recorded trigger state.</span>
+<span class="sd">        raw_data_asset: Azure ML raw data asset reference string, e.g.</span>
+<span class="sd">            ``&quot;azureml:ngt-raw:1&quot;``.</span>
+<span class="sd">        raw_data_version: Version string of the raw data asset, used for</span>
+<span class="sd">            augmentation cache lookup.</span>
+<span class="sd">        min_new_images: Minimum number of new or removed images required</span>
+<span class="sd">            to trigger ``data_change`` retraining.</span>
+<span class="sd">        interval_days: Minimum days since the last submission</span>
+<span class="sd">            required to trigger ``scheduled`` retraining.</span>
+<span class="sd">        experiment_name: Azure ML experiment name used when submitting</span>
+<span class="sd">            the pipeline job.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">data_dir</span><span class="p">:</span> <span class="n">Path</span>
+    <span class="n">state_path</span><span class="p">:</span> <span class="n">Path</span>
+    <span class="n">raw_data_asset</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">raw_data_version</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">min_new_images</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">100</span>
+    <span class="n">interval_days</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">7</span>
+    <span class="n">experiment_name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;sign-language-training&quot;</span></div>
+
+
+
+<div class="viewcode-block" id="RawDataAssetSnapshot">
+<a class="viewcode-back" href="../../../reference/sign_language_training.html#sign_language_training.orchestration.trigger_policy.RawDataAssetSnapshot">[docs]</a>
+<span class="nd">@dataclass</span><span class="p">(</span><span class="n">frozen</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">RawDataAssetSnapshot</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Metadata snapshot for the latest registered raw data asset.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        name: Azure ML data asset name.</span>
+<span class="sd">        version: Azure ML data asset version.</span>
+<span class="sd">        reference: Asset reference string in ``azureml:&lt;name&gt;:&lt;version&gt;`` format.</span>
+<span class="sd">        image_count: Total raw image count recorded in the asset tags, or</span>
+<span class="sd">            ``None`` when the tag is missing.</span>
+<span class="sd">        manifest_hash: Dataset manifest hash recorded in the asset tags, or</span>
+<span class="sd">            ``None`` when the tag is missing.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">name</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">version</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">reference</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">image_count</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span>
+    <span class="n">manifest_hash</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span></div>
+
+
+
+<div class="viewcode-block" id="RetrainingJobSnapshot">
+<a class="viewcode-back" href="../../../reference/sign_language_training.html#sign_language_training.orchestration.trigger_policy.RetrainingJobSnapshot">[docs]</a>
+<span class="nd">@dataclass</span><span class="p">(</span><span class="n">frozen</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">RetrainingJobSnapshot</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Metadata snapshot for a previous Azure ML retraining job.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        name: Azure ML job name.</span>
+<span class="sd">        status: Azure ML job status.</span>
+<span class="sd">        created_at: Job creation timestamp, or ``None`` when unavailable.</span>
+<span class="sd">        raw_data_asset: Raw data asset reference recorded on the job.</span>
+<span class="sd">        raw_data_version: Raw data asset version recorded on the job.</span>
+<span class="sd">        trigger_image_count: Raw image count recorded at job submission time.</span>
+<span class="sd">        studio_url: Azure ML Studio URL for the job, or ``None``.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">name</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">status</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">created_at</span><span class="p">:</span> <span class="n">datetime</span> <span class="o">|</span> <span class="kc">None</span>
+    <span class="n">raw_data_asset</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span>
+    <span class="n">raw_data_version</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span>
+    <span class="n">trigger_image_count</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span>
+    <span class="n">studio_url</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span></div>
+
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_parse_optional_int</span><span class="p">(</span><span class="n">value</span><span class="p">:</span> <span class="nb">object</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Parse an optional integer metadata value.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        value: Metadata value from Azure ML tags or properties.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        Parsed integer, or ``None`` when the value is empty or invalid.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="n">value</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">return</span> <span class="kc">None</span>
+
+    <span class="k">try</span><span class="p">:</span>
+        <span class="k">return</span> <span class="nb">int</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">value</span><span class="p">))</span>
+    <span class="k">except</span> <span class="p">(</span><span class="ne">TypeError</span><span class="p">,</span> <span class="ne">ValueError</span><span class="p">):</span>
+        <span class="k">return</span> <span class="kc">None</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_job_created_at</span><span class="p">(</span><span class="n">job</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">datetime</span> <span class="o">|</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Return the creation timestamp from an Azure ML SDK job object.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        job: Azure ML SDK job object.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        Timezone-aware creation timestamp, or ``None`` when unavailable.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">creation_context</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">job</span><span class="p">,</span> <span class="s2">&quot;creation_context&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+    <span class="n">created_at</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">creation_context</span><span class="p">,</span> <span class="s2">&quot;created_at&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">created_at</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">created_at</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">job</span><span class="p">,</span> <span class="s2">&quot;creation_time&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">created_at</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">return</span> <span class="kc">None</span>
+    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">created_at</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
+        <span class="n">created_at</span> <span class="o">=</span> <span class="n">datetime</span><span class="o">.</span><span class="n">fromisoformat</span><span class="p">(</span><span class="n">created_at</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s2">&quot;Z&quot;</span><span class="p">,</span> <span class="s2">&quot;+00:00&quot;</span><span class="p">))</span>
+    <span class="k">if</span> <span class="n">created_at</span><span class="o">.</span><span class="n">tzinfo</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">created_at</span> <span class="o">=</span> <span class="n">created_at</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="n">tzinfo</span><span class="o">=</span><span class="n">timezone</span><span class="o">.</span><span class="n">utc</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">created_at</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_numeric_version_key</span><span class="p">(</span><span class="n">version</span><span class="p">:</span> <span class="nb">object</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">int</span> <span class="o">|</span> <span class="nb">str</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Return a stable sort key for Azure ML asset versions.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        version: Version value from Azure ML.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        Sort key that places numeric versions after non-numeric versions and</span>
+<span class="sd">        sorts numeric versions by integer value.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">version_text</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">version</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">version_text</span><span class="o">.</span><span class="n">isdigit</span><span class="p">():</span>
+        <span class="k">return</span> <span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="nb">int</span><span class="p">(</span><span class="n">version_text</span><span class="p">))</span>
+    <span class="k">return</span> <span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">version_text</span><span class="p">)</span>
+
+
+<div class="viewcode-block" id="raw_data_asset_snapshot">
+<a class="viewcode-back" href="../../../reference/sign_language_training.html#sign_language_training.orchestration.trigger_policy.raw_data_asset_snapshot">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">raw_data_asset_snapshot</span><span class="p">(</span><span class="n">asset</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">RawDataAssetSnapshot</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Build a raw data snapshot from an Azure ML data asset object.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        asset: Azure ML SDK data asset object.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        Normalized raw data asset metadata used by the scheduled checker.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">tags</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">asset</span><span class="p">,</span> <span class="s2">&quot;tags&quot;</span><span class="p">,</span> <span class="p">{})</span> <span class="ow">or</span> <span class="p">{}</span>
+    <span class="n">name</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="nb">getattr</span><span class="p">(</span><span class="n">asset</span><span class="p">,</span> <span class="s2">&quot;name&quot;</span><span class="p">))</span>
+    <span class="n">version</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="nb">getattr</span><span class="p">(</span><span class="n">asset</span><span class="p">,</span> <span class="s2">&quot;version&quot;</span><span class="p">))</span>
+    <span class="k">return</span> <span class="n">RawDataAssetSnapshot</span><span class="p">(</span>
+        <span class="n">name</span><span class="o">=</span><span class="n">name</span><span class="p">,</span>
+        <span class="n">version</span><span class="o">=</span><span class="n">version</span><span class="p">,</span>
+        <span class="n">reference</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;azureml:</span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2">:</span><span class="si">{</span><span class="n">version</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span>
+        <span class="n">image_count</span><span class="o">=</span><span class="n">_parse_optional_int</span><span class="p">(</span><span class="n">tags</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">RAW_DATA_IMAGE_COUNT_TAG</span><span class="p">)),</span>
+        <span class="n">manifest_hash</span><span class="o">=</span><span class="p">(</span>
+            <span class="nb">str</span><span class="p">(</span><span class="n">tags</span><span class="p">[</span><span class="n">RAW_DATA_MANIFEST_HASH_TAG</span><span class="p">])</span>
+            <span class="k">if</span> <span class="n">tags</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">RAW_DATA_MANIFEST_HASH_TAG</span><span class="p">)</span>
+            <span class="k">else</span> <span class="kc">None</span>
+        <span class="p">),</span>
+    <span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="get_latest_raw_data_snapshot">
+<a class="viewcode-back" href="../../../reference/sign_language_training.html#sign_language_training.orchestration.trigger_policy.get_latest_raw_data_snapshot">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">get_latest_raw_data_snapshot</span><span class="p">(</span>
+    <span class="n">ml_client</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span>
+    <span class="n">asset_name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">RawDataAssetSnapshot</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Return the latest registered version of a raw data asset.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        ml_client: Authenticated Azure ML client.</span>
+<span class="sd">        asset_name: Azure ML data asset name, e.g. ``&quot;ngt-raw&quot;``.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        Snapshot of the latest registered raw data asset.</span>
+
+<span class="sd">    Raises:</span>
+<span class="sd">        ValueError: If no versions exist for ``asset_name``.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">versions</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">ml_client</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">list</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="n">asset_name</span><span class="p">))</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">versions</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;No Azure ML data asset versions found for </span><span class="si">{</span><span class="n">asset_name</span><span class="si">!r}</span><span class="s2">.&quot;</span><span class="p">)</span>
+
+    <span class="n">latest</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="n">versions</span><span class="p">,</span> <span class="n">key</span><span class="o">=</span><span class="k">lambda</span> <span class="n">asset</span><span class="p">:</span> <span class="n">_numeric_version_key</span><span class="p">(</span><span class="n">asset</span><span class="o">.</span><span class="n">version</span><span class="p">))</span>
+    <span class="k">return</span> <span class="n">raw_data_asset_snapshot</span><span class="p">(</span><span class="n">latest</span><span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="retraining_job_snapshot">
+<a class="viewcode-back" href="../../../reference/sign_language_training.html#sign_language_training.orchestration.trigger_policy.retraining_job_snapshot">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">retraining_job_snapshot</span><span class="p">(</span><span class="n">job</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">RetrainingJobSnapshot</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Build a retraining job snapshot from an Azure ML job object.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        job: Azure ML SDK job object.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        Normalized retraining job metadata used by the scheduled checker.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">tags</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">job</span><span class="p">,</span> <span class="s2">&quot;tags&quot;</span><span class="p">,</span> <span class="p">{})</span> <span class="ow">or</span> <span class="p">{}</span>
+    <span class="k">return</span> <span class="n">RetrainingJobSnapshot</span><span class="p">(</span>
+        <span class="n">name</span><span class="o">=</span><span class="nb">str</span><span class="p">(</span><span class="nb">getattr</span><span class="p">(</span><span class="n">job</span><span class="p">,</span> <span class="s2">&quot;name&quot;</span><span class="p">,</span> <span class="s2">&quot;&lt;unknown&gt;&quot;</span><span class="p">)),</span>
+        <span class="n">status</span><span class="o">=</span><span class="nb">str</span><span class="p">(</span><span class="nb">getattr</span><span class="p">(</span><span class="n">job</span><span class="p">,</span> <span class="s2">&quot;status&quot;</span><span class="p">,</span> <span class="s2">&quot;&quot;</span><span class="p">)),</span>
+        <span class="n">created_at</span><span class="o">=</span><span class="n">_job_created_at</span><span class="p">(</span><span class="n">job</span><span class="p">),</span>
+        <span class="n">raw_data_asset</span><span class="o">=</span><span class="p">(</span>
+            <span class="nb">str</span><span class="p">(</span><span class="n">tags</span><span class="p">[</span><span class="n">JOB_RAW_DATA_ASSET_TAG</span><span class="p">])</span>
+            <span class="k">if</span> <span class="n">tags</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">JOB_RAW_DATA_ASSET_TAG</span><span class="p">)</span>
+            <span class="k">else</span> <span class="kc">None</span>
+        <span class="p">),</span>
+        <span class="n">raw_data_version</span><span class="o">=</span><span class="p">(</span>
+            <span class="nb">str</span><span class="p">(</span><span class="n">tags</span><span class="p">[</span><span class="n">JOB_RAW_DATA_VERSION_TAG</span><span class="p">])</span>
+            <span class="k">if</span> <span class="n">tags</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">JOB_RAW_DATA_VERSION_TAG</span><span class="p">)</span>
+            <span class="k">else</span> <span class="kc">None</span>
+        <span class="p">),</span>
+        <span class="n">trigger_image_count</span><span class="o">=</span><span class="n">_parse_optional_int</span><span class="p">(</span><span class="n">tags</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">JOB_TRIGGER_IMAGE_COUNT_TAG</span><span class="p">)),</span>
+        <span class="n">studio_url</span><span class="o">=</span><span class="p">(</span>
+            <span class="nb">str</span><span class="p">(</span><span class="nb">getattr</span><span class="p">(</span><span class="n">job</span><span class="p">,</span> <span class="s2">&quot;studio_url&quot;</span><span class="p">))</span>
+            <span class="k">if</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">job</span><span class="p">,</span> <span class="s2">&quot;studio_url&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+            <span class="k">else</span> <span class="kc">None</span>
+        <span class="p">),</span>
+    <span class="p">)</span></div>
+
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_is_retraining_job</span><span class="p">(</span><span class="n">job</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span> <span class="n">experiment_name</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Return whether an Azure ML job belongs to this retraining flow.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        job: Azure ML SDK job object.</span>
+<span class="sd">        experiment_name: Expected Azure ML experiment name.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        ``True`` when the job belongs to the experiment and is tagged as a</span>
+<span class="sd">        retraining job.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">job</span><span class="p">,</span> <span class="s2">&quot;experiment_name&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span> <span class="o">!=</span> <span class="n">experiment_name</span><span class="p">:</span>
+        <span class="k">return</span> <span class="kc">False</span>
+
+    <span class="n">tags</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">job</span><span class="p">,</span> <span class="s2">&quot;tags&quot;</span><span class="p">,</span> <span class="p">{})</span> <span class="ow">or</span> <span class="p">{}</span>
+    <span class="k">return</span> <span class="n">tags</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">JOB_PURPOSE_TAG</span><span class="p">)</span> <span class="ow">in</span> <span class="n">RETRAINING_JOB_PURPOSES</span>
+
+
+<div class="viewcode-block" id="find_latest_completed_retraining_job">
+<a class="viewcode-back" href="../../../reference/sign_language_training.html#sign_language_training.orchestration.trigger_policy.find_latest_completed_retraining_job">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">find_latest_completed_retraining_job</span><span class="p">(</span>
+    <span class="n">ml_client</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span>
+    <span class="n">experiment_name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">RetrainingJobSnapshot</span> <span class="o">|</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Return the latest completed retraining job recorded in Azure ML.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        ml_client: Authenticated Azure ML client.</span>
+<span class="sd">        experiment_name: Azure ML experiment to inspect.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        Latest completed retraining job snapshot, or ``None`` if none exists.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">candidates</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">RetrainingJobSnapshot</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">for</span> <span class="n">job</span> <span class="ow">in</span> <span class="n">ml_client</span><span class="o">.</span><span class="n">jobs</span><span class="o">.</span><span class="n">list</span><span class="p">():</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">_is_retraining_job</span><span class="p">(</span><span class="n">job</span><span class="p">,</span> <span class="n">experiment_name</span><span class="p">):</span>
+            <span class="k">continue</span>
+
+        <span class="n">status</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="nb">getattr</span><span class="p">(</span><span class="n">job</span><span class="p">,</span> <span class="s2">&quot;status&quot;</span><span class="p">,</span> <span class="s2">&quot;&quot;</span><span class="p">))</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span>
+        <span class="k">if</span> <span class="n">status</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">COMPLETED_JOB_STATUSES</span><span class="p">:</span>
+            <span class="k">continue</span>
+        <span class="n">candidates</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">retraining_job_snapshot</span><span class="p">(</span><span class="n">job</span><span class="p">))</span>
+
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">candidates</span><span class="p">:</span>
+        <span class="k">return</span> <span class="kc">None</span>
+
+    <span class="k">return</span> <span class="nb">max</span><span class="p">(</span>
+        <span class="n">candidates</span><span class="p">,</span>
+        <span class="n">key</span><span class="o">=</span><span class="k">lambda</span> <span class="n">item</span><span class="p">:</span> <span class="n">item</span><span class="o">.</span><span class="n">created_at</span> <span class="ow">or</span> <span class="n">datetime</span><span class="o">.</span><span class="n">min</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="n">tzinfo</span><span class="o">=</span><span class="n">timezone</span><span class="o">.</span><span class="n">utc</span><span class="p">),</span>
+    <span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="find_active_retraining_job">
+<a class="viewcode-back" href="../../../reference/sign_language_training.html#sign_language_training.orchestration.trigger_policy.find_active_retraining_job">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">find_active_retraining_job</span><span class="p">(</span><span class="n">experiment_name</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Any</span> <span class="o">|</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Return an active Azure ML retraining job for an experiment.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        experiment_name: Azure ML experiment to inspect.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        First active job found, or ``None`` when none are active or Azure ML</span>
+<span class="sd">        cannot be queried.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="n">ml_client</span> <span class="o">=</span> <span class="n">get_client</span><span class="p">()</span>
+        <span class="k">for</span> <span class="n">job</span> <span class="ow">in</span> <span class="n">ml_client</span><span class="o">.</span><span class="n">jobs</span><span class="o">.</span><span class="n">list</span><span class="p">():</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">_is_retraining_job</span><span class="p">(</span><span class="n">job</span><span class="p">,</span> <span class="n">experiment_name</span><span class="p">):</span>
+                <span class="k">continue</span>
+
+            <span class="n">status</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="nb">getattr</span><span class="p">(</span><span class="n">job</span><span class="p">,</span> <span class="s2">&quot;status&quot;</span><span class="p">,</span> <span class="s2">&quot;&quot;</span><span class="p">))</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span>
+            <span class="k">if</span> <span class="n">status</span> <span class="ow">in</span> <span class="n">ACTIVE_JOB_STATUSES</span><span class="p">:</span>
+                <span class="k">return</span> <span class="n">job</span>
+    <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">exc</span><span class="p">:</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="s2">&quot;Could not query Azure ML jobs before retraining: </span><span class="si">%s</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">exc</span><span class="p">)</span>
+        <span class="k">return</span> <span class="kc">None</span>
+
+    <span class="k">return</span> <span class="kc">None</span></div>
+
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_last_training_is_recent</span><span class="p">(</span>
+    <span class="n">state</span><span class="p">:</span> <span class="n">TrainingTriggerState</span><span class="p">,</span>
+    <span class="n">interval_days</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Return ``True`` if the last submitted training is within the given interval.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        state: The current :class:`~sign_language_training.orchestration.training_state.TrainingTriggerState`.</span>
+<span class="sd">        interval_days: Number of days defining the recency window.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        ``True`` if a previous submission exists and occurred less than</span>
+<span class="sd">            ``interval_days`` ago, ``False`` otherwise.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">last</span> <span class="o">=</span> <span class="n">state</span><span class="o">.</span><span class="n">last_submitted_training</span>
+    <span class="k">if</span> <span class="n">last</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">return</span> <span class="kc">False</span>
+
+    <span class="n">submitted_at</span> <span class="o">=</span> <span class="n">datetime</span><span class="o">.</span><span class="n">fromisoformat</span><span class="p">(</span><span class="n">last</span><span class="o">.</span><span class="n">submitted_at</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">submitted_at</span><span class="o">.</span><span class="n">tzinfo</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">submitted_at</span> <span class="o">=</span> <span class="n">submitted_at</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="n">tzinfo</span><span class="o">=</span><span class="n">timezone</span><span class="o">.</span><span class="n">utc</span><span class="p">)</span>
+    <span class="n">now</span> <span class="o">=</span> <span class="n">datetime</span><span class="o">.</span><span class="n">now</span><span class="p">(</span><span class="n">timezone</span><span class="o">.</span><span class="n">utc</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">now</span> <span class="o">-</span> <span class="n">submitted_at</span> <span class="o">&lt;</span> <span class="n">timedelta</span><span class="p">(</span><span class="n">days</span><span class="o">=</span><span class="n">interval_days</span><span class="p">)</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_submit_and_update_state</span><span class="p">(</span>
+    <span class="o">*</span><span class="p">,</span>
+    <span class="n">config</span><span class="p">:</span> <span class="n">TriggerPolicyConfig</span><span class="p">,</span>
+    <span class="n">reason</span><span class="p">:</span> <span class="n">TriggerReason</span><span class="p">,</span>
+    <span class="n">inventory</span><span class="p">:</span> <span class="n">DatasetInventory</span><span class="p">,</span>
+    <span class="n">force_preprocess</span><span class="p">:</span> <span class="nb">bool</span><span class="p">,</span>
+    <span class="n">new_image_count</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+    <span class="n">skip_active_job_check</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">TriggerDecision</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Submit the retraining pipeline and persist the updated trigger state.</span>
+
+<span class="sd">    On successful submission, saves the new state to disk including the job</span>
+<span class="sd">    name, submission timestamp, dataset inventory snapshot, and trigger reason.</span>
+<span class="sd">    On failure, returns a :class:`TriggerDecision` with ``should_submit=False``</span>
+<span class="sd">    and the error message.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        config: The :class:`TriggerPolicyConfig` providing data paths,</span>
+<span class="sd">            asset references, and experiment name.</span>
+<span class="sd">        reason: The trigger reason to record in the persisted state.</span>
+<span class="sd">        inventory: The current :class:`~sign_language_training.orchestration.dataset_inventory.DatasetInventory`</span>
+<span class="sd">            snapshot to persist alongside the submission.</span>
+<span class="sd">        force_preprocess: If ``True``, passes ``force_preprocess=True`` to</span>
+<span class="sd">            :func:`~sign_language_training.orchestration.pipeline_submitter.submit_retraining_pipeline`</span>
+<span class="sd">            to skip cache lookup.</span>
+<span class="sd">        new_image_count: Number of new images detected since the last</span>
+<span class="sd">            submission, included in the returned decision.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        A :class:`TriggerDecision` with ``should_submit=True`` and job</span>
+<span class="sd">            details on success, or ``should_submit=False`` with the error message</span>
+<span class="sd">            on failure.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">active_job</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="kc">None</span>
+        <span class="k">if</span> <span class="n">skip_active_job_check</span>
+        <span class="k">else</span> <span class="n">find_active_retraining_job</span><span class="p">(</span><span class="n">config</span><span class="o">.</span><span class="n">experiment_name</span><span class="p">)</span>
+    <span class="p">)</span>
+    <span class="k">if</span> <span class="n">active_job</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">active_name</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="nb">getattr</span><span class="p">(</span><span class="n">active_job</span><span class="p">,</span> <span class="s2">&quot;name&quot;</span><span class="p">,</span> <span class="s2">&quot;&lt;unknown&gt;&quot;</span><span class="p">))</span>
+        <span class="n">active_status</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="nb">getattr</span><span class="p">(</span><span class="n">active_job</span><span class="p">,</span> <span class="s2">&quot;status&quot;</span><span class="p">,</span> <span class="s2">&quot;&lt;unknown&gt;&quot;</span><span class="p">))</span>
+        <span class="n">active_url</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">active_job</span><span class="p">,</span> <span class="s2">&quot;studio_url&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">TriggerDecision</span><span class="p">(</span>
+            <span class="n">should_submit</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+            <span class="n">reason</span><span class="o">=</span><span class="n">reason</span><span class="p">,</span>
+            <span class="n">message</span><span class="o">=</span><span class="p">(</span>
+                <span class="s2">&quot;Skipped retraining: Azure ML job &quot;</span>
+                <span class="sa">f</span><span class="s2">&quot;&#39;</span><span class="si">{</span><span class="n">active_name</span><span class="si">}</span><span class="s2">&#39; is already </span><span class="si">{</span><span class="n">active_status</span><span class="si">}</span><span class="s2">.&quot;</span>
+            <span class="p">),</span>
+            <span class="n">current_image_count</span><span class="o">=</span><span class="n">inventory</span><span class="o">.</span><span class="n">image_count</span><span class="p">,</span>
+            <span class="n">new_image_count</span><span class="o">=</span><span class="n">new_image_count</span><span class="p">,</span>
+            <span class="n">submitted_job_name</span><span class="o">=</span><span class="n">active_name</span><span class="p">,</span>
+            <span class="n">studio_url</span><span class="o">=</span><span class="nb">str</span><span class="p">(</span><span class="n">active_url</span><span class="p">)</span> <span class="k">if</span> <span class="n">active_url</span> <span class="k">else</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="p">)</span>
+
+    <span class="k">try</span><span class="p">:</span>
+        <span class="n">submitted</span><span class="p">:</span> <span class="n">SubmittedPipeline</span> <span class="o">=</span> <span class="n">submit_retraining_pipeline</span><span class="p">(</span>
+            <span class="n">experiment_name</span><span class="o">=</span><span class="n">config</span><span class="o">.</span><span class="n">experiment_name</span><span class="p">,</span>
+            <span class="n">data_asset</span><span class="o">=</span><span class="n">config</span><span class="o">.</span><span class="n">raw_data_asset</span><span class="p">,</span>
+            <span class="n">ngt_raw_version</span><span class="o">=</span><span class="n">config</span><span class="o">.</span><span class="n">raw_data_version</span><span class="p">,</span>
+            <span class="n">force_preprocess</span><span class="o">=</span><span class="n">force_preprocess</span><span class="p">,</span>
+            <span class="n">mlflow_enabled</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+            <span class="n">trigger_reason</span><span class="o">=</span><span class="n">reason</span><span class="p">,</span>
+            <span class="n">trigger_image_count</span><span class="o">=</span><span class="n">inventory</span><span class="o">.</span><span class="n">image_count</span><span class="p">,</span>
+            <span class="n">raw_data_manifest_hash</span><span class="o">=</span><span class="n">inventory</span><span class="o">.</span><span class="n">manifest_hash</span><span class="p">,</span>
+        <span class="p">)</span>
+    <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">exc</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">TriggerDecision</span><span class="p">(</span>
+            <span class="n">should_submit</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+            <span class="n">reason</span><span class="o">=</span><span class="n">reason</span><span class="p">,</span>
+            <span class="n">message</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;Azure ML retraining submission failed: </span><span class="si">{</span><span class="n">exc</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span>
+            <span class="n">current_image_count</span><span class="o">=</span><span class="n">inventory</span><span class="o">.</span><span class="n">image_count</span><span class="p">,</span>
+            <span class="n">new_image_count</span><span class="o">=</span><span class="n">new_image_count</span><span class="p">,</span>
+        <span class="p">)</span>
+
+    <span class="n">state</span> <span class="o">=</span> <span class="n">TrainingTriggerState</span><span class="p">(</span>
+        <span class="n">last_submitted_training</span><span class="o">=</span><span class="n">LastTrainingState</span><span class="p">(</span>
+            <span class="n">job_name</span><span class="o">=</span><span class="n">submitted</span><span class="o">.</span><span class="n">name</span><span class="p">,</span>
+            <span class="n">studio_url</span><span class="o">=</span><span class="n">submitted</span><span class="o">.</span><span class="n">studio_url</span><span class="p">,</span>
+            <span class="n">submitted_at</span><span class="o">=</span><span class="n">utc_now_iso</span><span class="p">(),</span>
+            <span class="n">reason</span><span class="o">=</span><span class="n">reason</span><span class="p">,</span>
+            <span class="n">raw_data_asset</span><span class="o">=</span><span class="n">config</span><span class="o">.</span><span class="n">raw_data_asset</span><span class="p">,</span>
+            <span class="n">raw_data_version</span><span class="o">=</span><span class="n">config</span><span class="o">.</span><span class="n">raw_data_version</span><span class="p">,</span>
+            <span class="n">image_count</span><span class="o">=</span><span class="n">inventory</span><span class="o">.</span><span class="n">image_count</span><span class="p">,</span>
+            <span class="n">manifest_hash</span><span class="o">=</span><span class="n">inventory</span><span class="o">.</span><span class="n">manifest_hash</span><span class="p">,</span>
+            <span class="n">files</span><span class="o">=</span><span class="n">inventory</span><span class="o">.</span><span class="n">files</span><span class="p">,</span>
+        <span class="p">)</span>
+    <span class="p">)</span>
+    <span class="n">save_state</span><span class="p">(</span><span class="n">config</span><span class="o">.</span><span class="n">state_path</span><span class="p">,</span> <span class="n">state</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">TriggerDecision</span><span class="p">(</span>
+        <span class="n">should_submit</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+        <span class="n">reason</span><span class="o">=</span><span class="n">reason</span><span class="p">,</span>
+        <span class="n">message</span><span class="o">=</span><span class="s2">&quot;Submitted Azure ML retraining pipeline.&quot;</span><span class="p">,</span>
+        <span class="n">current_image_count</span><span class="o">=</span><span class="n">inventory</span><span class="o">.</span><span class="n">image_count</span><span class="p">,</span>
+        <span class="n">new_image_count</span><span class="o">=</span><span class="n">new_image_count</span><span class="p">,</span>
+        <span class="n">submitted_job_name</span><span class="o">=</span><span class="n">submitted</span><span class="o">.</span><span class="n">name</span><span class="p">,</span>
+        <span class="n">studio_url</span><span class="o">=</span><span class="n">submitted</span><span class="o">.</span><span class="n">studio_url</span><span class="p">,</span>
+    <span class="p">)</span>
+
+
+<div class="viewcode-block" id="evaluate_and_maybe_submit">
+<a class="viewcode-back" href="../../../reference/sign_language_training.html#sign_language_training.orchestration.trigger_policy.evaluate_and_maybe_submit">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">evaluate_and_maybe_submit</span><span class="p">(</span>
+    <span class="o">*</span><span class="p">,</span>
+    <span class="n">reason</span><span class="p">:</span> <span class="n">TriggerReason</span><span class="p">,</span>
+    <span class="n">config</span><span class="p">:</span> <span class="n">TriggerPolicyConfig</span><span class="p">,</span>
+    <span class="n">force</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">TriggerDecision</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Evaluate the trigger policy and submit retraining if the policy allows it.</span>
+
+<span class="sd">    Loads the current trigger state, builds the dataset inventory, and</span>
+<span class="sd">    evaluates the policy for the given reason:</span>
+
+<span class="sd">    - ``force=True``: submits unconditionally regardless of reason.</span>
+<span class="sd">    - ``data_change``: submits if new or removed image count meets</span>
+<span class="sd">      ``config.min_new_images``.</span>
+<span class="sd">    - ``scheduled``: submits if the last submission is older than</span>
+<span class="sd">      ``config.interval_days``.</span>
+<span class="sd">    - ``manual`` with ``force=False``: never submits.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        reason: The trigger reason to evaluate. One of ``&quot;manual&quot;``,</span>
+<span class="sd">            ``&quot;data_change&quot;``, or ``&quot;scheduled&quot;``.</span>
+<span class="sd">        config: The :class:`TriggerPolicyConfig` controlling thresholds,</span>
+<span class="sd">            paths, and asset references.</span>
+<span class="sd">        force: If ``True``, bypasses all policy checks and submits</span>
+<span class="sd">            unconditionally.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        A :class:`TriggerDecision` describing the outcome, including</span>
+<span class="sd">            whether a pipeline was submitted and the current dataset counts.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">state</span> <span class="o">=</span> <span class="n">load_state</span><span class="p">(</span><span class="n">config</span><span class="o">.</span><span class="n">state_path</span><span class="p">)</span>
+    <span class="n">inventory</span> <span class="o">=</span> <span class="n">build_dataset_inventory</span><span class="p">(</span><span class="n">config</span><span class="o">.</span><span class="n">data_dir</span><span class="p">)</span>
+
+    <span class="n">previous_files</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="n">state</span><span class="o">.</span><span class="n">last_submitted_training</span><span class="o">.</span><span class="n">files</span>
+        <span class="k">if</span> <span class="n">state</span><span class="o">.</span><span class="n">last_submitted_training</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
+        <span class="k">else</span> <span class="kc">None</span>
+    <span class="p">)</span>
+    <span class="n">new_image_count</span> <span class="o">=</span> <span class="n">count_new_images</span><span class="p">(</span><span class="n">inventory</span><span class="p">,</span> <span class="n">previous_files</span><span class="p">)</span>
+    <span class="n">removed_image_count</span> <span class="o">=</span> <span class="n">count_removed_images</span><span class="p">(</span><span class="n">inventory</span><span class="p">,</span> <span class="n">previous_files</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">force</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">_submit_and_update_state</span><span class="p">(</span>
+            <span class="n">config</span><span class="o">=</span><span class="n">config</span><span class="p">,</span>
+            <span class="n">reason</span><span class="o">=</span><span class="n">reason</span><span class="p">,</span>
+            <span class="n">inventory</span><span class="o">=</span><span class="n">inventory</span><span class="p">,</span>
+            <span class="n">force_preprocess</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+            <span class="n">new_image_count</span><span class="o">=</span><span class="n">new_image_count</span><span class="p">,</span>
+            <span class="n">skip_active_job_check</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+        <span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">reason</span> <span class="o">==</span> <span class="s2">&quot;data_change&quot;</span><span class="p">:</span>
+        <span class="k">if</span> <span class="p">(</span>
+            <span class="n">new_image_count</span> <span class="o">&gt;=</span> <span class="n">config</span><span class="o">.</span><span class="n">min_new_images</span>
+            <span class="ow">or</span> <span class="n">removed_image_count</span> <span class="o">&gt;=</span> <span class="n">config</span><span class="o">.</span><span class="n">min_new_images</span>
+        <span class="p">):</span>
+            <span class="k">return</span> <span class="n">_submit_and_update_state</span><span class="p">(</span>
+                <span class="n">config</span><span class="o">=</span><span class="n">config</span><span class="p">,</span>
+                <span class="n">reason</span><span class="o">=</span><span class="n">reason</span><span class="p">,</span>
+                <span class="n">inventory</span><span class="o">=</span><span class="n">inventory</span><span class="p">,</span>
+                <span class="n">force_preprocess</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+                <span class="n">new_image_count</span><span class="o">=</span><span class="n">new_image_count</span><span class="p">,</span>
+            <span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">TriggerDecision</span><span class="p">(</span>
+            <span class="n">should_submit</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+            <span class="n">reason</span><span class="o">=</span><span class="n">reason</span><span class="p">,</span>
+            <span class="n">message</span><span class="o">=</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">&quot;Skipped retraining: </span><span class="si">{</span><span class="n">new_image_count</span><span class="si">}</span><span class="s2"> new images and &quot;</span>
+                <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">removed_image_count</span><span class="si">}</span><span class="s2"> removed images &lt; threshold &quot;</span>
+                <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">config</span><span class="o">.</span><span class="n">min_new_images</span><span class="si">}</span><span class="s2">.&quot;</span>
+            <span class="p">),</span>
+            <span class="n">current_image_count</span><span class="o">=</span><span class="n">inventory</span><span class="o">.</span><span class="n">image_count</span><span class="p">,</span>
+            <span class="n">new_image_count</span><span class="o">=</span><span class="n">new_image_count</span><span class="p">,</span>
+        <span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">reason</span> <span class="o">==</span> <span class="s2">&quot;scheduled&quot;</span><span class="p">:</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">_last_training_is_recent</span><span class="p">(</span><span class="n">state</span><span class="p">,</span> <span class="n">config</span><span class="o">.</span><span class="n">interval_days</span><span class="p">):</span>
+            <span class="k">return</span> <span class="n">_submit_and_update_state</span><span class="p">(</span>
+                <span class="n">config</span><span class="o">=</span><span class="n">config</span><span class="p">,</span>
+                <span class="n">reason</span><span class="o">=</span><span class="n">reason</span><span class="p">,</span>
+                <span class="n">inventory</span><span class="o">=</span><span class="n">inventory</span><span class="p">,</span>
+                <span class="n">force_preprocess</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+                <span class="n">new_image_count</span><span class="o">=</span><span class="n">new_image_count</span><span class="p">,</span>
+            <span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">TriggerDecision</span><span class="p">(</span>
+            <span class="n">should_submit</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+            <span class="n">reason</span><span class="o">=</span><span class="n">reason</span><span class="p">,</span>
+            <span class="n">message</span><span class="o">=</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">&quot;Skipped scheduled retraining: last submission is within &quot;</span>
+                <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">config</span><span class="o">.</span><span class="n">interval_days</span><span class="si">}</span><span class="s2"> days.&quot;</span>
+            <span class="p">),</span>
+            <span class="n">current_image_count</span><span class="o">=</span><span class="n">inventory</span><span class="o">.</span><span class="n">image_count</span><span class="p">,</span>
+            <span class="n">new_image_count</span><span class="o">=</span><span class="n">new_image_count</span><span class="p">,</span>
+        <span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">TriggerDecision</span><span class="p">(</span>
+        <span class="n">should_submit</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+        <span class="n">reason</span><span class="o">=</span><span class="n">reason</span><span class="p">,</span>
+        <span class="n">message</span><span class="o">=</span><span class="s2">&quot;Manual trigger received with force=false; no policy condition selected.&quot;</span><span class="p">,</span>
+        <span class="n">current_image_count</span><span class="o">=</span><span class="n">inventory</span><span class="o">.</span><span class="n">image_count</span><span class="p">,</span>
+        <span class="n">new_image_count</span><span class="o">=</span><span class="n">new_image_count</span><span class="p">,</span>
+    <span class="p">)</span></div>
+
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2026, Kinga Marchlewska, Raya Kichukova, Ana-Maria Farazică, Maciej Czerniak, Szymon Chirowski.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

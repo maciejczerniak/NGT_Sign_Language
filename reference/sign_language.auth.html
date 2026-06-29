@@ -1,0 +1,416 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>sign_language.auth package &mdash; Sign Language 0.1.0 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../_static/css/theme.css?v=9edc463e" />
+
+  
+      <script src="../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../_static/documentation_options.js?v=01f34227"></script>
+      <script src="../_static/doctools.js?v=9a2dae69"></script>
+      <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../index.html" class="icon icon-home">
+            Sign Language
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Getting Started</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../installation.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../usage.html">Usage</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">API Reference</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="sign_language.html">sign_language package</a></li>
+<li class="toctree-l1"><a class="reference internal" href="sign_language_training.html">sign_language_training package</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">Sign Language</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">sign_language.auth package</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../_sources/reference/sign_language.auth.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="sign-language-auth-package">
+<h1>sign_language.auth package<a class="headerlink" href="#sign-language-auth-package" title="Link to this heading"></a></h1>
+<section id="submodules">
+<h2>Submodules<a class="headerlink" href="#submodules" title="Link to this heading"></a></h2>
+</section>
+<section id="module-sign_language.auth.manager">
+<span id="sign-language-auth-manager-module"></span><h2>sign_language.auth.manager module<a class="headerlink" href="#module-sign_language.auth.manager" title="Link to this heading"></a></h2>
+<p>UserManager — business logic hooks for FastAPI-Users.</p>
+<dl class="py function">
+<dt class="sig sig-object py" id="sign_language.auth.manager.get_user_db">
+<em class="property"><span class="k"><span class="pre">async</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">sign_language.auth.manager.</span></span><span class="sig-name descname"><span class="pre">get_user_db</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">session</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">sqlalchemy.ext.asyncio.AsyncSession</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">fastapi.Depends</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.AsyncIterator" title="(in Python v3.14)"><span class="pre">AsyncIterator</span></a><span class="p"><span class="pre">[</span></span><span class="pre">fastapi_users_db_sqlalchemy.SQLAlchemyUserDatabase</span><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="../_modules/sign_language/auth/manager.html#get_user_db"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#sign_language.auth.manager.get_user_db" title="Link to this definition"></a></dt>
+<dd><p>Yield a <code class="xref py py-class docutils literal notranslate"><span class="pre">SQLAlchemyUserDatabase</span></code> instance.</p>
+<p>FastAPI dependency that wraps the active async session and the
+<a class="reference internal" href="#sign_language.auth.models.User" title="sign_language.auth.models.User"><code class="xref py py-class docutils literal notranslate"><span class="pre">User</span></code></a> model into a database adapter
+for FastAPI-Users.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>session</strong> – The active async SQLAlchemy session injected by
+<a class="reference internal" href="sign_language.db.html#sign_language.db.engine.get_async_session" title="sign_language.db.engine.get_async_session"><code class="xref py py-func docutils literal notranslate"><span class="pre">get_async_session()</span></code></a>.</p>
+</dd>
+<dt class="field-even">Yields<span class="colon">:</span></dt>
+<dd class="field-even"><p>A <code class="xref py py-class docutils literal notranslate"><span class="pre">SQLAlchemyUserDatabase</span></code>
+bound to the current session.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="sign_language.auth.manager.UserManager">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">sign_language.auth.manager.</span></span><span class="sig-name descname"><span class="pre">UserManager</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Any</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Any</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/sign_language/auth/manager.html#UserManager"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#sign_language.auth.manager.UserManager" title="Link to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">UUIDIDMixin</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">UUID'&gt;)</span></code></p>
+<p>Business logic hooks for FastAPI-Users user lifecycle events.</p>
+<p>Extends <code class="xref py py-class docutils literal notranslate"><span class="pre">BaseUserManager</span></code> with UUID primary keys
+via <code class="xref py py-class docutils literal notranslate"><span class="pre">UUIDIDMixin</span></code>. Token secrets are read from
+project settings.</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="sign_language.auth.manager.UserManager.on_after_register">
+<em class="property"><span class="pre">async</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">on_after_register</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">user</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#sign_language.auth.models.User" title="sign_language.auth.models.User"><span class="pre">User</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">request</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">fastapi.Request</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.14)"><span class="pre">None</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.14)"><span class="pre">None</span></a></span></span><a class="reference internal" href="../_modules/sign_language/auth/manager.html#UserManager.on_after_register"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#sign_language.auth.manager.UserManager.on_after_register" title="Link to this definition"></a></dt>
+<dd><p>Seed an empty stats row after a new user successfully registers.</p>
+<p>Creates a <a class="reference internal" href="#sign_language.auth.models.UserStats" title="sign_language.auth.models.UserStats"><code class="xref py py-class docutils literal notranslate"><span class="pre">UserStats</span></code></a> row (all
+counters at zero) so every user has stats from the moment they sign
+up, and the <code class="docutils literal notranslate"><span class="pre">GET</span> <span class="pre">/api/stats</span></code> endpoint always finds a row to return.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>user</strong> – The newly registered <a class="reference internal" href="#sign_language.auth.models.User" title="sign_language.auth.models.User"><code class="xref py py-class docutils literal notranslate"><span class="pre">User</span></code></a>.</p></li>
+<li><p><strong>request</strong> – The originating <code class="xref py py-class docutils literal notranslate"><span class="pre">Request</span></code>, if available.</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sign_language.auth.manager.UserManager.on_after_login">
+<em class="property"><span class="pre">async</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">on_after_login</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">user</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#sign_language.auth.models.User" title="sign_language.auth.models.User"><span class="pre">User</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">request</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">fastapi.Request</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.14)"><span class="pre">None</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">response</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#object" title="(in Python v3.14)"><span class="pre">object</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.14)"><span class="pre">None</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.14)"><span class="pre">None</span></a></span></span><a class="reference internal" href="../_modules/sign_language/auth/manager.html#UserManager.on_after_login"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#sign_language.auth.manager.UserManager.on_after_login" title="Link to this definition"></a></dt>
+<dd><p>Log a message after a user successfully logs in.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>user</strong> – The <a class="reference internal" href="#sign_language.auth.models.User" title="sign_language.auth.models.User"><code class="xref py py-class docutils literal notranslate"><span class="pre">User</span></code></a> who logged in.</p></li>
+<li><p><strong>request</strong> – The originating <code class="xref py py-class docutils literal notranslate"><span class="pre">Request</span></code>, if available.</p></li>
+<li><p><strong>response</strong> – The outgoing response object, if available.</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="sign_language.auth.manager.get_user_manager">
+<em class="property"><span class="k"><span class="pre">async</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">sign_language.auth.manager.</span></span><span class="sig-name descname"><span class="pre">get_user_manager</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">user_db</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">fastapi_users_db_sqlalchemy.SQLAlchemyUserDatabase</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">fastapi.Depends</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.AsyncIterator" title="(in Python v3.14)"><span class="pre">AsyncIterator</span></a><span class="p"><span class="pre">[</span></span><a class="reference internal" href="#sign_language.auth.manager.UserManager" title="sign_language.auth.manager.UserManager"><span class="pre">UserManager</span></a><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="../_modules/sign_language/auth/manager.html#get_user_manager"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#sign_language.auth.manager.get_user_manager" title="Link to this definition"></a></dt>
+<dd><p>Yield a <a class="reference internal" href="#sign_language.auth.manager.UserManager" title="sign_language.auth.manager.UserManager"><code class="xref py py-class docutils literal notranslate"><span class="pre">UserManager</span></code></a> instance as a FastAPI dependency.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>user_db</strong> – The database adapter injected by <a class="reference internal" href="#sign_language.auth.manager.get_user_db" title="sign_language.auth.manager.get_user_db"><code class="xref py py-func docutils literal notranslate"><span class="pre">get_user_db()</span></code></a>.</p>
+</dd>
+<dt class="field-even">Yields<span class="colon">:</span></dt>
+<dd class="field-even"><p>A <a class="reference internal" href="#sign_language.auth.manager.UserManager" title="sign_language.auth.manager.UserManager"><code class="xref py py-class docutils literal notranslate"><span class="pre">UserManager</span></code></a> bound to the provided database adapter.</p>
+</dd>
+</dl>
+</dd></dl>
+
+</section>
+<section id="module-sign_language.auth.models">
+<span id="sign-language-auth-models-module"></span><h2>sign_language.auth.models module<a class="headerlink" href="#module-sign_language.auth.models" title="Link to this heading"></a></h2>
+<p>SQLAlchemy models — User, per-user stats, collected samples, monitoring.</p>
+<dl class="py class">
+<dt class="sig sig-object py" id="sign_language.auth.models.User">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">sign_language.auth.models.</span></span><span class="sig-name descname"><span class="pre">User</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Any</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Any</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/sign_language/auth/models.html#User"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#sign_language.auth.models.User" title="Link to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">SQLAlchemyBaseUserTableUUID</span></code>, <a class="reference internal" href="sign_language.db.html#sign_language.db.engine.Base" title="sign_language.db.engine.Base"><code class="xref py py-class docutils literal notranslate"><span class="pre">Base</span></code></a></p>
+<p>User table.</p>
+<dl class="simple">
+<dt>Inherits from SQLAlchemyBaseUserTableUUID, which provides:</dt><dd><p>id              : UUID primary key
+email           : str, unique
+hashed_password : str
+is_active       : bool (default True)
+is_superuser    : bool (default False)  ← used as “admin” flag
+is_verified     : bool (default False)</p>
+</dd>
+<dt>Three privilege tiers:</dt><dd><p>anonymous (no user)         — public endpoints + /predict, /ws/predict
+regular  (is_superuser=F)   — anonymous + /stats, /progress (future)
+admin    (is_superuser=T)   — everything, incl. /api/admin/*</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="sign_language.auth.models.UserStats">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">sign_language.auth.models.</span></span><span class="sig-name descname"><span class="pre">UserStats</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Any</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Any</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/sign_language/auth/models.html#UserStats"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#sign_language.auth.models.UserStats" title="Link to this definition"></a></dt>
+<dd><p>Bases: <a class="reference internal" href="sign_language.db.html#sign_language.db.engine.Base" title="sign_language.db.engine.Base"><code class="xref py py-class docutils literal notranslate"><span class="pre">Base</span></code></a></p>
+<p>Per-user progress stats shown on the logged-in home page.</p>
+<p>One row per user, created when they register (see
+<code class="docutils literal notranslate"><span class="pre">UserManager.on_after_register</span></code>). Holds the values the home dashboard
+displays. <code class="docutils literal notranslate"><span class="pre">level</span></code> is <em>not</em> stored — it is computed from <code class="docutils literal notranslate"><span class="pre">points</span></code> on
+read, so it can never drift out of sync with the points total.</p>
+<section id="columns">
+<h3>Columns<a class="headerlink" href="#columns" title="Link to this heading"></a></h3>
+<p>user_id          : FK to <code class="docutils literal notranslate"><span class="pre">user.id</span></code> (UUID) — primary key, one row per user.
+streak           : Consecutive-day practice streak.
+points           : Points earned through practice.
+last_played      : Name of the last mode/activity, or NULL if never played.
+last_active_date : Date the user last practiced — used to compute the streak.
+updated_at       : UTC timestamp of the last update to this row.</p>
+</section>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="sign_language.auth.models.CollectedSample">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">sign_language.auth.models.</span></span><span class="sig-name descname"><span class="pre">CollectedSample</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Any</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Any</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/sign_language/auth/models.html#CollectedSample"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#sign_language.auth.models.CollectedSample" title="Link to this definition"></a></dt>
+<dd><p>Bases: <a class="reference internal" href="sign_language.db.html#sign_language.db.engine.Base" title="sign_language.db.engine.Base"><code class="xref py py-class docutils literal notranslate"><span class="pre">Base</span></code></a></p>
+<p>One labelled fingerspelling sample contributed via Collect mode.</p>
+<p>The image bytes are written to disk under <code class="docutils literal notranslate"><span class="pre">settings.collect_storage_dir</span></code>;
+this row stores the file path plus metadata, not the bytes themselves.
+This mirrors how object storage works, so a future move to Azure Blob only
+changes <code class="docutils literal notranslate"><span class="pre">image_path</span></code> from a local filesystem path to a blob URL — the
+table and the rest of the flow stay the same.</p>
+<p>Authentication is optional for contributing, so <code class="docutils literal notranslate"><span class="pre">user_id</span></code> is nullable:
+logged-in users are attributed, anonymous/guest contributions have NULL.</p>
+<section id="id1">
+<h3>Columns<a class="headerlink" href="#id1" title="Link to this heading"></a></h3>
+<p>id           : UUID primary key — globally unique sample identifier.
+user_id      : FK to <code class="docutils literal notranslate"><span class="pre">user.id</span></code> (UUID), or NULL for anonymous/guest</p>
+<blockquote>
+<div><p>contributions. ON DELETE SET NULL so deleting a user keeps
+their contributed samples (just un-attributes them).</p>
+</div></blockquote>
+<p>letter       : The labelled letter the sample represents, e.g. <code class="docutils literal notranslate"><span class="pre">&quot;A&quot;</span></code>.
+image_path   : Path to the stored image file (local path now, blob URL later).
+source       : How the sample was captured — <code class="docutils literal notranslate"><span class="pre">&quot;camera&quot;</span></code>, <code class="docutils literal notranslate"><span class="pre">&quot;upload&quot;</span></code>,</p>
+<blockquote>
+<div><p>or <code class="docutils literal notranslate"><span class="pre">&quot;auto&quot;</span></code>.</p>
+</div></blockquote>
+<p>language     : Sign language the sample belongs to. Defaults to <code class="docutils literal notranslate"><span class="pre">&quot;NGT&quot;</span></code>.
+created_at   : UTC timestamp when the sample was contributed.</p>
+</section>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="sign_language.auth.models.MonitoringEvent">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">sign_language.auth.models.</span></span><span class="sig-name descname"><span class="pre">MonitoringEvent</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Any</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Any</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/sign_language/auth/models.html#MonitoringEvent"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#sign_language.auth.models.MonitoringEvent" title="Link to this definition"></a></dt>
+<dd><p>Bases: <a class="reference internal" href="sign_language.db.html#sign_language.db.engine.Base" title="sign_language.db.engine.Base"><code class="xref py py-class docutils literal notranslate"><span class="pre">Base</span></code></a></p>
+<p>Persistent store for one operational event (request or prediction).</p>
+<p>One row is written per HTTP request by <code class="docutils literal notranslate"><span class="pre">MonitoringMiddleware</span></code>.
+Prediction-specific columns (<code class="docutils literal notranslate"><span class="pre">predicted_letter</span></code>, <code class="docutils literal notranslate"><span class="pre">confidence</span></code>,
+<code class="docutils literal notranslate"><span class="pre">endpoint_type</span></code>) are populated by <code class="docutils literal notranslate"><span class="pre">track_prediction()</span></code> and are
+<code class="docutils literal notranslate"><span class="pre">NULL</span></code> for non-inference requests.</p>
+<section id="id2">
+<h3>Columns<a class="headerlink" href="#id2" title="Link to this heading"></a></h3>
+<p>id              : UUID primary key — globally unique event identifier.
+timestamp       : UTC timestamp of the event — used for time-range queries.
+path            : Request path, e.g. <code class="docutils literal notranslate"><span class="pre">/api/predict</span></code>.
+method          : HTTP method, e.g. <code class="docutils literal notranslate"><span class="pre">GET</span></code>, <code class="docutils literal notranslate"><span class="pre">POST</span></code>.
+status_code     : HTTP response status code.
+latency_ms      : Wall-clock request duration in milliseconds.
+predicted_letter: Top-1 predicted letter, or NULL if no inference occurred.
+confidence      : Model confidence score (0–1), or NULL.
+endpoint_type   : <code class="docutils literal notranslate"><span class="pre">&quot;http&quot;</span></code> or <code class="docutils literal notranslate"><span class="pre">&quot;ws&quot;</span></code> — which interface produced the</p>
+<blockquote>
+<div><p>prediction. NULL for non-inference requests.</p>
+</div></blockquote>
+<dl class="simple">
+<dt>entropy<span class="classifier">Shannon entropy over the normalised top-3 probabilities,</span></dt><dd><p>or NULL when not applicable.</p>
+</dd>
+</dl>
+</section>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="sign_language.auth.models.LetterProgress">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">sign_language.auth.models.</span></span><span class="sig-name descname"><span class="pre">LetterProgress</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Any</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Any</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/sign_language/auth/models.html#LetterProgress"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#sign_language.auth.models.LetterProgress" title="Link to this definition"></a></dt>
+<dd><p>Bases: <a class="reference internal" href="sign_language.db.html#sign_language.db.engine.Base" title="sign_language.db.engine.Base"><code class="xref py py-class docutils literal notranslate"><span class="pre">Base</span></code></a></p>
+<p>Per-user, per-letter practice progress.</p>
+<p>One row per (user, letter) pair, tracking how many times the user has
+signed that letter correctly. A letter counts as “learned” once
+<code class="docutils literal notranslate"><span class="pre">correct_count</span></code> reaches <code class="docutils literal notranslate"><span class="pre">LEARNED_THRESHOLD</span></code> (3). The aggregate
+<code class="docutils literal notranslate"><span class="pre">letters_learned</span></code> shown to the user is <em>computed</em> by counting the rows
+at or above that threshold (see the stats endpoint) rather than stored, so
+it can never drift out of sync with the underlying counts.</p>
+<section id="id3">
+<h3>Columns<a class="headerlink" href="#id3" title="Link to this heading"></a></h3>
+<p>user_id       : FK to <code class="docutils literal notranslate"><span class="pre">user.id</span></code> (UUID). Part of the composite PK.
+letter        : The letter, e.g. <code class="docutils literal notranslate"><span class="pre">&quot;A&quot;</span></code>. Part of the composite PK.
+correct_count : Number of times the user has signed this letter correctly.
+updated_at    : UTC timestamp of the last update to this row.</p>
+</section>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="sign_language.auth.models.DailyActivity">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">sign_language.auth.models.</span></span><span class="sig-name descname"><span class="pre">DailyActivity</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Any</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Any</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/sign_language/auth/models.html#DailyActivity"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#sign_language.auth.models.DailyActivity" title="Link to this definition"></a></dt>
+<dd><p>Bases: <a class="reference internal" href="sign_language.db.html#sign_language.db.engine.Base" title="sign_language.db.engine.Base"><code class="xref py py-class docutils literal notranslate"><span class="pre">Base</span></code></a></p>
+<p>Distinct letters a user practiced on a given calendar day.</p>
+<p>Backs the home-page “daily goal” (practise N distinct letters today).
+One row per (user, day). <code class="docutils literal notranslate"><span class="pre">letters</span></code> holds the set of distinct letters
+practised that day — a letter is added only once no matter how many times
+it is signed, so <code class="docutils literal notranslate"><span class="pre">len(letters)</span></code> is the distinct-letter count the goal
+measures. Resets naturally each day because each day is a new row.</p>
+<section id="id4">
+<h3>Columns<a class="headerlink" href="#id4" title="Link to this heading"></a></h3>
+<p>user_id       : FK to <code class="docutils literal notranslate"><span class="pre">user.id</span></code> (UUID). Part of the composite PK.
+activity_date : The calendar day (server local date). Part of the PK.
+letters       : Distinct letters practised that day, e.g. <code class="docutils literal notranslate"><span class="pre">[&quot;A&quot;,</span> <span class="pre">&quot;C&quot;]</span></code>.</p>
+</section>
+</dd></dl>
+
+</section>
+<section id="module-sign_language.auth.schemas">
+<span id="sign-language-auth-schemas-module"></span><h2>sign_language.auth.schemas module<a class="headerlink" href="#module-sign_language.auth.schemas" title="Link to this heading"></a></h2>
+<p>Pydantic schemas for user-facing auth payloads.</p>
+<dl class="py class">
+<dt class="sig sig-object py" id="sign_language.auth.schemas.UserRead">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">sign_language.auth.schemas.</span></span><span class="sig-name descname"><span class="pre">UserRead</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Any</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Any</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/sign_language/auth/schemas.html#UserRead"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#sign_language.auth.schemas.UserRead" title="Link to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">~fastapi_users.schemas.BaseUser.</span></code></p>
+<p>Public user representation (returned by /users/me etc.).</p>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="sign_language.auth.schemas.UserCreate">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">sign_language.auth.schemas.</span></span><span class="sig-name descname"><span class="pre">UserCreate</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Any</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Any</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/sign_language/auth/schemas.html#UserCreate"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#sign_language.auth.schemas.UserCreate" title="Link to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">BaseUserCreate</span></code></p>
+<p>Fields required to register a new user (email + password).</p>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="sign_language.auth.schemas.UserUpdate">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">sign_language.auth.schemas.</span></span><span class="sig-name descname"><span class="pre">UserUpdate</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Any</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Any</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/sign_language/auth/schemas.html#UserUpdate"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#sign_language.auth.schemas.UserUpdate" title="Link to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">BaseUserUpdate</span></code></p>
+<p>Fields a user is allowed to update on themselves.</p>
+</dd></dl>
+
+</section>
+<section id="module-sign_language.auth.users">
+<span id="sign-language-auth-users-module"></span><h2>sign_language.auth.users module<a class="headerlink" href="#module-sign_language.auth.users" title="Link to this heading"></a></h2>
+<p>FastAPI-Users instance, JWT backend, and reusable dependencies.</p>
+<p>This module wires together the JWT authentication backend and exposes
+three reusable FastAPI dependencies for use across route handlers:</p>
+<ul class="simple">
+<li><p><code class="xref py py-data docutils literal notranslate"><span class="pre">current_active_user</span></code> — requires a valid bearer token (401 if missing)</p></li>
+<li><p><code class="xref py py-data docutils literal notranslate"><span class="pre">current_active_user_optional</span></code> — returns <code class="docutils literal notranslate"><span class="pre">None</span></code> instead of 401</p></li>
+<li><p><code class="xref py py-data docutils literal notranslate"><span class="pre">current_admin</span></code> — requires <code class="docutils literal notranslate"><span class="pre">is_superuser=True</span></code> (403 otherwise)</p></li>
+</ul>
+<dl class="py function">
+<dt class="sig sig-object py" id="sign_language.auth.users.get_jwt_strategy">
+<span class="sig-prename descclassname"><span class="pre">sign_language.auth.users.</span></span><span class="sig-name descname"><span class="pre">get_jwt_strategy</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">fastapi_users.authentication.JWTStrategy</span></span></span><a class="reference internal" href="../_modules/sign_language/auth/users.html#get_jwt_strategy"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#sign_language.auth.users.get_jwt_strategy" title="Link to this definition"></a></dt>
+<dd><p>Create and return a <code class="xref py py-class docutils literal notranslate"><span class="pre">JWTStrategy</span></code>.</p>
+<p>Reads the secret key and token lifetime from project settings.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>A <code class="xref py py-class docutils literal notranslate"><span class="pre">JWTStrategy</span></code> configured
+with <code class="docutils literal notranslate"><span class="pre">settings.secret_key</span></code> and <code class="docutils literal notranslate"><span class="pre">settings.jwt_lifetime_seconds</span></code>.</p>
+</dd>
+</dl>
+</dd></dl>
+
+</section>
+<section id="module-sign_language.auth.ws_auth">
+<span id="sign-language-auth-ws-auth-module"></span><h2>sign_language.auth.ws_auth module<a class="headerlink" href="#module-sign_language.auth.ws_auth" title="Link to this heading"></a></h2>
+<p>WebSocket auth helper.</p>
+<p>FastAPI-Users has no built-in WebSocket dependency, so this module decodes
+the JWT manually using the same <code class="xref py py-class docutils literal notranslate"><span class="pre">JWTStrategy</span></code>
+as the HTTP auth backend. Authentication failures are always silent — the
+WebSocket connection continues as anonymous.</p>
+<dl class="py function">
+<dt class="sig sig-object py" id="sign_language.auth.ws_auth.get_user_from_ws_token">
+<em class="property"><span class="k"><span class="pre">async</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">sign_language.auth.ws_auth.</span></span><span class="sig-name descname"><span class="pre">get_user_from_ws_token</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">token</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><span class="pre">str</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.14)"><span class="pre">None</span></a></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="#sign_language.auth.models.User" title="sign_language.auth.models.User"><span class="pre">User</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.14)"><span class="pre">None</span></a></span></span><a class="reference internal" href="../_modules/sign_language/auth/ws_auth.html#get_user_from_ws_token"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#sign_language.auth.ws_auth.get_user_from_ws_token" title="Link to this definition"></a></dt>
+<dd><p>Decode a JWT passed as a WebSocket query parameter and return the user.</p>
+<p>Opens a short-lived database session to resolve the user from the token.
+Any failure — missing token, invalid or expired JWT, unknown user, or
+inactive account — returns <code class="docutils literal notranslate"><span class="pre">None</span></code> silently so that callers treat
+anonymous and failed-auth sessions identically.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>token</strong> – The JWT bearer token passed via the WebSocket <code class="docutils literal notranslate"><span class="pre">token</span></code>
+query parameter, or <code class="docutils literal notranslate"><span class="pre">None</span></code> if not provided.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>The authenticated <a class="reference internal" href="#sign_language.auth.models.User" title="sign_language.auth.models.User"><code class="xref py py-class docutils literal notranslate"><span class="pre">User</span></code></a> if
+the token is valid and the user is active, otherwise <code class="docutils literal notranslate"><span class="pre">None</span></code>.</p>
+</dd>
+</dl>
+</dd></dl>
+
+</section>
+<section id="module-sign_language.auth">
+<span id="module-contents"></span><h2>Module contents<a class="headerlink" href="#module-sign_language.auth" title="Link to this heading"></a></h2>
+<p>Authentication package — FastAPI-Users wiring.</p>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2026, Kinga Marchlewska, Raya Kichukova, Ana-Maria Farazică, Maciej Czerniak, Szymon Chirowski.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

@@ -1,0 +1,309 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>sign_language.utils package &mdash; Sign Language 0.1.0 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../_static/css/theme.css?v=9edc463e" />
+
+  
+      <script src="../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../_static/documentation_options.js?v=01f34227"></script>
+      <script src="../_static/doctools.js?v=9a2dae69"></script>
+      <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../index.html" class="icon icon-home">
+            Sign Language
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Getting Started</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../installation.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../usage.html">Usage</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">API Reference</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="sign_language.html">sign_language package</a></li>
+<li class="toctree-l1"><a class="reference internal" href="sign_language_training.html">sign_language_training package</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">Sign Language</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">sign_language.utils package</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../_sources/reference/sign_language.utils.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="sign-language-utils-package">
+<h1>sign_language.utils package<a class="headerlink" href="#sign-language-utils-package" title="Link to this heading"></a></h1>
+<section id="submodules">
+<h2>Submodules<a class="headerlink" href="#submodules" title="Link to this heading"></a></h2>
+</section>
+<section id="module-sign_language.utils.sequence">
+<span id="sign-language-utils-sequence-module"></span><h2>sign_language.utils.sequence module<a class="headerlink" href="#module-sign_language.utils.sequence" title="Link to this heading"></a></h2>
+<p>Sequence builder.</p>
+<p>Converts stable single-letter predictions into words and sentences by
+tracking hold durations, cooldown periods, and pauses (hand removed from
+view).</p>
+<section id="grace-period">
+<h3>Grace period<a class="headerlink" href="#grace-period" title="Link to this heading"></a></h3>
+<p>If <code class="docutils literal notranslate"><span class="pre">stable_letter</span></code> briefly drops to <code class="docutils literal notranslate"><span class="pre">None</span></code> for less than
+<code class="docutils literal notranslate"><span class="pre">stable_grace_sec</span></code> seconds the hold timer is <em>not</em> reset. This
+prevents the 1-second commit window from restarting every time the
+smoother has a noisy frame, which was the main cause of letters being
+very hard to commit.</p>
+</section>
+<dl class="py class">
+<dt class="sig sig-object py" id="sign_language.utils.sequence.SequenceBuilder">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">sign_language.utils.sequence.</span></span><span class="sig-name descname"><span class="pre">SequenceBuilder</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">letter_hold_sec</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.14)"><span class="pre">float</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.14)"><span class="pre">None</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cooldown_sec</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.14)"><span class="pre">float</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.14)"><span class="pre">None</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">space_pause_sec</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.14)"><span class="pre">float</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.14)"><span class="pre">None</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">stable_grace_sec</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.14)"><span class="pre">float</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.14)"><span class="pre">None</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/sign_language/utils/sequence.html#SequenceBuilder"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#sign_language.utils.sequence.SequenceBuilder" title="Link to this definition"></a></dt>
+<dd><p>Bases: <a class="reference external" href="https://docs.python.org/3/library/functions.html#object" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></a></p>
+<p>Accumulate stable letter predictions into words and sentences.</p>
+<p>A letter is committed after it has been held for
+<code class="xref py py-attr docutils literal notranslate"><span class="pre">letter_hold_sec</span></code> seconds. A space is inserted when no hand
+is detected for <code class="xref py py-attr docutils literal notranslate"><span class="pre">space_pause_sec</span></code> seconds.</p>
+<p>Timing values default to the application settings but can be
+overridden per-instance for testing.</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="sign_language.utils.sequence.SequenceBuilder.__init__">
+<span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">letter_hold_sec</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.14)"><span class="pre">float</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.14)"><span class="pre">None</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cooldown_sec</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.14)"><span class="pre">float</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.14)"><span class="pre">None</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">space_pause_sec</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.14)"><span class="pre">float</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.14)"><span class="pre">None</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">stable_grace_sec</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.14)"><span class="pre">float</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.14)"><span class="pre">None</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.14)"><span class="pre">None</span></a></span></span><a class="reference internal" href="../_modules/sign_language/utils/sequence.html#SequenceBuilder.__init__"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#sign_language.utils.sequence.SequenceBuilder.__init__" title="Link to this definition"></a></dt>
+<dd><p>Initialise the sequence builder with optional timing overrides.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>letter_hold_sec</strong> – Seconds a stable letter must be held before
+it is committed. Defaults to <code class="docutils literal notranslate"><span class="pre">settings.sequence_letter_hold_sec</span></code>.</p></li>
+<li><p><strong>cooldown_sec</strong> – Minimum seconds between two consecutive letter
+commits. Defaults to <code class="docutils literal notranslate"><span class="pre">settings.sequence_cooldown_sec</span></code>.</p></li>
+<li><p><strong>space_pause_sec</strong> – Seconds of hand absence before a space is
+inserted into the sentence. Defaults to
+<code class="docutils literal notranslate"><span class="pre">settings.sequence_space_pause_sec</span></code>.</p></li>
+<li><p><strong>stable_grace_sec</strong> – Maximum seconds a stable letter may be
+absent before the hold timer is reset. Defaults to
+<code class="docutils literal notranslate"><span class="pre">settings.sequence_stable_grace_sec</span></code>.</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sign_language.utils.sequence.SequenceBuilder.reset">
+<span class="sig-name descname"><span class="pre">reset</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.14)"><span class="pre">None</span></a></span></span><a class="reference internal" href="../_modules/sign_language/utils/sequence.html#SequenceBuilder.reset"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#sign_language.utils.sequence.SequenceBuilder.reset" title="Link to this definition"></a></dt>
+<dd><p>Clear all accumulated sequence state.</p>
+<p>Resets the sentence, current word, hold timer, cooldown timer,
+no-hand timer, and grace-period tracker to their initial values.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sign_language.utils.sequence.SequenceBuilder.update">
+<span class="sig-name descname"><span class="pre">update</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">stable_letter</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><span class="pre">str</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.14)"><span class="pre">None</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">hand_detected</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.14)"><span class="pre">bool</span></a></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#dict" title="(in Python v3.14)"><span class="pre">dict</span></a></span></span><a class="reference internal" href="../_modules/sign_language/utils/sequence.html#SequenceBuilder.update"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#sign_language.utils.sequence.SequenceBuilder.update" title="Link to this definition"></a></dt>
+<dd><p>Process one frame and return the current sequence state.</p>
+<p>Handles four cases in order:</p>
+<ol class="arabic simple">
+<li><p><strong>No hand detected</strong>: starts or extends the no-hand timer; inserts
+a space into the sentence if the hand has been absent for
+<code class="docutils literal notranslate"><span class="pre">space_pause_sec</span></code> seconds.</p></li>
+<li><p><strong>Stable letter briefly absent (grace period)</strong>: if
+<code class="docutils literal notranslate"><span class="pre">stable_letter</span></code> is <code class="docutils literal notranslate"><span class="pre">None</span></code> but within <code class="docutils literal notranslate"><span class="pre">stable_grace_sec</span></code> of
+the last valid letter, the hold timer is preserved across the
+noisy frame.</p></li>
+<li><p><strong>Same letter as last committed</strong>: hold timer is reset to prevent
+double-committing the same letter.</p></li>
+<li><p><strong>Hold timer</strong>: starts or continues tracking the current letter;
+commits it to <code class="docutils literal notranslate"><span class="pre">current_word</span></code> once held for <code class="docutils literal notranslate"><span class="pre">letter_hold_sec</span></code>
+seconds and the cooldown has elapsed.</p></li>
+</ol>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>stable_letter</strong> – The smoothed stable letter from
+<a class="reference internal" href="#sign_language.utils.smoothing.PredictionSmoother" title="sign_language.utils.smoothing.PredictionSmoother"><code class="xref py py-class docutils literal notranslate"><span class="pre">PredictionSmoother</span></code></a>,
+or <code class="docutils literal notranslate"><span class="pre">None</span></code> if no stable prediction is available.</p></li>
+<li><p><strong>hand_detected</strong> – Whether a hand was detected in the current frame.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Dict with keys <code class="docutils literal notranslate"><span class="pre">current_word</span></code>, <code class="docutils literal notranslate"><span class="pre">sentence</span></code>, and
+<code class="docutils literal notranslate"><span class="pre">committed_letter</span></code>. <code class="docutils literal notranslate"><span class="pre">committed_letter</span></code> is the letter just
+committed in this frame, or <code class="docutils literal notranslate"><span class="pre">None</span></code> if no commit occurred.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sign_language.utils.sequence.SequenceBuilder.clear">
+<span class="sig-name descname"><span class="pre">clear</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.14)"><span class="pre">None</span></a></span></span><a class="reference internal" href="../_modules/sign_language/utils/sequence.html#SequenceBuilder.clear"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#sign_language.utils.sequence.SequenceBuilder.clear" title="Link to this definition"></a></dt>
+<dd><p>Alias for <a class="reference internal" href="#sign_language.utils.sequence.SequenceBuilder.reset" title="sign_language.utils.sequence.SequenceBuilder.reset"><code class="xref py py-meth docutils literal notranslate"><span class="pre">reset()</span></code></a>.</p>
+<p>Provided for API consistency with other stateful helpers that
+expose a <code class="docutils literal notranslate"><span class="pre">clear</span></code> method.</p>
+</dd></dl>
+
+</dd></dl>
+
+</section>
+<section id="module-sign_language.utils.smoothing">
+<span id="sign-language-utils-smoothing-module"></span><h2>sign_language.utils.smoothing module<a class="headerlink" href="#module-sign_language.utils.smoothing" title="Link to this heading"></a></h2>
+<p>Prediction smoother.</p>
+<p>Buffers the last <em>N</em> frame-level predictions and emits a stable letter
+only when a supermajority of recent frames agree with sufficient average
+confidence. This eliminates the flickering that raw per-frame output
+would produce.</p>
+<section id="hysteresis">
+<h3>Hysteresis<a class="headerlink" href="#hysteresis" title="Link to this heading"></a></h3>
+<p>Gaining stability requires <code class="docutils literal notranslate"><span class="pre">acquire_threshold</span></code> votes (strict).
+Keeping stability only requires <code class="docutils literal notranslate"><span class="pre">sticky_threshold</span></code> votes (lenient).
+This prevents a single noisy frame from instantly clearing a stable
+reading that the window spent time building up.</p>
+</section>
+<dl class="py class">
+<dt class="sig sig-object py" id="sign_language.utils.smoothing.PredictionSmoother">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">sign_language.utils.smoothing.</span></span><span class="sig-name descname"><span class="pre">PredictionSmoother</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">window_size</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><span class="pre">int</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.14)"><span class="pre">None</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">acquire_threshold</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><span class="pre">int</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.14)"><span class="pre">None</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sticky_threshold</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><span class="pre">int</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.14)"><span class="pre">None</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">min_confidence</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.14)"><span class="pre">float</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.14)"><span class="pre">None</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/sign_language/utils/smoothing.html#PredictionSmoother"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#sign_language.utils.smoothing.PredictionSmoother" title="Link to this definition"></a></dt>
+<dd><p>Bases: <a class="reference external" href="https://docs.python.org/3/library/functions.html#object" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></a></p>
+<p>Sliding-window majority-vote smoother with hysteresis.</p>
+<p>Buffers the last <code class="docutils literal notranslate"><span class="pre">window_size</span></code> frame predictions and emits a stable
+letter only when a supermajority of frames agree with sufficient average
+confidence. Two separate vote thresholds implement hysteresis: a strict
+<code class="docutils literal notranslate"><span class="pre">acquire_threshold</span></code> to gain stability and a lenient <code class="docutils literal notranslate"><span class="pre">sticky_threshold</span></code>
+to maintain it.</p>
+<p>All tuning parameters default to the application settings but can be
+overridden per-instance for testing.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Variables<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>stable_letter</strong> – The currently agreed-upon letter, or <code class="docutils literal notranslate"><span class="pre">None</span></code> if
+no stable prediction has been reached.</p></li>
+<li><p><strong>stable_confidence</strong> – Average confidence of the stable letter across
+its supporting frames in the current window. Zero when unstable.</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="sign_language.utils.smoothing.PredictionSmoother.__init__">
+<span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">window_size</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><span class="pre">int</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.14)"><span class="pre">None</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">acquire_threshold</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><span class="pre">int</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.14)"><span class="pre">None</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sticky_threshold</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><span class="pre">int</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.14)"><span class="pre">None</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">min_confidence</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.14)"><span class="pre">float</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.14)"><span class="pre">None</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.14)"><span class="pre">None</span></a></span></span><a class="reference internal" href="../_modules/sign_language/utils/smoothing.html#PredictionSmoother.__init__"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#sign_language.utils.smoothing.PredictionSmoother.__init__" title="Link to this definition"></a></dt>
+<dd><p>Initialise the smoother with optional parameter overrides.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>window_size</strong> – Number of recent frames to keep in the sliding
+window. Defaults to <code class="docutils literal notranslate"><span class="pre">settings.smoother_window_size</span></code>.</p></li>
+<li><p><strong>acquire_threshold</strong> – Minimum vote count required to acquire a
+stable letter (strict bar). Defaults to
+<code class="docutils literal notranslate"><span class="pre">settings.smoother_acquire_threshold</span></code>.</p></li>
+<li><p><strong>sticky_threshold</strong> – Minimum vote count required to keep an
+already-stable letter stable (lenient bar). Defaults to
+<code class="docutils literal notranslate"><span class="pre">settings.smoother_sticky_threshold</span></code>.</p></li>
+<li><p><strong>min_confidence</strong> – Per-frame confidence floor below which frames
+are excluded from the average confidence calculation. Defaults to
+<code class="docutils literal notranslate"><span class="pre">settings.smoother_min_confidence</span></code>.</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sign_language.utils.smoothing.PredictionSmoother.update">
+<span class="sig-name descname"><span class="pre">update</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">letter</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><span class="pre">str</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">confidence</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.14)"><span class="pre">float</span></a></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.14)"><span class="pre">None</span></a></span></span><a class="reference internal" href="../_modules/sign_language/utils/smoothing.html#PredictionSmoother.update"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#sign_language.utils.smoothing.PredictionSmoother.update" title="Link to this definition"></a></dt>
+<dd><p>Add a new frame prediction and recalculate the stable letter.</p>
+<p>Appends the prediction to the sliding window buffer. If the buffer
+is not yet full, returns immediately without updating stability.</p>
+<p>Once full, applies hysteresis: if a letter is already stable, checks
+whether it still has at least <code class="docutils literal notranslate"><span class="pre">sticky_threshold</span></code> votes with
+sufficient average confidence. If so, keeps it. If support has
+collapsed, falls through to the standard acquisition path which
+requires <code class="docutils literal notranslate"><span class="pre">acquire_threshold</span></code> votes to establish a new stable letter.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>letter</strong> – Predicted letter label for the current frame.</p></li>
+<li><p><strong>confidence</strong> – Model confidence score for <code class="docutils literal notranslate"><span class="pre">letter</span></code> in [0, 1].</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sign_language.utils.smoothing.PredictionSmoother.clear">
+<span class="sig-name descname"><span class="pre">clear</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.14)"><span class="pre">None</span></a></span></span><a class="reference internal" href="../_modules/sign_language/utils/smoothing.html#PredictionSmoother.clear"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#sign_language.utils.smoothing.PredictionSmoother.clear" title="Link to this definition"></a></dt>
+<dd><p>Reset the prediction buffer and clear the stable letter state.</p>
+<p>After calling this method, <code class="docutils literal notranslate"><span class="pre">stable_letter</span></code> is <code class="docutils literal notranslate"><span class="pre">None</span></code> and
+<code class="docutils literal notranslate"><span class="pre">stable_confidence</span></code> is <code class="docutils literal notranslate"><span class="pre">0.0</span></code>.</p>
+</dd></dl>
+
+</dd></dl>
+
+</section>
+<section id="module-sign_language.utils">
+<span id="module-contents"></span><h2>Module contents<a class="headerlink" href="#module-sign_language.utils" title="Link to this heading"></a></h2>
+<p>sign_language.utils sub-package.</p>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2026, Kinga Marchlewska, Raya Kichukova, Ana-Maria Farazică, Maciej Czerniak, Szymon Chirowski.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

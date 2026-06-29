@@ -1,0 +1,260 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>sign_language.utils.smoothing &mdash; Sign Language 0.1.0 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/css/theme.css?v=9edc463e" />
+
+  
+      <script src="../../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../../_static/documentation_options.js?v=01f34227"></script>
+      <script src="../../../_static/doctools.js?v=9a2dae69"></script>
+      <script src="../../../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../index.html" class="icon icon-home">
+            Sign Language
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Getting Started</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../installation.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../usage.html">Usage</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">API Reference</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../reference/sign_language.html">sign_language package</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../reference/sign_language_training.html">sign_language_training package</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../index.html">Sign Language</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">sign_language.utils.smoothing</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for sign_language.utils.smoothing</h1><div class="highlight"><pre>
+<span></span><span class="sd">&quot;&quot;&quot;Prediction smoother.</span>
+
+<span class="sd">Buffers the last *N* frame-level predictions and emits a stable letter</span>
+<span class="sd">only when a supermajority of recent frames agree with sufficient average</span>
+<span class="sd">confidence. This eliminates the flickering that raw per-frame output</span>
+<span class="sd">would produce.</span>
+
+<span class="sd">Hysteresis</span>
+<span class="sd">----------</span>
+<span class="sd">Gaining stability requires ``acquire_threshold`` votes (strict).</span>
+<span class="sd">Keeping stability only requires ``sticky_threshold`` votes (lenient).</span>
+<span class="sd">This prevents a single noisy frame from instantly clearing a stable</span>
+<span class="sd">reading that the window spent time building up.</span>
+<span class="sd">&quot;&quot;&quot;</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">collections</span><span class="w"> </span><span class="kn">import</span> <span class="n">Counter</span><span class="p">,</span> <span class="n">deque</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Optional</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">sign_language.core.settings</span><span class="w"> </span><span class="kn">import</span> <span class="n">settings</span>
+
+
+<div class="viewcode-block" id="PredictionSmoother">
+<a class="viewcode-back" href="../../../reference/sign_language.utils.html#sign_language.utils.smoothing.PredictionSmoother">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">PredictionSmoother</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Sliding-window majority-vote smoother with hysteresis.</span>
+
+<span class="sd">    Buffers the last ``window_size`` frame predictions and emits a stable</span>
+<span class="sd">    letter only when a supermajority of frames agree with sufficient average</span>
+<span class="sd">    confidence. Two separate vote thresholds implement hysteresis: a strict</span>
+<span class="sd">    ``acquire_threshold`` to gain stability and a lenient ``sticky_threshold``</span>
+<span class="sd">    to maintain it.</span>
+
+<span class="sd">    All tuning parameters default to the application settings but can be</span>
+<span class="sd">    overridden per-instance for testing.</span>
+
+<span class="sd">    :ivar stable_letter: The currently agreed-upon letter, or ``None`` if</span>
+<span class="sd">        no stable prediction has been reached.</span>
+<span class="sd">    :ivar stable_confidence: Average confidence of the stable letter across</span>
+<span class="sd">        its supporting frames in the current window. Zero when unstable.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+<div class="viewcode-block" id="PredictionSmoother.__init__">
+<a class="viewcode-back" href="../../../reference/sign_language.utils.html#sign_language.utils.smoothing.PredictionSmoother.__init__">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">window_size</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">acquire_threshold</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">sticky_threshold</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">min_confidence</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Initialise the smoother with optional parameter overrides.</span>
+
+<span class="sd">        :param window_size: Number of recent frames to keep in the sliding</span>
+<span class="sd">            window. Defaults to ``settings.smoother_window_size``.</span>
+<span class="sd">        :param acquire_threshold: Minimum vote count required to acquire a</span>
+<span class="sd">            stable letter (strict bar). Defaults to</span>
+<span class="sd">            ``settings.smoother_acquire_threshold``.</span>
+<span class="sd">        :param sticky_threshold: Minimum vote count required to keep an</span>
+<span class="sd">            already-stable letter stable (lenient bar). Defaults to</span>
+<span class="sd">            ``settings.smoother_sticky_threshold``.</span>
+<span class="sd">        :param min_confidence: Per-frame confidence floor below which frames</span>
+<span class="sd">            are excluded from the average confidence calculation. Defaults to</span>
+<span class="sd">            ``settings.smoother_min_confidence``.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">window_size</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="n">window_size</span> <span class="k">if</span> <span class="n">window_size</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="n">settings</span><span class="o">.</span><span class="n">smoother_window_size</span>
+        <span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">acquire_threshold</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="n">acquire_threshold</span>
+            <span class="k">if</span> <span class="n">acquire_threshold</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
+            <span class="k">else</span> <span class="n">settings</span><span class="o">.</span><span class="n">smoother_acquire_threshold</span>
+        <span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">sticky_threshold</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="n">sticky_threshold</span>
+            <span class="k">if</span> <span class="n">sticky_threshold</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
+            <span class="k">else</span> <span class="n">settings</span><span class="o">.</span><span class="n">smoother_sticky_threshold</span>
+        <span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">min_confidence</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="n">min_confidence</span>
+            <span class="k">if</span> <span class="n">min_confidence</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
+            <span class="k">else</span> <span class="n">settings</span><span class="o">.</span><span class="n">smoother_min_confidence</span>
+        <span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">buffer</span><span class="p">:</span> <span class="n">deque</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">float</span><span class="p">]]</span> <span class="o">=</span> <span class="n">deque</span><span class="p">(</span><span class="n">maxlen</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">window_size</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">stable_letter</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">stable_confidence</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.0</span></div>
+
+
+<div class="viewcode-block" id="PredictionSmoother.update">
+<a class="viewcode-back" href="../../../reference/sign_language.utils.html#sign_language.utils.smoothing.PredictionSmoother.update">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">update</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">letter</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">confidence</span><span class="p">:</span> <span class="nb">float</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Add a new frame prediction and recalculate the stable letter.</span>
+
+<span class="sd">        Appends the prediction to the sliding window buffer. If the buffer</span>
+<span class="sd">        is not yet full, returns immediately without updating stability.</span>
+
+<span class="sd">        Once full, applies hysteresis: if a letter is already stable, checks</span>
+<span class="sd">        whether it still has at least ``sticky_threshold`` votes with</span>
+<span class="sd">        sufficient average confidence. If so, keeps it. If support has</span>
+<span class="sd">        collapsed, falls through to the standard acquisition path which</span>
+<span class="sd">        requires ``acquire_threshold`` votes to establish a new stable letter.</span>
+
+<span class="sd">        :param letter: Predicted letter label for the current frame.</span>
+<span class="sd">        :param confidence: Model confidence score for ``letter`` in [0, 1].</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">buffer</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">letter</span><span class="p">,</span> <span class="n">confidence</span><span class="p">))</span>
+
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">buffer</span><span class="p">)</span> <span class="o">&lt;</span> <span class="bp">self</span><span class="o">.</span><span class="n">window_size</span><span class="p">:</span>
+            <span class="k">return</span>
+
+        <span class="n">votes</span> <span class="o">=</span> <span class="n">Counter</span><span class="p">(</span><span class="n">ltr</span> <span class="k">for</span> <span class="n">ltr</span><span class="p">,</span> <span class="n">_</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">buffer</span><span class="p">)</span>
+        <span class="n">top_letter</span><span class="p">,</span> <span class="n">top_count</span> <span class="o">=</span> <span class="n">votes</span><span class="o">.</span><span class="n">most_common</span><span class="p">(</span><span class="mi">1</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
+
+        <span class="c1"># ── Hysteresis: use a lower bar to keep the current stable letter ──</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">stable_letter</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">current_count</span> <span class="o">=</span> <span class="n">votes</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">stable_letter</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span>
+            <span class="n">current_avg</span> <span class="o">=</span> <span class="p">(</span>
+                <span class="nb">sum</span><span class="p">(</span><span class="n">c</span> <span class="k">for</span> <span class="n">ltr</span><span class="p">,</span> <span class="n">c</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">buffer</span> <span class="k">if</span> <span class="n">ltr</span> <span class="o">==</span> <span class="bp">self</span><span class="o">.</span><span class="n">stable_letter</span><span class="p">)</span>
+                <span class="o">/</span> <span class="n">current_count</span>
+                <span class="k">if</span> <span class="n">current_count</span> <span class="o">&gt;</span> <span class="mi">0</span>
+                <span class="k">else</span> <span class="mf">0.0</span>
+            <span class="p">)</span>
+            <span class="k">if</span> <span class="p">(</span>
+                <span class="n">current_count</span> <span class="o">&gt;=</span> <span class="bp">self</span><span class="o">.</span><span class="n">sticky_threshold</span>
+                <span class="ow">and</span> <span class="n">current_avg</span> <span class="o">&gt;=</span> <span class="bp">self</span><span class="o">.</span><span class="n">min_confidence</span>
+            <span class="p">):</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">stable_confidence</span> <span class="o">=</span> <span class="n">current_avg</span>
+                <span class="k">return</span>
+
+        <span class="c1"># ── Standard acquisition path ────────────────────────────────────</span>
+        <span class="k">if</span> <span class="n">top_count</span> <span class="o">&gt;=</span> <span class="bp">self</span><span class="o">.</span><span class="n">acquire_threshold</span><span class="p">:</span>
+            <span class="n">avg_conf</span> <span class="o">=</span> <span class="nb">sum</span><span class="p">(</span><span class="n">c</span> <span class="k">for</span> <span class="n">ltr</span><span class="p">,</span> <span class="n">c</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">buffer</span> <span class="k">if</span> <span class="n">ltr</span> <span class="o">==</span> <span class="n">top_letter</span><span class="p">)</span> <span class="o">/</span> <span class="n">top_count</span>
+            <span class="k">if</span> <span class="n">avg_conf</span> <span class="o">&gt;=</span> <span class="bp">self</span><span class="o">.</span><span class="n">min_confidence</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">stable_letter</span> <span class="o">=</span> <span class="n">top_letter</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">stable_confidence</span> <span class="o">=</span> <span class="n">avg_conf</span>
+                <span class="k">return</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">stable_letter</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">stable_confidence</span> <span class="o">=</span> <span class="mf">0.0</span></div>
+
+
+<div class="viewcode-block" id="PredictionSmoother.clear">
+<a class="viewcode-back" href="../../../reference/sign_language.utils.html#sign_language.utils.smoothing.PredictionSmoother.clear">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">clear</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Reset the prediction buffer and clear the stable letter state.</span>
+
+<span class="sd">        After calling this method, ``stable_letter`` is ``None`` and</span>
+<span class="sd">        ``stable_confidence`` is ``0.0``.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">buffer</span><span class="o">.</span><span class="n">clear</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">stable_letter</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">stable_confidence</span> <span class="o">=</span> <span class="mf">0.0</span></div>
+</div>
+
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2026, Kinga Marchlewska, Raya Kichukova, Ana-Maria Farazică, Maciej Czerniak, Szymon Chirowski.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

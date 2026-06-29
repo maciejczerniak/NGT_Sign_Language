@@ -1,0 +1,1116 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>sign_language.core package &mdash; Sign Language 0.1.0 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../_static/css/theme.css?v=9edc463e" />
+
+  
+      <script src="../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../_static/documentation_options.js?v=01f34227"></script>
+      <script src="../_static/doctools.js?v=9a2dae69"></script>
+      <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../index.html" class="icon icon-home">
+            Sign Language
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Getting Started</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../installation.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../usage.html">Usage</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">API Reference</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="sign_language.html">sign_language package</a></li>
+<li class="toctree-l1"><a class="reference internal" href="sign_language_training.html">sign_language_training package</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">Sign Language</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">sign_language.core package</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../_sources/reference/sign_language.core.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="sign-language-core-package">
+<h1>sign_language.core package<a class="headerlink" href="#sign-language-core-package" title="Link to this heading"></a></h1>
+<section id="submodules">
+<h2>Submodules<a class="headerlink" href="#submodules" title="Link to this heading"></a></h2>
+</section>
+<section id="module-sign_language.core.inference">
+<span id="sign-language-core-inference-module"></span><h2>sign_language.core.inference module<a class="headerlink" href="#module-sign_language.core.inference" title="Link to this heading"></a></h2>
+<p>Inference engine.</p>
+<p>Runs EfficientNet-B0 as the primary classifier and falls back to the
+Landmark MLP when EfficientNet confidence drops below a threshold.</p>
+<p>The confidence thresholds are controlled by
+<code class="docutils literal notranslate"><span class="pre">efficientnet_confidence_threshold</span></code> and <code class="docutils literal notranslate"><span class="pre">landmark_override_threshold</span></code>
+in project settings.</p>
+<dl class="py function">
+<dt class="sig sig-object py" id="sign_language.core.inference.run_inference">
+<span class="sig-prename descclassname"><span class="pre">sign_language.core.inference.</span></span><span class="sig-name descname"><span class="pre">run_inference</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">tensor</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.pytorch.org/docs/stable/tensors.html#torch.Tensor" title="(in PyTorch v2.12)"><span class="pre">torch.Tensor</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">model</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.pytorch.org/docs/stable/generated/torch.nn.Module.html#torch.nn.Module" title="(in PyTorch v2.12)"><span class="pre">torch.nn.Module</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">class_names</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#list" title="(in Python v3.14)"><span class="pre">list</span></a><span class="p"><span class="pre">[</span></span><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><span class="pre">str</span></a><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">device</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.pytorch.org/docs/stable/tensor_attributes.html#torch.device" title="(in PyTorch v2.12)"><span class="pre">torch.device</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">landmarks_data</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#list" title="(in Python v3.14)"><span class="pre">list</span></a><span class="p"><span class="pre">[</span></span><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#dict" title="(in Python v3.14)"><span class="pre">dict</span></a><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.14)"><span class="pre">None</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">landmark_model</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.pytorch.org/docs/stable/generated/torch.nn.Module.html#torch.nn.Module" title="(in PyTorch v2.12)"><span class="pre">torch.nn.Module</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.14)"><span class="pre">None</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">lm_class_names</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#list" title="(in Python v3.14)"><span class="pre">list</span></a><span class="p"><span class="pre">[</span></span><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><span class="pre">str</span></a><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.14)"><span class="pre">None</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#tuple" title="(in Python v3.14)"><span class="pre">tuple</span></a><span class="p"><span class="pre">[</span></span><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><span class="pre">str</span></a><span class="p"><span class="pre">,</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.14)"><span class="pre">float</span></a><span class="p"><span class="pre">,</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#list" title="(in Python v3.14)"><span class="pre">list</span></a><span class="p"><span class="pre">[</span></span><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#dict" title="(in Python v3.14)"><span class="pre">dict</span></a><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="../_modules/sign_language/core/inference.html#run_inference"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#sign_language.core.inference.run_inference" title="Link to this definition"></a></dt>
+<dd><p>Run inference on a preprocessed image tensor.</p>
+<p>Uses EfficientNet-B0 as the primary model. When its top-1 confidence
+falls below <code class="docutils literal notranslate"><span class="pre">settings.efficientnet_confidence_threshold</span></code> and landmark
+data is available, the Landmark MLP is consulted. If the MLP confidence
+exceeds <code class="docutils literal notranslate"><span class="pre">settings.landmark_override_threshold</span></code>, its prediction and
+top-3 list replace the image model’s output.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>tensor</strong> – Preprocessed image tensor of shape <code class="docutils literal notranslate"><span class="pre">(1,</span> <span class="pre">3,</span> <span class="pre">224,</span> <span class="pre">224)</span></code>
+already on the correct device.</p></li>
+<li><p><strong>model</strong> – Loaded EfficientNet-B0 model in eval mode.</p></li>
+<li><p><strong>class_names</strong> – Ordered list of class label strings matching the
+EfficientNet output head.</p></li>
+<li><p><strong>device</strong> – Torch device used to move the landmark feature tensor.</p></li>
+<li><p><strong>landmarks_data</strong> – Optional list of 21 landmark dicts with <code class="docutils literal notranslate"><span class="pre">x</span></code>,
+<code class="docutils literal notranslate"><span class="pre">y</span></code>, and <code class="docutils literal notranslate"><span class="pre">z</span></code> keys, as returned by MediaPipe. Required for
+landmark MLP fallback.</p></li>
+<li><p><strong>landmark_model</strong> – Optional loaded Landmark MLP model in eval mode.
+If <code class="docutils literal notranslate"><span class="pre">None</span></code>, the fallback is skipped entirely.</p></li>
+<li><p><strong>lm_class_names</strong> – Ordered list of class label strings matching the
+MLP output head. Required for landmark MLP fallback.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>A three-tuple of <code class="docutils literal notranslate"><span class="pre">(predicted_letter,</span> <span class="pre">confidence,</span> <span class="pre">top_3)</span></code>
+where <code class="docutils literal notranslate"><span class="pre">predicted_letter</span></code> is the top-1 class label, <code class="docutils literal notranslate"><span class="pre">confidence</span></code>
+is its score in [0, 1], and <code class="docutils literal notranslate"><span class="pre">top_3</span></code> is a list of up to three dicts
+each containing <code class="docutils literal notranslate"><span class="pre">letter</span></code> and <code class="docutils literal notranslate"><span class="pre">confidence</span></code> keys.</p>
+</dd>
+</dl>
+</dd></dl>
+
+</section>
+<section id="module-sign_language.core.logging">
+<span id="sign-language-core-logging-module"></span><h2>sign_language.core.logging module<a class="headerlink" href="#module-sign_language.core.logging" title="Link to this heading"></a></h2>
+<p>Logging configuration and logger factory.</p>
+<p>Provides a centralised <a class="reference internal" href="#sign_language.core.logging.get_logger" title="sign_language.core.logging.get_logger"><code class="xref py py-func docutils literal notranslate"><span class="pre">get_logger()</span></code></a> factory that configures file
+and optional console handlers based on project settings. Handlers are
+reused if already attached to a logger to avoid duplicate log entries.</p>
+<dl class="py function">
+<dt class="sig sig-object py" id="sign_language.core.logging.get_logger">
+<span class="sig-prename descclassname"><span class="pre">sign_language.core.logging.</span></span><span class="sig-name descname"><span class="pre">get_logger</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><span class="pre">str</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.14)"><span class="pre">None</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">settings</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#sign_language.core.settings.Settings" title="sign_language.core.settings.Settings"><span class="pre">Settings</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">pydantic_settings.BaseSettings</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference external" href="https://docs.python.org/3/library/logging.html#logging.Logger" title="(in Python v3.14)"><span class="pre">Logger</span></a></span></span><a class="reference internal" href="../_modules/sign_language/core/logging.html#get_logger"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#sign_language.core.logging.get_logger" title="Link to this definition"></a></dt>
+<dd><p>Create or retrieve a configured logger with file and optional console handlers.</p>
+<p>Configures the logger with the log level from settings. Attaches a file
+handler if one pointing to the configured log path is not already present.
+In development environments, also attaches a console handler if one is
+not already present.</p>
+<p>Existing handlers are reused and reconfigured rather than duplicated.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>name</strong> – Logger name passed to <a class="reference external" href="https://docs.python.org/3/library/logging.html#logging.getLogger" title="(in Python v3.14)"><code class="xref py py-func docutils literal notranslate"><span class="pre">logging.getLogger()</span></code></a>. If <code class="docutils literal notranslate"><span class="pre">None</span></code>,
+returns the root logger.</p></li>
+<li><p><strong>settings</strong> – The <a class="reference internal" href="#sign_language.core.settings.Settings" title="sign_language.core.settings.Settings"><code class="xref py py-class docutils literal notranslate"><span class="pre">Settings</span></code></a> instance
+used to resolve log level, log path, and environment info.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>A configured <a class="reference external" href="https://docs.python.org/3/library/logging.html#logging.Logger" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Logger</span></code></a> instance.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="sign_language.core.logging.get_log_file_handler">
+<span class="sig-prename descclassname"><span class="pre">sign_language.core.logging.</span></span><span class="sig-name descname"><span class="pre">get_log_file_handler</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">settings</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#sign_language.core.settings.Settings" title="sign_language.core.settings.Settings"><span class="pre">Settings</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">pydantic_settings.BaseSettings</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference external" href="https://docs.python.org/3/library/logging.handlers.html#logging.FileHandler" title="(in Python v3.14)"><span class="pre">FileHandler</span></a></span></span><a class="reference internal" href="../_modules/sign_language/core/logging.html#get_log_file_handler"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#sign_language.core.logging.get_log_file_handler" title="Link to this definition"></a></dt>
+<dd><p>Create and return a configured file handler for the log path from settings.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>settings</strong> – The <a class="reference internal" href="#sign_language.core.settings.Settings" title="sign_language.core.settings.Settings"><code class="xref py py-class docutils literal notranslate"><span class="pre">Settings</span></code></a> instance
+used to resolve the log file path and log level.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>A <a class="reference external" href="https://docs.python.org/3/library/logging.handlers.html#logging.FileHandler" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">FileHandler</span></code></a> configured with the standard
+formatter and the log level from settings.</p>
+</dd>
+</dl>
+</dd></dl>
+
+</section>
+<section id="module-sign_language.core.preprocessing">
+<span id="sign-language-core-preprocessing-module"></span><h2>sign_language.core.preprocessing module<a class="headerlink" href="#module-sign_language.core.preprocessing" title="Link to this heading"></a></h2>
+<p>Image preprocessing pipeline.</p>
+<p>Decodes base64-encoded camera frames, detects and crops hands via
+MediaPipe, and applies the ImageNet normalisation transform expected
+by EfficientNet-B0.</p>
+<dl class="py function">
+<dt class="sig sig-object py" id="sign_language.core.preprocessing.decode_base64_image">
+<span class="sig-prename descclassname"><span class="pre">sign_language.core.preprocessing.</span></span><span class="sig-name descname"><span class="pre">decode_base64_image</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">image_data</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><span class="pre">str</span></a></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Image</span></span></span><a class="reference internal" href="../_modules/sign_language/core/preprocessing.html#decode_base64_image"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#sign_language.core.preprocessing.decode_base64_image" title="Link to this definition"></a></dt>
+<dd><p>Decode a base64-encoded image string into an RGB PIL Image.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>image_data</strong> – Base64 string, optionally with a
+<code class="docutils literal notranslate"><span class="pre">data:image/...;base64,</span></code> prefix which is stripped automatically.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>An RGB <code class="xref py py-class docutils literal notranslate"><span class="pre">Image</span></code>.</p>
+</dd>
+<dt class="field-odd">Raises<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3/library/exceptions.html#ValueError" title="(in Python v3.14)"><strong>ValueError</strong></a> – If the base64 data cannot be decoded or the image
+format is not recognised.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="sign_language.core.preprocessing.CroppedHandDetection">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">sign_language.core.preprocessing.</span></span><span class="sig-name descname"><span class="pre">CroppedHandDetection</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">label</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><span class="pre">str</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">crop</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Image</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">landmarks</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#list" title="(in Python v3.14)"><span class="pre">list</span></a><span class="p"><span class="pre">[</span></span><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#dict" title="(in Python v3.14)"><span class="pre">dict</span></a><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">wrist_x</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.14)"><span class="pre">float</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">wrist_y</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.14)"><span class="pre">float</span></a></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/sign_language/core/preprocessing.html#CroppedHandDetection"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#sign_language.core.preprocessing.CroppedHandDetection" title="Link to this definition"></a></dt>
+<dd><p>Bases: <a class="reference external" href="https://docs.python.org/3/library/functions.html#object" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></a></p>
+<p>Detected hand crop before model preprocessing.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>label</strong> – Handedness label from MediaPipe, either <code class="docutils literal notranslate"><span class="pre">&quot;Left&quot;</span></code> or
+<code class="docutils literal notranslate"><span class="pre">&quot;Right&quot;</span></code>, or <code class="docutils literal notranslate"><span class="pre">&quot;Hand_&lt;i&gt;&quot;</span></code> if handedness is unavailable.</p></li>
+<li><p><strong>crop</strong> – Cropped <code class="xref py py-class docutils literal notranslate"><span class="pre">Image</span></code> of the hand region.</p></li>
+<li><p><strong>landmarks</strong> – List of 21 landmark dicts each with <code class="docutils literal notranslate"><span class="pre">x</span></code>, <code class="docutils literal notranslate"><span class="pre">y</span></code>,
+and <code class="docutils literal notranslate"><span class="pre">z</span></code> keys in normalised [0, 1] coordinates.</p></li>
+<li><p><strong>wrist_x</strong> – Normalised x coordinate of landmark 0 (wrist), used
+for cross-frame hand tracking.</p></li>
+<li><p><strong>wrist_y</strong> – Normalised y coordinate of landmark 0 (wrist), used
+for cross-frame hand tracking.</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="sign_language.core.preprocessing.CroppedHandDetection.label">
+<span class="sig-name descname"><span class="pre">label</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><span class="pre">str</span></a></em><a class="headerlink" href="#sign_language.core.preprocessing.CroppedHandDetection.label" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="sign_language.core.preprocessing.CroppedHandDetection.crop">
+<span class="sig-name descname"><span class="pre">crop</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Image</span></em><a class="headerlink" href="#sign_language.core.preprocessing.CroppedHandDetection.crop" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="sign_language.core.preprocessing.CroppedHandDetection.landmarks">
+<span class="sig-name descname"><span class="pre">landmarks</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#list" title="(in Python v3.14)"><span class="pre">list</span></a><span class="p"><span class="pre">[</span></span><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#dict" title="(in Python v3.14)"><span class="pre">dict</span></a><span class="p"><span class="pre">]</span></span></em><a class="headerlink" href="#sign_language.core.preprocessing.CroppedHandDetection.landmarks" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="sign_language.core.preprocessing.CroppedHandDetection.wrist_x">
+<span class="sig-name descname"><span class="pre">wrist_x</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.14)"><span class="pre">float</span></a></em><a class="headerlink" href="#sign_language.core.preprocessing.CroppedHandDetection.wrist_x" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="sign_language.core.preprocessing.CroppedHandDetection.wrist_y">
+<span class="sig-name descname"><span class="pre">wrist_y</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.14)"><span class="pre">float</span></a></em><a class="headerlink" href="#sign_language.core.preprocessing.CroppedHandDetection.wrist_y" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="sign_language.core.preprocessing.HandDetection">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">sign_language.core.preprocessing.</span></span><span class="sig-name descname"><span class="pre">HandDetection</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">label</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><span class="pre">str</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">crop</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Image</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">landmarks</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#list" title="(in Python v3.14)"><span class="pre">list</span></a><span class="p"><span class="pre">[</span></span><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#dict" title="(in Python v3.14)"><span class="pre">dict</span></a><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">wrist_x</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.14)"><span class="pre">float</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">wrist_y</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.14)"><span class="pre">float</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">tensor</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.pytorch.org/docs/stable/tensors.html#torch.Tensor" title="(in PyTorch v2.12)"><span class="pre">torch.Tensor</span></a></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/sign_language/core/preprocessing.html#HandDetection"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#sign_language.core.preprocessing.HandDetection" title="Link to this definition"></a></dt>
+<dd><p>Bases: <a class="reference internal" href="#sign_language.core.preprocessing.CroppedHandDetection" title="sign_language.core.preprocessing.CroppedHandDetection"><code class="xref py py-class docutils literal notranslate"><span class="pre">CroppedHandDetection</span></code></a></p>
+<p>Fully preprocessed hand detection ready for model inference.</p>
+<p>Extends <a class="reference internal" href="#sign_language.core.preprocessing.CroppedHandDetection" title="sign_language.core.preprocessing.CroppedHandDetection"><code class="xref py py-class docutils literal notranslate"><span class="pre">CroppedHandDetection</span></code></a> with a preprocessed image tensor
+that has been resized, normalised, and moved to the target device.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>tensor</strong> – Preprocessed image tensor of shape <code class="docutils literal notranslate"><span class="pre">(1,</span> <span class="pre">3,</span> <span class="pre">H,</span> <span class="pre">W)</span></code>
+on the target device, ready for EfficientNet-B0 inference.</p>
+</dd>
+</dl>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="sign_language.core.preprocessing.HandDetection.tensor">
+<span class="sig-name descname"><span class="pre">tensor</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.pytorch.org/docs/stable/tensors.html#torch.Tensor" title="(in PyTorch v2.12)"><span class="pre">torch.Tensor</span></a></em><a class="headerlink" href="#sign_language.core.preprocessing.HandDetection.tensor" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="sign_language.core.preprocessing.HandDetection.label">
+<span class="sig-name descname"><span class="pre">label</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><span class="pre">str</span></a></em><a class="headerlink" href="#sign_language.core.preprocessing.HandDetection.label" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="sign_language.core.preprocessing.HandDetection.crop">
+<span class="sig-name descname"><span class="pre">crop</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Image</span></em><a class="headerlink" href="#sign_language.core.preprocessing.HandDetection.crop" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="sign_language.core.preprocessing.HandDetection.landmarks">
+<span class="sig-name descname"><span class="pre">landmarks</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#list" title="(in Python v3.14)"><span class="pre">list</span></a><span class="p"><span class="pre">[</span></span><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#dict" title="(in Python v3.14)"><span class="pre">dict</span></a><span class="p"><span class="pre">]</span></span></em><a class="headerlink" href="#sign_language.core.preprocessing.HandDetection.landmarks" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="sign_language.core.preprocessing.HandDetection.wrist_x">
+<span class="sig-name descname"><span class="pre">wrist_x</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.14)"><span class="pre">float</span></a></em><a class="headerlink" href="#sign_language.core.preprocessing.HandDetection.wrist_x" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="sign_language.core.preprocessing.HandDetection.wrist_y">
+<span class="sig-name descname"><span class="pre">wrist_y</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.14)"><span class="pre">float</span></a></em><a class="headerlink" href="#sign_language.core.preprocessing.HandDetection.wrist_y" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="sign_language.core.preprocessing.detect_and_crop_hand">
+<span class="sig-prename descclassname"><span class="pre">sign_language.core.preprocessing.</span></span><span class="sig-name descname"><span class="pre">detect_and_crop_hand</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">frame</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">numpy.ndarray</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">hands_detector</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Any" title="(in Python v3.14)"><span class="pre">Any</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">padding</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><span class="pre">int</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">30</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#tuple" title="(in Python v3.14)"><span class="pre">tuple</span></a><span class="p"><span class="pre">[</span></span><span class="pre">Image</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.14)"><span class="pre">None</span></a><span class="p"><span class="pre">,</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#list" title="(in Python v3.14)"><span class="pre">list</span></a><span class="p"><span class="pre">[</span></span><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#dict" title="(in Python v3.14)"><span class="pre">dict</span></a><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.14)"><span class="pre">None</span></a><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="../_modules/sign_language/core/preprocessing.html#detect_and_crop_hand"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#sign_language.core.preprocessing.detect_and_crop_hand" title="Link to this definition"></a></dt>
+<dd><p>Detect a hand in a frame and return a cropped PIL image plus landmarks.</p>
+<p>Legacy single-hand interface — returns only the first detected hand.
+Prefer <a class="reference internal" href="#sign_language.core.preprocessing.detect_and_crop_all_hands" title="sign_language.core.preprocessing.detect_and_crop_all_hands"><code class="xref py py-func docutils literal notranslate"><span class="pre">detect_and_crop_all_hands()</span></code></a> for multi-hand support.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>frame</strong> – RGB numpy array of shape <code class="docutils literal notranslate"><span class="pre">(H,</span> <span class="pre">W,</span> <span class="pre">3)</span></code>.</p></li>
+<li><p><strong>hands_detector</strong> – A MediaPipe <code class="docutils literal notranslate"><span class="pre">HandLandmarker</span></code> instance, or
+<code class="docutils literal notranslate"><span class="pre">None</span></code> to skip detection.</p></li>
+<li><p><strong>padding</strong> – Pixels to add around the detected bounding box.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>A tuple of <code class="docutils literal notranslate"><span class="pre">(cropped_image,</span> <span class="pre">landmarks)</span></code> for the first
+detected hand, or <code class="docutils literal notranslate"><span class="pre">(None,</span> <span class="pre">None)</span></code> if no hand is detected or
+<code class="docutils literal notranslate"><span class="pre">hands_detector</span></code> is <code class="docutils literal notranslate"><span class="pre">None</span></code>.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="sign_language.core.preprocessing.detect_and_crop_all_hands">
+<span class="sig-prename descclassname"><span class="pre">sign_language.core.preprocessing.</span></span><span class="sig-name descname"><span class="pre">detect_and_crop_all_hands</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">frame</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">numpy.ndarray</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">hands_detector</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Any" title="(in Python v3.14)"><span class="pre">Any</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">padding</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><span class="pre">int</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">30</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#list" title="(in Python v3.14)"><span class="pre">list</span></a><span class="p"><span class="pre">[</span></span><a class="reference internal" href="#sign_language.core.preprocessing.CroppedHandDetection" title="sign_language.core.preprocessing.CroppedHandDetection"><span class="pre">CroppedHandDetection</span></a><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="../_modules/sign_language/core/preprocessing.html#detect_and_crop_all_hands"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#sign_language.core.preprocessing.detect_and_crop_all_hands" title="Link to this definition"></a></dt>
+<dd><p>Detect all hands in a frame and return a list of cropped results.</p>
+<p>Each result includes the handedness label from MediaPipe (<code class="docutils literal notranslate"><span class="pre">&quot;Left&quot;</span></code>
+or <code class="docutils literal notranslate"><span class="pre">&quot;Right&quot;</span></code>), the cropped image, normalised landmarks, and the
+wrist position for cross-frame tracking.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>frame</strong> – RGB numpy array of shape <code class="docutils literal notranslate"><span class="pre">(H,</span> <span class="pre">W,</span> <span class="pre">3)</span></code>.</p></li>
+<li><p><strong>hands_detector</strong> – A MediaPipe <code class="docutils literal notranslate"><span class="pre">HandLandmarker</span></code> instance, or
+<code class="docutils literal notranslate"><span class="pre">None</span></code> to skip detection.</p></li>
+<li><p><strong>padding</strong> – Pixels to add around each detected bounding box.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>A list of <a class="reference internal" href="#sign_language.core.preprocessing.CroppedHandDetection" title="sign_language.core.preprocessing.CroppedHandDetection"><code class="xref py py-class docutils literal notranslate"><span class="pre">CroppedHandDetection</span></code></a> instances, one per
+detected hand. Returns an empty list if no hands are detected,
+<code class="docutils literal notranslate"><span class="pre">hands_detector</span></code> is <code class="docutils literal notranslate"><span class="pre">None</span></code>, or an error occurs.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="sign_language.core.preprocessing.preprocess_image">
+<span class="sig-prename descclassname"><span class="pre">sign_language.core.preprocessing.</span></span><span class="sig-name descname"><span class="pre">preprocess_image</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">image_data</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><span class="pre">str</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">hands_detector</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Any" title="(in Python v3.14)"><span class="pre">Any</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">device</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.pytorch.org/docs/stable/tensor_attributes.html#torch.device" title="(in PyTorch v2.12)"><span class="pre">torch.device</span></a></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#tuple" title="(in Python v3.14)"><span class="pre">tuple</span></a><span class="p"><span class="pre">[</span></span><a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.14)"><span class="pre">bool</span></a><span class="p"><span class="pre">,</span></span><span class="w"> </span><a class="reference external" href="https://docs.pytorch.org/docs/stable/tensors.html#torch.Tensor" title="(in PyTorch v2.12)"><span class="pre">torch.Tensor</span></a><span class="p"><span class="pre">,</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#list" title="(in Python v3.14)"><span class="pre">list</span></a><span class="p"><span class="pre">[</span></span><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#dict" title="(in Python v3.14)"><span class="pre">dict</span></a><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.14)"><span class="pre">None</span></a><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="../_modules/sign_language/core/preprocessing.html#preprocess_image"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#sign_language.core.preprocessing.preprocess_image" title="Link to this definition"></a></dt>
+<dd><p>Full preprocessing pipeline: decode → detect hand → crop → transform.</p>
+<p>Legacy single-hand interface kept for backward compatibility with the
+HTTP route and CLI. The WebSocket endpoint uses <a class="reference internal" href="#sign_language.core.preprocessing.preprocess_all_hands" title="sign_language.core.preprocessing.preprocess_all_hands"><code class="xref py py-func docutils literal notranslate"><span class="pre">preprocess_all_hands()</span></code></a>.</p>
+<p>Falls back to the full uncropped image if no hand is detected, so
+inference always receives a valid tensor.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>image_data</strong> – Base64-encoded image from the client.</p></li>
+<li><p><strong>hands_detector</strong> – MediaPipe <code class="docutils literal notranslate"><span class="pre">HandLandmarker</span></code> instance, or <code class="docutils literal notranslate"><span class="pre">None</span></code>.</p></li>
+<li><p><strong>device</strong> – Torch device for the output tensor.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>A three-tuple of <code class="docutils literal notranslate"><span class="pre">(hand_detected,</span> <span class="pre">tensor,</span> <span class="pre">landmarks)</span></code> where
+<code class="docutils literal notranslate"><span class="pre">hand_detected</span></code> indicates whether a hand crop was used, <code class="docutils literal notranslate"><span class="pre">tensor</span></code>
+is the preprocessed image tensor of shape <code class="docutils literal notranslate"><span class="pre">(1,</span> <span class="pre">3,</span> <span class="pre">H,</span> <span class="pre">W)</span></code>, and
+<code class="docutils literal notranslate"><span class="pre">landmarks</span></code> is the list of 21 landmark dicts or <code class="docutils literal notranslate"><span class="pre">None</span></code>.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="sign_language.core.preprocessing.preprocess_all_hands">
+<span class="sig-prename descclassname"><span class="pre">sign_language.core.preprocessing.</span></span><span class="sig-name descname"><span class="pre">preprocess_all_hands</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">image_data</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><span class="pre">str</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">hands_detector</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Any" title="(in Python v3.14)"><span class="pre">Any</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">device</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.pytorch.org/docs/stable/tensor_attributes.html#torch.device" title="(in PyTorch v2.12)"><span class="pre">torch.device</span></a></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#list" title="(in Python v3.14)"><span class="pre">list</span></a><span class="p"><span class="pre">[</span></span><a class="reference internal" href="#sign_language.core.preprocessing.HandDetection" title="sign_language.core.preprocessing.HandDetection"><span class="pre">HandDetection</span></a><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="../_modules/sign_language/core/preprocessing.html#preprocess_all_hands"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#sign_language.core.preprocessing.preprocess_all_hands" title="Link to this definition"></a></dt>
+<dd><p>Full preprocessing pipeline for all detected hands.</p>
+<p>Decodes the base64 image, runs MediaPipe detection on all hands,
+crops each hand region, and applies the ImageNet transform to produce
+a tensor per hand.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>image_data</strong> – Base64-encoded image from the client.</p></li>
+<li><p><strong>hands_detector</strong> – MediaPipe <code class="docutils literal notranslate"><span class="pre">HandLandmarker</span></code> instance, or <code class="docutils literal notranslate"><span class="pre">None</span></code>.</p></li>
+<li><p><strong>device</strong> – Torch device for the output tensors.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>A list of <a class="reference internal" href="#sign_language.core.preprocessing.HandDetection" title="sign_language.core.preprocessing.HandDetection"><code class="xref py py-class docutils literal notranslate"><span class="pre">HandDetection</span></code></a> instances, one per detected
+hand, each containing the label, crop, landmarks, wrist position,
+and preprocessed tensor. Returns an empty list when no hands are
+found.</p>
+</dd>
+</dl>
+</dd></dl>
+
+</section>
+<section id="module-sign_language.core.settings">
+<span id="sign-language-core-settings-module"></span><h2>sign_language.core.settings module<a class="headerlink" href="#module-sign_language.core.settings" title="Link to this heading"></a></h2>
+<p>Application settings loaded from environment variables and the <code class="docutils literal notranslate"><span class="pre">.env</span></code> file.</p>
+<p>Provides a single <a class="reference internal" href="#sign_language.core.settings.Settings" title="sign_language.core.settings.Settings"><code class="xref py py-class docutils literal notranslate"><span class="pre">Settings</span></code></a> instance (<code class="docutils literal notranslate"><span class="pre">settings</span></code>) used throughout
+the application for configuration. All fields are overridable via environment
+variables or the <code class="docutils literal notranslate"><span class="pre">.env</span></code> file at the repository root.</p>
+<p>Torch is imported lazily via <code class="xref py py-class docutils literal notranslate"><span class="pre">_LazyTorch</span></code> to avoid pulling it in on
+import in environments where it is not needed (e.g. Windows CPU-only scripts).</p>
+<dl class="py class">
+<dt class="sig sig-object py" id="sign_language.core.settings.Settings">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">sign_language.core.settings.</span></span><span class="sig-name descname"><span class="pre">Settings</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Any</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Any</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/sign_language/core/settings.html#Settings"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#sign_language.core.settings.Settings" title="Link to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">BaseSettings</span></code></p>
+<p>Application-wide configuration loaded from environment variables and <code class="docutils literal notranslate"><span class="pre">.env</span></code>.</p>
+<p>All fields map directly to environment variables (case-insensitive).
+Unknown variables in <code class="docutils literal notranslate"><span class="pre">.env</span></code> are silently ignored. Sensible defaults are
+provided for every field so the application starts without a <code class="docutils literal notranslate"><span class="pre">.env</span></code> file,
+but production deployments must override <code class="docutils literal notranslate"><span class="pre">secret_key</span></code>, <code class="docutils literal notranslate"><span class="pre">database_url</span></code>,
+and any Azure/MLflow fields they use.</p>
+<p>Sections:</p>
+<ul class="simple">
+<li><p><strong>Application identity</strong>: name, version, authors, environment status.</p></li>
+<li><p><strong>Debug / logging</strong>: debug flag, log level, log file path.</p></li>
+<li><p><strong>CORS</strong>: allowed origins for the FastAPI CORS middleware.</p></li>
+<li><p><strong>Auth / database</strong>: PostgreSQL URL, JWT secret, token lifetime.</p></li>
+<li><p><strong>Training</strong>: hyperparameters, file names, dataset paths.</p></li>
+<li><p><strong>MLflow</strong>: experiment tracking configuration.</p></li>
+<li><p><strong>Azure ML</strong>: workspace, compute, environment, and asset settings.</p></li>
+<li><p><strong>Model paths</strong>: local paths to model checkpoints and MediaPipe assets.</p></li>
+<li><p><strong>Server</strong>: Uvicorn host and port.</p></li>
+<li><p><strong>Inference thresholds</strong>: EfficientNet and landmark MLP confidence gates.</p></li>
+<li><p><strong>Sequence builder</strong>: timing parameters for letter commit and spacing.</p></li>
+<li><p><strong>Prediction smoother</strong>: majority-vote window and threshold settings.</p></li>
+</ul>
+<dl class="py method">
+<dt class="sig sig-object py" id="sign_language.core.settings.Settings.normalize_debug_input">
+<span class="sig-name descname"><span class="pre">normalize_debug_input</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#sign_language.core.settings.Settings.normalize_debug_input" title="Link to this definition"></a></dt>
+<dd><p>Normalise string representations of the debug flag to booleans.</p>
+<p>Accepts common truthy/falsy string values including environment-style
+words such as <code class="docutils literal notranslate"><span class="pre">&quot;development&quot;</span></code> and <code class="docutils literal notranslate"><span class="pre">&quot;production&quot;</span></code>.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>v</strong> – Raw input value from the environment or <code class="docutils literal notranslate"><span class="pre">.env</span></code> file.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><code class="docutils literal notranslate"><span class="pre">True</span></code>, <code class="docutils literal notranslate"><span class="pre">False</span></code>, or the original value if no normalisation
+applies.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sign_language.core.settings.Settings.set_and_verify_debug_mode">
+<span class="sig-name descname"><span class="pre">set_and_verify_debug_mode</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#sign_language.core.settings.Settings.set_and_verify_debug_mode" title="Link to this definition"></a></dt>
+<dd><p>Derive and validate the debug flag against the application status.</p>
+<p>If <code class="docutils literal notranslate"><span class="pre">debug</span></code> is <code class="docutils literal notranslate"><span class="pre">None</span></code>, infers <code class="docutils literal notranslate"><span class="pre">True</span></code> for <code class="docutils literal notranslate"><span class="pre">DEVELOPMENT</span></code> and
+<code class="docutils literal notranslate"><span class="pre">False</span></code> for <code class="docutils literal notranslate"><span class="pre">PRODUCTION</span></code>. Raises if debug is explicitly enabled
+in a production environment.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>v</strong> – The normalised debug value, or <code class="docutils literal notranslate"><span class="pre">None</span></code> if not set.</p></li>
+<li><p><strong>info</strong> – Pydantic validation context providing access to already
+validated fields.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>The resolved boolean debug flag.</p>
+</dd>
+<dt class="field-odd">Raises<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3/library/exceptions.html#ValueError" title="(in Python v3.14)"><strong>ValueError</strong></a> – If <code class="docutils literal notranslate"><span class="pre">debug=True</span></code> is set while <code class="docutils literal notranslate"><span class="pre">status</span></code> is
+<code class="docutils literal notranslate"><span class="pre">&quot;PRODUCTION&quot;</span></code>.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sign_language.core.settings.Settings.validate_log_level">
+<span class="sig-name descname"><span class="pre">validate_log_level</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#sign_language.core.settings.Settings.validate_log_level" title="Link to this definition"></a></dt>
+<dd><p>Validate and resolve the log level string.</p>
+<p>If <code class="docutils literal notranslate"><span class="pre">None</span></code>, defaults to <code class="docutils literal notranslate"><span class="pre">&quot;DEBUG&quot;</span></code> in development and <code class="docutils literal notranslate"><span class="pre">&quot;INFO&quot;</span></code>
+in production.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>v</strong> – The raw log level string, or <code class="docutils literal notranslate"><span class="pre">None</span></code>.</p></li>
+<li><p><strong>info</strong> – Pydantic validation context.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>A valid uppercase log level string.</p>
+</dd>
+<dt class="field-odd">Raises<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3/library/exceptions.html#ValueError" title="(in Python v3.14)"><strong>ValueError</strong></a> – If the provided string is not a recognised
+Python logging level name.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sign_language.core.settings.Settings.validate_version">
+<span class="sig-name descname"><span class="pre">validate_version</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#sign_language.core.settings.Settings.validate_version" title="Link to this definition"></a></dt>
+<dd><p>Validate that the version string follows semantic versioning.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>v</strong> – The raw version string.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>The version string unchanged if valid.</p>
+</dd>
+<dt class="field-odd">Raises<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3/library/exceptions.html#ValueError" title="(in Python v3.14)"><strong>ValueError</strong></a> – If the string does not match the semver pattern.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sign_language.core.settings.Settings.validate_authors">
+<span class="sig-name descname"><span class="pre">validate_authors</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#sign_language.core.settings.Settings.validate_authors" title="Link to this definition"></a></dt>
+<dd><p>Validate that at least one non-empty author name is provided.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>authors</strong> – List of author name strings.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>The list unchanged if valid.</p>
+</dd>
+<dt class="field-odd">Raises<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3/library/exceptions.html#ValueError" title="(in Python v3.14)"><strong>ValueError</strong></a> – If the list is empty or any name is blank.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sign_language.core.settings.Settings.validate_emails">
+<span class="sig-name descname"><span class="pre">validate_emails</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#sign_language.core.settings.Settings.validate_emails" title="Link to this definition"></a></dt>
+<dd><p>Validate that email count matches author count and all emails are valid.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>emails</strong> – List of author email strings.</p></li>
+<li><p><strong>info</strong> – Pydantic validation context providing access to <code class="docutils literal notranslate"><span class="pre">authors</span></code>.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>The list unchanged if valid.</p>
+</dd>
+<dt class="field-odd">Raises<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3/library/exceptions.html#ValueError" title="(in Python v3.14)"><strong>ValueError</strong></a> – If the email count does not match the author count,
+or if any email does not match the expected format.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sign_language.core.settings.Settings.validate_log_path">
+<span class="sig-name descname"><span class="pre">validate_log_path</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#sign_language.core.settings.Settings.validate_log_path" title="Link to this definition"></a></dt>
+<dd><p>Pass through the log path unchanged.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>path</strong> – The raw log path value, or <code class="docutils literal notranslate"><span class="pre">None</span></code>.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>The path unchanged.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sign_language.core.settings.Settings.parse_cors_origins">
+<span class="sig-name descname"><span class="pre">parse_cors_origins</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#sign_language.core.settings.Settings.parse_cors_origins" title="Link to this definition"></a></dt>
+<dd><p>Parse CORS origins from a list, JSON array string, or comma-separated string.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>v</strong> – Raw input — a list, a JSON array string, a comma-separated
+string, or <code class="docutils literal notranslate"><span class="pre">None</span></code>.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>A list of origin strings. Returns an empty list for <code class="docutils literal notranslate"><span class="pre">None</span></code>.</p>
+</dd>
+<dt class="field-odd">Raises<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3/library/exceptions.html#ValueError" title="(in Python v3.14)"><strong>ValueError</strong></a> – If the input type is not supported.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sign_language.core.settings.Settings.validate_positive_training_ints">
+<span class="sig-name descname"><span class="pre">validate_positive_training_ints</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#sign_language.core.settings.Settings.validate_positive_training_ints" title="Link to this definition"></a></dt>
+<dd><p>Validate that core training integer settings are positive.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>v</strong> – The integer value to validate.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>The value unchanged if positive.</p>
+</dd>
+<dt class="field-odd">Raises<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3/library/exceptions.html#ValueError" title="(in Python v3.14)"><strong>ValueError</strong></a> – If the value is zero or negative.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sign_language.core.settings.Settings.validate_positive_training_floats">
+<span class="sig-name descname"><span class="pre">validate_positive_training_floats</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#sign_language.core.settings.Settings.validate_positive_training_floats" title="Link to this definition"></a></dt>
+<dd><p>Validate that the learning rate is strictly positive.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>v</strong> – The learning rate value.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>The value unchanged if positive.</p>
+</dd>
+<dt class="field-odd">Raises<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3/library/exceptions.html#ValueError" title="(in Python v3.14)"><strong>ValueError</strong></a> – If the value is zero or negative.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sign_language.core.settings.Settings.validate_training_eta_min">
+<span class="sig-name descname"><span class="pre">validate_training_eta_min</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#sign_language.core.settings.Settings.validate_training_eta_min" title="Link to this definition"></a></dt>
+<dd><p>Validate that the minimum learning rate is non-negative.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>v</strong> – The eta_min value.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>The value unchanged if non-negative.</p>
+</dd>
+<dt class="field-odd">Raises<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3/library/exceptions.html#ValueError" title="(in Python v3.14)"><strong>ValueError</strong></a> – If the value is negative.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sign_language.core.settings.Settings.validate_training_ratios">
+<span class="sig-name descname"><span class="pre">validate_training_ratios</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#sign_language.core.settings.Settings.validate_training_ratios" title="Link to this definition"></a></dt>
+<dd><p>Validate that training ratio settings are strictly between 0 and 1.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>v</strong> – The ratio value.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>The value unchanged if in (0, 1).</p>
+</dd>
+<dt class="field-odd">Raises<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3/library/exceptions.html#ValueError" title="(in Python v3.14)"><strong>ValueError</strong></a> – If the value is outside the open interval (0, 1).</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sign_language.core.settings.Settings.validate_training_n_splits">
+<span class="sig-name descname"><span class="pre">validate_training_n_splits</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#sign_language.core.settings.Settings.validate_training_n_splits" title="Link to this definition"></a></dt>
+<dd><p>Validate that the number of training splits is exactly 1.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>v</strong> – The n_splits value.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>The value unchanged if equal to 1.</p>
+</dd>
+<dt class="field-odd">Raises<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3/library/exceptions.html#ValueError" title="(in Python v3.14)"><strong>ValueError</strong></a> – If the value is not 1.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sign_language.core.settings.Settings.validate_training_num_workers">
+<span class="sig-name descname"><span class="pre">validate_training_num_workers</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#sign_language.core.settings.Settings.validate_training_num_workers" title="Link to this definition"></a></dt>
+<dd><p>Validate that the DataLoader worker count is non-negative.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>v</strong> – The num_workers value.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>The value unchanged if non-negative.</p>
+</dd>
+<dt class="field-odd">Raises<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3/library/exceptions.html#ValueError" title="(in Python v3.14)"><strong>ValueError</strong></a> – If the value is negative.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sign_language.core.settings.Settings.validate_img_size">
+<span class="sig-name descname"><span class="pre">validate_img_size</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#sign_language.core.settings.Settings.validate_img_size" title="Link to this definition"></a></dt>
+<dd><p>Validate that the inference image size is a positive integer.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>v</strong> – The img_size value.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>The value unchanged if positive.</p>
+</dd>
+<dt class="field-odd">Raises<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3/library/exceptions.html#ValueError" title="(in Python v3.14)"><strong>ValueError</strong></a> – If the value is zero or negative.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sign_language.core.settings.Settings.validate_server_port">
+<span class="sig-name descname"><span class="pre">validate_server_port</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#sign_language.core.settings.Settings.validate_server_port" title="Link to this definition"></a></dt>
+<dd><p>Validate that the server port is in the valid TCP range.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>v</strong> – The port number.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>The value unchanged if in [1, 65535].</p>
+</dd>
+<dt class="field-odd">Raises<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3/library/exceptions.html#ValueError" title="(in Python v3.14)"><strong>ValueError</strong></a> – If the port is outside the valid range.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sign_language.core.settings.Settings.validate_server_host">
+<span class="sig-name descname"><span class="pre">validate_server_host</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#sign_language.core.settings.Settings.validate_server_host" title="Link to this definition"></a></dt>
+<dd><p>Validate that the server host string is not blank.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>v</strong> – The host string.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>The value unchanged if non-empty.</p>
+</dd>
+<dt class="field-odd">Raises<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3/library/exceptions.html#ValueError" title="(in Python v3.14)"><strong>ValueError</strong></a> – If the string is empty or whitespace only.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sign_language.core.settings.Settings.validate_unit_interval">
+<span class="sig-name descname"><span class="pre">validate_unit_interval</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#sign_language.core.settings.Settings.validate_unit_interval" title="Link to this definition"></a></dt>
+<dd><p>Validate that confidence and threshold values are in the open interval (0, 1).</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>v</strong> – The threshold value.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>The value unchanged if in (0, 1).</p>
+</dd>
+<dt class="field-odd">Raises<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3/library/exceptions.html#ValueError" title="(in Python v3.14)"><strong>ValueError</strong></a> – If the value is outside the open interval.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sign_language.core.settings.Settings.validate_positive_durations">
+<span class="sig-name descname"><span class="pre">validate_positive_durations</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#sign_language.core.settings.Settings.validate_positive_durations" title="Link to this definition"></a></dt>
+<dd><p>Validate that sequence timing values are strictly positive.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>v</strong> – The duration in seconds.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>The value unchanged if positive.</p>
+</dd>
+<dt class="field-odd">Raises<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3/library/exceptions.html#ValueError" title="(in Python v3.14)"><strong>ValueError</strong></a> – If the value is zero or negative.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sign_language.core.settings.Settings.validate_positive_smoother_ints">
+<span class="sig-name descname"><span class="pre">validate_positive_smoother_ints</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#sign_language.core.settings.Settings.validate_positive_smoother_ints" title="Link to this definition"></a></dt>
+<dd><p>Validate that smoother integer settings are at least 1.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>v</strong> – The smoother integer value.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>The value unchanged if &gt;= 1.</p>
+</dd>
+<dt class="field-odd">Raises<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3/library/exceptions.html#ValueError" title="(in Python v3.14)"><strong>ValueError</strong></a> – If the value is less than 1.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sign_language.core.settings.Settings.validate_database_url">
+<span class="sig-name descname"><span class="pre">validate_database_url</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#sign_language.core.settings.Settings.validate_database_url" title="Link to this definition"></a></dt>
+<dd><p>Validate that the database URL uses the asyncpg scheme.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>v</strong> – The raw database URL string.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>The URL unchanged if valid.</p>
+</dd>
+<dt class="field-odd">Raises<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3/library/exceptions.html#ValueError" title="(in Python v3.14)"><strong>ValueError</strong></a> – If the URL does not start with
+<code class="docutils literal notranslate"><span class="pre">postgresql+asyncpg://</span></code>.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sign_language.core.settings.Settings.validate_secret_key">
+<span class="sig-name descname"><span class="pre">validate_secret_key</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#sign_language.core.settings.Settings.validate_secret_key" title="Link to this definition"></a></dt>
+<dd><p>Validate the JWT secret key length and warn if using the default placeholder.</p>
+<p>Allows the default <code class="docutils literal notranslate"><span class="pre">&quot;change-me-in-production&quot;</span></code> placeholder through
+with a warning so development environments start without configuration.
+In all other cases, enforces a minimum length of 32 characters.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>v</strong> – The raw secret key string.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>The key unchanged if valid.</p>
+</dd>
+<dt class="field-odd">Raises<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3/library/exceptions.html#ValueError" title="(in Python v3.14)"><strong>ValueError</strong></a> – If the key is not the default placeholder and is
+shorter than 32 characters.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sign_language.core.settings.Settings.validate_jwt_lifetime">
+<span class="sig-name descname"><span class="pre">validate_jwt_lifetime</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#sign_language.core.settings.Settings.validate_jwt_lifetime" title="Link to this definition"></a></dt>
+<dd><p>Validate that the JWT token lifetime is a positive integer.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>v</strong> – The lifetime in seconds.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>The value unchanged if positive.</p>
+</dd>
+<dt class="field-odd">Raises<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3/library/exceptions.html#ValueError" title="(in Python v3.14)"><strong>ValueError</strong></a> – If the value is zero or negative.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sign_language.core.settings.Settings.get_debug_state">
+<span class="sig-name descname"><span class="pre">get_debug_state</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.14)"><span class="pre">bool</span></a></span></span><a class="reference internal" href="../_modules/sign_language/core/settings.html#Settings.get_debug_state"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#sign_language.core.settings.Settings.get_debug_state" title="Link to this definition"></a></dt>
+<dd><p>Return the debug flag as a boolean.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p><code class="docutils literal notranslate"><span class="pre">True</span></code> if debug mode is active, <code class="docutils literal notranslate"><span class="pre">False</span></code> otherwise.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sign_language.core.settings.Settings.get_log_level">
+<span class="sig-name descname"><span class="pre">get_log_level</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><span class="pre">int</span></a></span></span><a class="reference internal" href="../_modules/sign_language/core/settings.html#Settings.get_log_level"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#sign_language.core.settings.Settings.get_log_level" title="Link to this definition"></a></dt>
+<dd><p>Convert the string log level to its corresponding integer value.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>The integer logging level constant from the <a class="reference external" href="https://docs.python.org/3/library/logging.html#module-logging" title="(in Python v3.14)"><code class="xref py py-mod docutils literal notranslate"><span class="pre">logging</span></code></a>
+module corresponding to <code class="docutils literal notranslate"><span class="pre">self.log_level</span></code>.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sign_language.core.settings.Settings.get_app_info">
+<span class="sig-name descname"><span class="pre">get_app_info</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Dict" title="(in Python v3.14)"><span class="pre">Dict</span></a><span class="p"><span class="pre">[</span></span><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><span class="pre">str</span></a><span class="p"><span class="pre">,</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Any" title="(in Python v3.14)"><span class="pre">Any</span></a><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="../_modules/sign_language/core/settings.html#Settings.get_app_info"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#sign_language.core.settings.Settings.get_app_info" title="Link to this definition"></a></dt>
+<dd><p>Return a dictionary with basic application identity information.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Dict containing <code class="docutils literal notranslate"><span class="pre">name</span></code>, <code class="docutils literal notranslate"><span class="pre">version</span></code>, <code class="docutils literal notranslate"><span class="pre">environment</span></code>,
+and <code class="docutils literal notranslate"><span class="pre">debug</span></code> keys.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sign_language.core.settings.Settings.get_authors_with_emails">
+<span class="sig-name descname"><span class="pre">get_authors_with_emails</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.List" title="(in Python v3.14)"><span class="pre">List</span></a><span class="p"><span class="pre">[</span></span><a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Dict" title="(in Python v3.14)"><span class="pre">Dict</span></a><span class="p"><span class="pre">[</span></span><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><span class="pre">str</span></a><span class="p"><span class="pre">,</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><span class="pre">str</span></a><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="../_modules/sign_language/core/settings.html#Settings.get_authors_with_emails"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#sign_language.core.settings.Settings.get_authors_with_emails" title="Link to this definition"></a></dt>
+<dd><p>Return a list of authors paired with their email addresses.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>List of dicts each containing <code class="docutils literal notranslate"><span class="pre">name</span></code> and <code class="docutils literal notranslate"><span class="pre">email</span></code> keys,
+zipped from <code class="docutils literal notranslate"><span class="pre">authors</span></code> and <code class="docutils literal notranslate"><span class="pre">authors_email</span></code>.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sign_language.core.settings.Settings.get_logging_config">
+<span class="sig-name descname"><span class="pre">get_logging_config</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Dict" title="(in Python v3.14)"><span class="pre">Dict</span></a><span class="p"><span class="pre">[</span></span><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><span class="pre">str</span></a><span class="p"><span class="pre">,</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Any" title="(in Python v3.14)"><span class="pre">Any</span></a><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="../_modules/sign_language/core/settings.html#Settings.get_logging_config"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#sign_language.core.settings.Settings.get_logging_config" title="Link to this definition"></a></dt>
+<dd><p>Return logging configuration as a dictionary.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Dict containing <code class="docutils literal notranslate"><span class="pre">level</span></code>, <code class="docutils literal notranslate"><span class="pre">level_int</span></code>, <code class="docutils literal notranslate"><span class="pre">path</span></code>,
+and <code class="docutils literal notranslate"><span class="pre">directory</span></code> keys.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sign_language.core.settings.Settings.is_development">
+<span class="sig-name descname"><span class="pre">is_development</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.14)"><span class="pre">bool</span></a></span></span><a class="reference internal" href="../_modules/sign_language/core/settings.html#Settings.is_development"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#sign_language.core.settings.Settings.is_development" title="Link to this definition"></a></dt>
+<dd><p>Return <code class="docutils literal notranslate"><span class="pre">True</span></code> if the application is running in development mode.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p><code class="docutils literal notranslate"><span class="pre">True</span></code> when <code class="docutils literal notranslate"><span class="pre">status</span></code> is <code class="docutils literal notranslate"><span class="pre">&quot;DEVELOPMENT&quot;</span></code>.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sign_language.core.settings.Settings.is_production">
+<span class="sig-name descname"><span class="pre">is_production</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.14)"><span class="pre">bool</span></a></span></span><a class="reference internal" href="../_modules/sign_language/core/settings.html#Settings.is_production"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#sign_language.core.settings.Settings.is_production" title="Link to this definition"></a></dt>
+<dd><p>Return <code class="docutils literal notranslate"><span class="pre">True</span></code> if the application is running in production mode.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p><code class="docutils literal notranslate"><span class="pre">True</span></code> when <code class="docutils literal notranslate"><span class="pre">status</span></code> is <code class="docutils literal notranslate"><span class="pre">&quot;PRODUCTION&quot;</span></code>.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sign_language.core.settings.Settings.get_version_components">
+<span class="sig-name descname"><span class="pre">get_version_components</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Dict" title="(in Python v3.14)"><span class="pre">Dict</span></a><span class="p"><span class="pre">[</span></span><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><span class="pre">str</span></a><span class="p"><span class="pre">,</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><span class="pre">str</span></a><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="../_modules/sign_language/core/settings.html#Settings.get_version_components"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#sign_language.core.settings.Settings.get_version_components" title="Link to this definition"></a></dt>
+<dd><p>Parse and return the individual components of the semantic version string.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Dict with <code class="docutils literal notranslate"><span class="pre">major</span></code>, <code class="docutils literal notranslate"><span class="pre">minor</span></code>, <code class="docutils literal notranslate"><span class="pre">patch</span></code>, <code class="docutils literal notranslate"><span class="pre">prerelease</span></code>,
+and <code class="docutils literal notranslate"><span class="pre">build</span></code> keys. All values are strings; <code class="docutils literal notranslate"><span class="pre">prerelease</span></code> and
+<code class="docutils literal notranslate"><span class="pre">build</span></code> are empty strings when not present.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sign_language.core.settings.Settings.as_dict">
+<span class="sig-name descname"><span class="pre">as_dict</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Dict" title="(in Python v3.14)"><span class="pre">Dict</span></a><span class="p"><span class="pre">[</span></span><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><span class="pre">str</span></a><span class="p"><span class="pre">,</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Any" title="(in Python v3.14)"><span class="pre">Any</span></a><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="../_modules/sign_language/core/settings.html#Settings.as_dict"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#sign_language.core.settings.Settings.as_dict" title="Link to this definition"></a></dt>
+<dd><p>Return core settings as a flat dictionary.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Dict containing app identity, status, debug, log settings,
+training config, and model config.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sign_language.core.settings.Settings.get_environment_info">
+<span class="sig-name descname"><span class="pre">get_environment_info</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Dict" title="(in Python v3.14)"><span class="pre">Dict</span></a><span class="p"><span class="pre">[</span></span><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><span class="pre">str</span></a><span class="p"><span class="pre">,</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Any" title="(in Python v3.14)"><span class="pre">Any</span></a><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="../_modules/sign_language/core/settings.html#Settings.get_environment_info"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#sign_language.core.settings.Settings.get_environment_info" title="Link to this definition"></a></dt>
+<dd><p>Return runtime environment information.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Dict containing <code class="docutils literal notranslate"><span class="pre">status</span></code>, <code class="docutils literal notranslate"><span class="pre">debug</span></code>, <code class="docutils literal notranslate"><span class="pre">is_development</span></code>,
+<code class="docutils literal notranslate"><span class="pre">is_production</span></code>, <code class="docutils literal notranslate"><span class="pre">python_version</span></code>, and <code class="docutils literal notranslate"><span class="pre">platform</span></code> keys.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sign_language.core.settings.Settings.get_device">
+<span class="sig-name descname"><span class="pre">get_device</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Any" title="(in Python v3.14)"><span class="pre">Any</span></a></span></span><a class="reference internal" href="../_modules/sign_language/core/settings.html#Settings.get_device"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#sign_language.core.settings.Settings.get_device" title="Link to this definition"></a></dt>
+<dd><p>Detect and return the best available torch device.</p>
+<p>Selection priority: CUDA &gt; MPS &gt; CPU.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>A <a class="reference external" href="https://docs.pytorch.org/docs/stable/tensor_attributes.html#torch.device" title="(in PyTorch v2.12)"><code class="xref py py-class docutils literal notranslate"><span class="pre">torch.device</span></code></a> instance for the best available
+compute backend.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sign_language.core.settings.Settings.get_training_data_dir">
+<span class="sig-name descname"><span class="pre">get_training_data_dir</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference external" href="https://docs.python.org/3/library/pathlib.html#pathlib.Path" title="(in Python v3.14)"><span class="pre">Path</span></a></span></span><a class="reference internal" href="../_modules/sign_language/core/settings.html#Settings.get_training_data_dir"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#sign_language.core.settings.Settings.get_training_data_dir" title="Link to this definition"></a></dt>
+<dd><p>Return the default local training dataset root path.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>The <a class="reference external" href="https://docs.python.org/3/library/pathlib.html#pathlib.Path" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Path</span></code></a> from <code class="docutils literal notranslate"><span class="pre">training_local_data_dir</span></code>.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sign_language.core.settings.Settings.get_training_config">
+<span class="sig-name descname"><span class="pre">get_training_config</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Dict" title="(in Python v3.14)"><span class="pre">Dict</span></a><span class="p"><span class="pre">[</span></span><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><span class="pre">str</span></a><span class="p"><span class="pre">,</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Any" title="(in Python v3.14)"><span class="pre">Any</span></a><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="../_modules/sign_language/core/settings.html#Settings.get_training_config"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#sign_language.core.settings.Settings.get_training_config" title="Link to this definition"></a></dt>
+<dd><p>Return all training-related settings as a dictionary.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Dict containing hyperparameters, file name constants,
+dataset paths, and Azure ML asset references.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sign_language.core.settings.Settings.get_mlflow_config">
+<span class="sig-name descname"><span class="pre">get_mlflow_config</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Dict" title="(in Python v3.14)"><span class="pre">Dict</span></a><span class="p"><span class="pre">[</span></span><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><span class="pre">str</span></a><span class="p"><span class="pre">,</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Any" title="(in Python v3.14)"><span class="pre">Any</span></a><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="../_modules/sign_language/core/settings.html#Settings.get_mlflow_config"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#sign_language.core.settings.Settings.get_mlflow_config" title="Link to this definition"></a></dt>
+<dd><p>Return MLflow experiment tracking settings as a dictionary.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Dict containing <code class="docutils literal notranslate"><span class="pre">enabled</span></code>, <code class="docutils literal notranslate"><span class="pre">tracking_uri</span></code>,
+<code class="docutils literal notranslate"><span class="pre">experiment_name</span></code>, <code class="docutils literal notranslate"><span class="pre">run_name</span></code>, <code class="docutils literal notranslate"><span class="pre">autolog</span></code>, and
+<code class="docutils literal notranslate"><span class="pre">log_artifacts</span></code> keys.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sign_language.core.settings.Settings.get_model_config">
+<span class="sig-name descname"><span class="pre">get_model_config</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Dict" title="(in Python v3.14)"><span class="pre">Dict</span></a><span class="p"><span class="pre">[</span></span><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><span class="pre">str</span></a><span class="p"><span class="pre">,</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Any" title="(in Python v3.14)"><span class="pre">Any</span></a><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="../_modules/sign_language/core/settings.html#Settings.get_model_config"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#sign_language.core.settings.Settings.get_model_config" title="Link to this definition"></a></dt>
+<dd><p>Return all model-related paths and constants as a dictionary.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Dict containing <code class="docutils literal notranslate"><span class="pre">img_size</span></code>, <code class="docutils literal notranslate"><span class="pre">model_path</span></code>,
+<code class="docutils literal notranslate"><span class="pre">lm_model_path</span></code>, <code class="docutils literal notranslate"><span class="pre">hand_landmarker_path</span></code>,
+<code class="docutils literal notranslate"><span class="pre">frontend_build_dir</span></code>, and <code class="docutils literal notranslate"><span class="pre">recordings_dir</span></code> keys.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sign_language.core.settings.Settings.get_server_config">
+<span class="sig-name descname"><span class="pre">get_server_config</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Dict" title="(in Python v3.14)"><span class="pre">Dict</span></a><span class="p"><span class="pre">[</span></span><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><span class="pre">str</span></a><span class="p"><span class="pre">,</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Any" title="(in Python v3.14)"><span class="pre">Any</span></a><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="../_modules/sign_language/core/settings.html#Settings.get_server_config"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#sign_language.core.settings.Settings.get_server_config" title="Link to this definition"></a></dt>
+<dd><p>Return Uvicorn server settings as a dictionary.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Dict containing <code class="docutils literal notranslate"><span class="pre">host</span></code>, <code class="docutils literal notranslate"><span class="pre">port</span></code>, and <code class="docutils literal notranslate"><span class="pre">reload</span></code> keys.
+<code class="docutils literal notranslate"><span class="pre">reload</span></code> is <code class="docutils literal notranslate"><span class="pre">True</span></code> in development mode.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sign_language.core.settings.Settings.get_inference_config">
+<span class="sig-name descname"><span class="pre">get_inference_config</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Dict" title="(in Python v3.14)"><span class="pre">Dict</span></a><span class="p"><span class="pre">[</span></span><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><span class="pre">str</span></a><span class="p"><span class="pre">,</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Any" title="(in Python v3.14)"><span class="pre">Any</span></a><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="../_modules/sign_language/core/settings.html#Settings.get_inference_config"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#sign_language.core.settings.Settings.get_inference_config" title="Link to this definition"></a></dt>
+<dd><p>Return inference threshold settings as a dictionary.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Dict containing <code class="docutils literal notranslate"><span class="pre">efficientnet_confidence_threshold</span></code> and
+<code class="docutils literal notranslate"><span class="pre">landmark_override_threshold</span></code> keys.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sign_language.core.settings.Settings.get_sequence_config">
+<span class="sig-name descname"><span class="pre">get_sequence_config</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Dict" title="(in Python v3.14)"><span class="pre">Dict</span></a><span class="p"><span class="pre">[</span></span><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><span class="pre">str</span></a><span class="p"><span class="pre">,</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Any" title="(in Python v3.14)"><span class="pre">Any</span></a><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="../_modules/sign_language/core/settings.html#Settings.get_sequence_config"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#sign_language.core.settings.Settings.get_sequence_config" title="Link to this definition"></a></dt>
+<dd><p>Return sequence-builder timing settings as a dictionary.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Dict containing <code class="docutils literal notranslate"><span class="pre">letter_hold_sec</span></code>, <code class="docutils literal notranslate"><span class="pre">cooldown_sec</span></code>,
+<code class="docutils literal notranslate"><span class="pre">space_pause_sec</span></code>, and <code class="docutils literal notranslate"><span class="pre">stable_grace_sec</span></code> keys.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sign_language.core.settings.Settings.get_smoother_config">
+<span class="sig-name descname"><span class="pre">get_smoother_config</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Dict" title="(in Python v3.14)"><span class="pre">Dict</span></a><span class="p"><span class="pre">[</span></span><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><span class="pre">str</span></a><span class="p"><span class="pre">,</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Any" title="(in Python v3.14)"><span class="pre">Any</span></a><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="../_modules/sign_language/core/settings.html#Settings.get_smoother_config"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#sign_language.core.settings.Settings.get_smoother_config" title="Link to this definition"></a></dt>
+<dd><p>Return prediction-smoother settings as a dictionary.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Dict containing <code class="docutils literal notranslate"><span class="pre">window_size</span></code>, <code class="docutils literal notranslate"><span class="pre">acquire_threshold</span></code>,
+<code class="docutils literal notranslate"><span class="pre">sticky_threshold</span></code>, and <code class="docutils literal notranslate"><span class="pre">min_confidence</span></code> keys.</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="sign_language.core.settings.get_settings">
+<span class="sig-prename descclassname"><span class="pre">sign_language.core.settings.</span></span><span class="sig-name descname"><span class="pre">get_settings</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">use_test_env</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.14)"><span class="pre">bool</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="#sign_language.core.settings.Settings" title="sign_language.core.settings.Settings"><span class="pre">Settings</span></a></span></span><a class="reference internal" href="../_modules/sign_language/core/settings.html#get_settings"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#sign_language.core.settings.get_settings" title="Link to this definition"></a></dt>
+<dd><p>Create and return a <a class="reference internal" href="#sign_language.core.settings.Settings" title="sign_language.core.settings.Settings"><code class="xref py py-class docutils literal notranslate"><span class="pre">Settings</span></code></a> instance.</p>
+<p>When <code class="docutils literal notranslate"><span class="pre">use_test_env</span></code> is <code class="docutils literal notranslate"><span class="pre">True</span></code>, loads from <code class="docutils literal notranslate"><span class="pre">.env.test</span></code> in the same
+directory as the main <code class="docutils literal notranslate"><span class="pre">.env</span></code> file instead of the default <code class="docutils literal notranslate"><span class="pre">.env</span></code>.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>use_test_env</strong> – If <code class="docutils literal notranslate"><span class="pre">True</span></code>, load settings from <code class="docutils literal notranslate"><span class="pre">.env.test</span></code>
+for use in the test suite.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>A fully validated <a class="reference internal" href="#sign_language.core.settings.Settings" title="sign_language.core.settings.Settings"><code class="xref py py-class docutils literal notranslate"><span class="pre">Settings</span></code></a> instance.</p>
+</dd>
+</dl>
+</dd></dl>
+
+</section>
+<section id="module-sign_language.core">
+<span id="module-contents"></span><h2>Module contents<a class="headerlink" href="#module-sign_language.core" title="Link to this heading"></a></h2>
+<p>sign_language.core sub-package.</p>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2026, Kinga Marchlewska, Raya Kichukova, Ana-Maria Farazică, Maciej Czerniak, Szymon Chirowski.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

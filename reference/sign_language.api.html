@@ -1,0 +1,885 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>sign_language.api package &mdash; Sign Language 0.1.0 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../_static/css/theme.css?v=9edc463e" />
+
+  
+      <script src="../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../_static/documentation_options.js?v=01f34227"></script>
+      <script src="../_static/doctools.js?v=9a2dae69"></script>
+      <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../index.html" class="icon icon-home">
+            Sign Language
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Getting Started</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../installation.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../usage.html">Usage</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">API Reference</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="sign_language.html">sign_language package</a></li>
+<li class="toctree-l1"><a class="reference internal" href="sign_language_training.html">sign_language_training package</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">Sign Language</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">sign_language.api package</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../_sources/reference/sign_language.api.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="sign-language-api-package">
+<h1>sign_language.api package<a class="headerlink" href="#sign-language-api-package" title="Link to this heading"></a></h1>
+<section id="submodules">
+<h2>Submodules<a class="headerlink" href="#submodules" title="Link to this heading"></a></h2>
+</section>
+<section id="module-sign_language.api.app">
+<span id="sign-language-api-app-module"></span><h2>sign_language.api.app module<a class="headerlink" href="#module-sign_language.api.app" title="Link to this heading"></a></h2>
+<p>FastAPI application factory for the Sign Language API.</p>
+<p>This module defines two entry points:</p>
+<ul class="simple">
+<li><p><a class="reference internal" href="#sign_language.api.app.lifespan" title="sign_language.api.app.lifespan"><code class="xref py py-func docutils literal notranslate"><span class="pre">lifespan()</span></code></a> — an async context manager that loads ML models on
+startup and disposes of the database engine on shutdown.</p></li>
+<li><p><a class="reference internal" href="#sign_language.api.app.create_app" title="sign_language.api.app.create_app"><code class="xref py py-func docutils literal notranslate"><span class="pre">create_app()</span></code></a> — the application factory that wires together
+middleware, authentication routers, API routers, and the static
+frontend file server.</p></li>
+</ul>
+<p>The factory pattern (rather than a module-level <code class="docutils literal notranslate"><span class="pre">app</span></code> instance) allows
+the application to be instantiated multiple times in tests with different
+configurations, and is compatible with <code class="docutils literal notranslate"><span class="pre">uvicorn</span></code>’s <code class="docutils literal notranslate"><span class="pre">--factory</span></code> flag.</p>
+<p>Database schema management is intentionally left to Alembic. The
+<code class="docutils literal notranslate"><span class="pre">create_all</span></code> call is omitted here so that the schema has exactly one
+source of truth. Run <code class="docutils literal notranslate"><span class="pre">alembic</span> <span class="pre">upgrade</span> <span class="pre">head</span></code> before starting the server.</p>
+<dl class="py function">
+<dt class="sig sig-object py" id="sign_language.api.app.lifespan">
+<span class="sig-prename descclassname"><span class="pre">sign_language.api.app.</span></span><span class="sig-name descname"><span class="pre">lifespan</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">app</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">fastapi.FastAPI</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.AsyncIterator" title="(in Python v3.14)"><span class="pre">AsyncIterator</span></a><span class="p"><span class="pre">[</span></span><a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.14)"><span class="pre">None</span></a><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="../_modules/sign_language/api/app.html#lifespan"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#sign_language.api.app.lifespan" title="Link to this definition"></a></dt>
+<dd><p>Manage application startup and shutdown lifecycle.</p>
+<p>On startup, loads all ML models via <code class="xref py py-func docutils literal notranslate"><span class="pre">load_all()</span></code> and attaches the
+resulting <code class="xref py py-class docutils literal notranslate"><span class="pre">AppState</span></code> instance to <code class="docutils literal notranslate"><span class="pre">app.state.app_state</span></code> so
+that it is accessible from every request handler via
+<code class="docutils literal notranslate"><span class="pre">request.app.state.app_state</span></code>.</p>
+<p>On shutdown (after the <code class="docutils literal notranslate"><span class="pre">yield</span></code>), disposes of the SQLAlchemy async
+engine to cleanly close all database connections in the connection
+pool.</p>
+<p>Database schema management is handled exclusively by Alembic.
+<code class="docutils literal notranslate"><span class="pre">create_all</span></code> is not called here — run <code class="docutils literal notranslate"><span class="pre">alembic</span> <span class="pre">upgrade</span> <span class="pre">head</span></code>
+before starting the server to ensure the schema is up to date.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>app</strong> – The FastAPI application instance. Passed automatically by
+FastAPI when the lifespan context manager is registered.</p>
+</dd>
+<dt class="field-even">Yields<span class="colon">:</span></dt>
+<dd class="field-even"><p>Nothing. Control returns to FastAPI between the startup and
+shutdown phases.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="sign_language.api.app.create_app">
+<span class="sig-prename descclassname"><span class="pre">sign_language.api.app.</span></span><span class="sig-name descname"><span class="pre">create_app</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">fastapi.FastAPI</span></span></span><a class="reference internal" href="../_modules/sign_language/api/app.html#create_app"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#sign_language.api.app.create_app" title="Link to this definition"></a></dt>
+<dd><p>Create and configure the FastAPI application instance.</p>
+<p>Registers all middleware, authentication routers, API routers, and
+the static frontend file server in the correct order. Should be
+called once per process, typically via <code class="docutils literal notranslate"><span class="pre">uvicorn</span></code> with the
+<code class="docutils literal notranslate"><span class="pre">--factory</span></code> flag:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>uvicorn<span class="w"> </span>sign_language.api:create_app<span class="w"> </span>--factory<span class="w"> </span>--reload
+</pre></div>
+</div>
+<p><strong>Middleware (applied in reverse registration order):</strong></p>
+<ul class="simple">
+<li><p><code class="xref py py-class docutils literal notranslate"><span class="pre">CORSMiddleware</span></code> — handles
+cross-origin requests. When <code class="docutils literal notranslate"><span class="pre">settings.cors_origins</span></code> is set,
+only the listed origins are allowed with credentials. When unset,
+all origins are permitted without credentials.</p></li>
+<li><p><code class="xref py py-class docutils literal notranslate"><span class="pre">MonitoringMiddleware</span></code> — records per-request latency and
+status codes to the <code class="docutils literal notranslate"><span class="pre">monitoring_events</span></code> PostgreSQL table.</p></li>
+</ul>
+<p><strong>Router registration order:</strong></p>
+<p>Auth routers are registered before the static file mount so that
+<code class="docutils literal notranslate"><span class="pre">/api/auth/*</span></code> and <code class="docutils literal notranslate"><span class="pre">/api/users/*</span></code> paths are matched by their
+handlers rather than falling through to the frontend.</p>
+<p>The WebSocket router is registered without a prefix; the prediction
+endpoint lives at <code class="docutils literal notranslate"><span class="pre">/ws/predict</span></code>.</p>
+<p>If the frontend build directory configured in settings does not
+exist, the application starts in API-only mode and logs a warning.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>A fully configured <code class="xref py py-class docutils literal notranslate"><span class="pre">fastapi.FastAPI</span></code> instance ready to
+be served by an ASGI server.</p>
+</dd>
+</dl>
+</dd></dl>
+
+</section>
+<section id="module-sign_language.api.routes">
+<span id="sign-language-api-routes-module"></span><h2>sign_language.api.routes module<a class="headerlink" href="#module-sign_language.api.routes" title="Link to this heading"></a></h2>
+<p>HTTP endpoints for the Sign Language API.</p>
+<p>Exposes the following route groups:</p>
+<ul class="simple">
+<li><p><strong>General</strong> — <code class="docutils literal notranslate"><span class="pre">/health</span></code>, <code class="docutils literal notranslate"><span class="pre">/info</span></code>: liveness check and model metadata.</p></li>
+<li><p><strong>Inference</strong> — <code class="docutils literal notranslate"><span class="pre">/predict</span></code>: single-frame sign language classification.</p></li>
+<li><p><strong>Session</strong> — <code class="docutils literal notranslate"><span class="pre">/reset</span></code>: clear per-connection smoother and sequence state.</p></li>
+<li><p><strong>Admin</strong> — <code class="docutils literal notranslate"><span class="pre">/admin/*</span></code>: operational metrics and monitoring history,
+restricted to superuser accounts.</p></li>
+</ul>
+<p>Authentication is handled via FastAPI-Users JWT bearer tokens. Most
+endpoints are publicly accessible; admin endpoints require a valid token
+belonging to a superuser account (<code class="docutils literal notranslate"><span class="pre">is_superuser=True</span></code>).</p>
+<dl class="py function">
+<dt class="sig sig-object py" id="sign_language.api.routes.health">
+<span class="sig-prename descclassname"><span class="pre">sign_language.api.routes.</span></span><span class="sig-name descname"><span class="pre">health</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#dict" title="(in Python v3.14)"><span class="pre">dict</span></a><span class="p"><span class="pre">[</span></span><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><span class="pre">str</span></a><span class="p"><span class="pre">,</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><span class="pre">str</span></a><span class="p"><span class="pre">]</span></span></span></span><a class="headerlink" href="#sign_language.api.routes.health" title="Link to this definition"></a></dt>
+<dd><p>Return a simple liveness check response.</p>
+<p>Used by container orchestrators and load balancers to verify that
+the API process is running and accepting connections.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p><code class="docutils literal notranslate"><span class="pre">{&quot;status&quot;:</span> <span class="pre">&quot;ok&quot;}</span></code> when the server is healthy.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="sign_language.api.routes.info">
+<span class="sig-prename descclassname"><span class="pre">sign_language.api.routes.</span></span><span class="sig-name descname"><span class="pre">info</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">request</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">fastapi.Request</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="#sign_language.api.schemas.InfoResponse" title="sign_language.api.schemas.InfoResponse"><span class="pre">InfoResponse</span></a></span></span><a class="headerlink" href="#sign_language.api.routes.info" title="Link to this definition"></a></dt>
+<dd><p>Return metadata about the loaded models and runtime configuration.</p>
+<p>Provides information useful for client-side feature detection, such
+as whether the landmark model and hand detector are available, the
+number of classes the model was trained on, and the torch device in
+use.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>request</strong> – The incoming HTTP request, used to access shared state.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">InfoResponse</span></code> containing app name, version, device,
+class count, class names, and availability flags for optional
+model components.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="sign_language.api.routes.predict">
+<em class="property"><span class="k"><span class="pre">async</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">sign_language.api.routes.</span></span><span class="sig-name descname"><span class="pre">predict</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">payload</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#sign_language.api.schemas.PredictRequest" title="sign_language.api.schemas.PredictRequest"><span class="pre">PredictRequest</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">request</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">fastapi.Request</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">user</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="sign_language.auth.html#sign_language.auth.models.User" title="sign_language.auth.models.User"><span class="pre">User</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.14)"><span class="pre">None</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">fastapi.Depends</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="#sign_language.api.schemas.PredictResponse" title="sign_language.api.schemas.PredictResponse"><span class="pre">PredictResponse</span></a></span></span><a class="headerlink" href="#sign_language.api.routes.predict" title="Link to this definition"></a></dt>
+<dd><p>Run sign language inference on a single base64-encoded image frame.</p>
+<p>Authentication is optional. Anonymous callers receive full inference
+functionality. When a valid bearer token is present, the <code class="docutils literal notranslate"><span class="pre">user</span></code>
+parameter is populated and the request can be attributed to that
+user for future stats and progress tracking.</p>
+<p>The endpoint preprocesses the image, runs the EfficientNet classifier
+(with optional landmark MLP fallback), updates the per-connection
+smoother and sequence builder, and records a monitoring event
+including the Shannon entropy of the top-3 prediction distribution.</p>
+<p>Shannon entropy is computed over the normalised top-3 probabilities
+as <code class="docutils literal notranslate"><span class="pre">-sum(p</span> <span class="pre">*</span> <span class="pre">log2(p))</span></code> and stored alongside confidence as a proxy
+for model uncertainty over time.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>payload</strong> – Request body containing the base64-encoded JPEG image.</p></li>
+<li><p><strong>request</strong> – The incoming HTTP request, used to access shared state.</p></li>
+<li><p><strong>user</strong> – Authenticated user, or <code class="docutils literal notranslate"><span class="pre">None</span></code> for anonymous requests.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">PredictResponse</span></code> containing the predicted letter,
+confidence, top-3 alternatives, stable letter, current word,
+sentence, committed letter, and hand detection flag.</p>
+</dd>
+<dt class="field-odd">Raises<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>HTTPException</strong> – 400 if the image cannot be decoded or no valid
+    hand region can be extracted from the frame.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="sign_language.api.routes.reset">
+<span class="sig-prename descclassname"><span class="pre">sign_language.api.routes.</span></span><span class="sig-name descname"><span class="pre">reset</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">request</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">fastapi.Request</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="#sign_language.api.schemas.ResetResponse" title="sign_language.api.schemas.ResetResponse"><span class="pre">ResetResponse</span></a></span></span><a class="headerlink" href="#sign_language.api.routes.reset" title="Link to this definition"></a></dt>
+<dd><p>Reset the per-connection smoother and sequence builder state.</p>
+<p>Clears accumulated letter history so that the next prediction starts
+fresh. Useful when a user wants to begin a new signing session without
+reloading the page.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>request</strong> – The incoming HTTP request, used to access shared state.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">ResetResponse</span></code> confirming the reset was applied.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="sign_language.api.routes.collect_sample">
+<em class="property"><span class="k"><span class="pre">async</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">sign_language.api.routes.</span></span><span class="sig-name descname"><span class="pre">collect_sample</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">payload</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#sign_language.api.schemas.CollectRequest" title="sign_language.api.schemas.CollectRequest"><span class="pre">CollectRequest</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">user</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="sign_language.auth.html#sign_language.auth.models.User" title="sign_language.auth.models.User"><span class="pre">User</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.14)"><span class="pre">None</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">fastapi.Depends</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">session</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">sqlalchemy.ext.asyncio.AsyncSession</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">fastapi.Depends</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="#sign_language.api.schemas.CollectResponse" title="sign_language.api.schemas.CollectResponse"><span class="pre">CollectResponse</span></a></span></span><a class="headerlink" href="#sign_language.api.routes.collect_sample" title="Link to this definition"></a></dt>
+<dd><p>Store one labelled fingerspelling sample contributed via Collect mode.</p>
+<p>Authentication is optional — anonymous/guest callers may contribute
+(<code class="docutils literal notranslate"><span class="pre">user_id</span></code> is left NULL); a valid bearer token attributes the sample to
+the user. The image bytes are decoded and written to a file under
+<code class="docutils literal notranslate"><span class="pre">settings.collect_storage_dir</span></code>; a <a class="reference internal" href="sign_language.auth.html#sign_language.auth.models.CollectedSample" title="sign_language.auth.models.CollectedSample"><code class="xref py py-class docutils literal notranslate"><span class="pre">CollectedSample</span></code></a>
+row records the file path and metadata. A future deployment can swap the
+local file write for Azure Blob without changing this contract.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>payload</strong> – The sample — base64 image, letter label, source, language.</p></li>
+<li><p><strong>user</strong> – The authenticated user if a token was provided, else <code class="docutils literal notranslate"><span class="pre">None</span></code>.</p></li>
+<li><p><strong>session</strong> – The active async SQLAlchemy session.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>A <a class="reference internal" href="#sign_language.api.schemas.CollectResponse" title="sign_language.api.schemas.CollectResponse"><code class="xref py py-class docutils literal notranslate"><span class="pre">CollectResponse</span></code></a> with the
+stored sample’s id.</p>
+</dd>
+<dt class="field-odd">Raises<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>HTTPException</strong> – <code class="docutils literal notranslate"><span class="pre">400</span></code> if <code class="docutils literal notranslate"><span class="pre">source</span></code> is invalid or the image cannot
+be decoded; <code class="docutils literal notranslate"><span class="pre">500</span></code> if the file cannot be written.</p>
+</dd>
+</dl>
+</dd></dl>
+
+</section>
+<section id="module-sign_language.api.schemas">
+<span id="sign-language-api-schemas-module"></span><h2>sign_language.api.schemas module<a class="headerlink" href="#module-sign_language.api.schemas" title="Link to this heading"></a></h2>
+<p>Request/response models for the API.</p>
+<dl class="py class">
+<dt class="sig sig-object py" id="sign_language.api.schemas.PredictRequest">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">sign_language.api.schemas.</span></span><span class="sig-name descname"><span class="pre">PredictRequest</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Any</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Any</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/sign_language/api/schemas.html#PredictRequest"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#sign_language.api.schemas.PredictRequest" title="Link to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">BaseModel</span></code></p>
+<p>Request body for the <code class="docutils literal notranslate"><span class="pre">POST</span> <span class="pre">/api/predict</span></code> and <code class="docutils literal notranslate"><span class="pre">/ws/predict</span></code> endpoints.</p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="sign_language.api.schemas.PredictRequest.image">
+<span class="sig-name descname"><span class="pre">image</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><span class="pre">str</span></a></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">Ellipsis</span></em><a class="headerlink" href="#sign_language.api.schemas.PredictRequest.image" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="sign_language.api.schemas.TopKItem">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">sign_language.api.schemas.</span></span><span class="sig-name descname"><span class="pre">TopKItem</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Any</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Any</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/sign_language/api/schemas.html#TopKItem"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#sign_language.api.schemas.TopKItem" title="Link to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">BaseModel</span></code></p>
+<p>A single entry in the top-k prediction list.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>letter</strong> – The predicted class label (e.g. <code class="docutils literal notranslate"><span class="pre">&quot;A&quot;</span></code>).</p></li>
+<li><p><strong>confidence</strong> – The model’s confidence score for this class, in [0, 1].</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="sign_language.api.schemas.TopKItem.letter">
+<span class="sig-name descname"><span class="pre">letter</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><span class="pre">str</span></a></em><a class="headerlink" href="#sign_language.api.schemas.TopKItem.letter" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="sign_language.api.schemas.TopKItem.confidence">
+<span class="sig-name descname"><span class="pre">confidence</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.14)"><span class="pre">float</span></a></em><a class="headerlink" href="#sign_language.api.schemas.TopKItem.confidence" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="sign_language.api.schemas.PredictResponse">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">sign_language.api.schemas.</span></span><span class="sig-name descname"><span class="pre">PredictResponse</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Any</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Any</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/sign_language/api/schemas.html#PredictResponse"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#sign_language.api.schemas.PredictResponse" title="Link to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">BaseModel</span></code></p>
+<p>Response body for a single-frame inference request.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>hand_detected</strong> – Whether a hand was detected in the input frame.</p></li>
+<li><p><strong>predicted_letter</strong> – The top-1 predicted class label, or <code class="docutils literal notranslate"><span class="pre">None</span></code>
+if no hand was detected.</p></li>
+<li><p><strong>confidence</strong> – The model’s confidence score for the top-1 prediction.</p></li>
+<li><p><strong>top_3</strong> – The top-3 predicted letters with their confidence scores.</p></li>
+<li><p><strong>stable_letter</strong> – The smoothed stable prediction from the smoother,
+or <code class="docutils literal notranslate"><span class="pre">None</span></code> if the smoother has not yet committed to a letter.</p></li>
+<li><p><strong>stable_confidence</strong> – Confidence of the stable letter, or <code class="docutils literal notranslate"><span class="pre">None</span></code>
+if no stable letter is available.</p></li>
+<li><p><strong>current_word</strong> – The word currently being built from committed letters.</p></li>
+<li><p><strong>sentence</strong> – The full sentence accumulated so far.</p></li>
+<li><p><strong>committed_letter</strong> – The most recently committed letter, or <code class="docutils literal notranslate"><span class="pre">None</span></code>
+if no letter was committed in this frame.</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="sign_language.api.schemas.PredictResponse.hand_detected">
+<span class="sig-name descname"><span class="pre">hand_detected</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.14)"><span class="pre">bool</span></a></em><a class="headerlink" href="#sign_language.api.schemas.PredictResponse.hand_detected" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="sign_language.api.schemas.PredictResponse.predicted_letter">
+<span class="sig-name descname"><span class="pre">predicted_letter</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><span class="pre">str</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.14)"><span class="pre">None</span></a></em><a class="headerlink" href="#sign_language.api.schemas.PredictResponse.predicted_letter" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="sign_language.api.schemas.PredictResponse.confidence">
+<span class="sig-name descname"><span class="pre">confidence</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.14)"><span class="pre">float</span></a></em><a class="headerlink" href="#sign_language.api.schemas.PredictResponse.confidence" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="sign_language.api.schemas.PredictResponse.top_3">
+<span class="sig-name descname"><span class="pre">top_3</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#list" title="(in Python v3.14)"><span class="pre">list</span></a><span class="p"><span class="pre">[</span></span><a class="reference internal" href="#sign_language.api.schemas.TopKItem" title="sign_language.api.schemas.TopKItem"><span class="pre">TopKItem</span></a><span class="p"><span class="pre">]</span></span></em><a class="headerlink" href="#sign_language.api.schemas.PredictResponse.top_3" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="sign_language.api.schemas.PredictResponse.stable_letter">
+<span class="sig-name descname"><span class="pre">stable_letter</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><span class="pre">str</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.14)"><span class="pre">None</span></a></em><a class="headerlink" href="#sign_language.api.schemas.PredictResponse.stable_letter" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="sign_language.api.schemas.PredictResponse.stable_confidence">
+<span class="sig-name descname"><span class="pre">stable_confidence</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.14)"><span class="pre">float</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.14)"><span class="pre">None</span></a></em><a class="headerlink" href="#sign_language.api.schemas.PredictResponse.stable_confidence" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="sign_language.api.schemas.PredictResponse.current_word">
+<span class="sig-name descname"><span class="pre">current_word</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><span class="pre">str</span></a></em><a class="headerlink" href="#sign_language.api.schemas.PredictResponse.current_word" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="sign_language.api.schemas.PredictResponse.sentence">
+<span class="sig-name descname"><span class="pre">sentence</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><span class="pre">str</span></a></em><a class="headerlink" href="#sign_language.api.schemas.PredictResponse.sentence" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="sign_language.api.schemas.PredictResponse.committed_letter">
+<span class="sig-name descname"><span class="pre">committed_letter</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><span class="pre">str</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.14)"><span class="pre">None</span></a></em><a class="headerlink" href="#sign_language.api.schemas.PredictResponse.committed_letter" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="sign_language.api.schemas.ResetResponse">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">sign_language.api.schemas.</span></span><span class="sig-name descname"><span class="pre">ResetResponse</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Any</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Any</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/sign_language/api/schemas.html#ResetResponse"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#sign_language.api.schemas.ResetResponse" title="Link to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">BaseModel</span></code></p>
+<p>Response body for the <code class="docutils literal notranslate"><span class="pre">POST</span> <span class="pre">/api/reset</span></code> endpoint.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>ok</strong> – Always <code class="docutils literal notranslate"><span class="pre">True</span></code>, confirming the reset was applied successfully.</p>
+</dd>
+</dl>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="sign_language.api.schemas.ResetResponse.ok">
+<span class="sig-name descname"><span class="pre">ok</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.14)"><span class="pre">bool</span></a></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">True</span></em><a class="headerlink" href="#sign_language.api.schemas.ResetResponse.ok" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="sign_language.api.schemas.InfoResponse">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">sign_language.api.schemas.</span></span><span class="sig-name descname"><span class="pre">InfoResponse</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Any</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Any</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/sign_language/api/schemas.html#InfoResponse"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#sign_language.api.schemas.InfoResponse" title="Link to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">BaseModel</span></code></p>
+<p>Response body for the <code class="docutils literal notranslate"><span class="pre">GET</span> <span class="pre">/api/info</span></code> endpoint.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>app_name</strong> – The application name from project settings.</p></li>
+<li><p><strong>version</strong> – The application version string from project settings.</p></li>
+<li><p><strong>device</strong> – The compute device in use, e.g. <code class="docutils literal notranslate"><span class="pre">&quot;cpu&quot;</span></code> or <code class="docutils literal notranslate"><span class="pre">&quot;cuda:0&quot;</span></code>.</p></li>
+<li><p><strong>num_classes</strong> – The number of output classes the classifier supports.</p></li>
+<li><p><strong>class_names</strong> – Ordered list of class label strings.</p></li>
+<li><p><strong>landmark_model_available</strong> – Whether the landmark MLP model is loaded.</p></li>
+<li><p><strong>hand_detector_available</strong> – Whether the MediaPipe hand detector is loaded.</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="sign_language.api.schemas.InfoResponse.app_name">
+<span class="sig-name descname"><span class="pre">app_name</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><span class="pre">str</span></a></em><a class="headerlink" href="#sign_language.api.schemas.InfoResponse.app_name" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="sign_language.api.schemas.InfoResponse.version">
+<span class="sig-name descname"><span class="pre">version</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><span class="pre">str</span></a></em><a class="headerlink" href="#sign_language.api.schemas.InfoResponse.version" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="sign_language.api.schemas.InfoResponse.device">
+<span class="sig-name descname"><span class="pre">device</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><span class="pre">str</span></a></em><a class="headerlink" href="#sign_language.api.schemas.InfoResponse.device" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="sign_language.api.schemas.InfoResponse.num_classes">
+<span class="sig-name descname"><span class="pre">num_classes</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><span class="pre">int</span></a></em><a class="headerlink" href="#sign_language.api.schemas.InfoResponse.num_classes" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="sign_language.api.schemas.InfoResponse.class_names">
+<span class="sig-name descname"><span class="pre">class_names</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#list" title="(in Python v3.14)"><span class="pre">list</span></a><span class="p"><span class="pre">[</span></span><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><span class="pre">str</span></a><span class="p"><span class="pre">]</span></span></em><a class="headerlink" href="#sign_language.api.schemas.InfoResponse.class_names" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="sign_language.api.schemas.InfoResponse.landmark_model_available">
+<span class="sig-name descname"><span class="pre">landmark_model_available</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.14)"><span class="pre">bool</span></a></em><a class="headerlink" href="#sign_language.api.schemas.InfoResponse.landmark_model_available" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="sign_language.api.schemas.InfoResponse.hand_detector_available">
+<span class="sig-name descname"><span class="pre">hand_detector_available</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.14)"><span class="pre">bool</span></a></em><a class="headerlink" href="#sign_language.api.schemas.InfoResponse.hand_detector_available" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="sign_language.api.schemas.level_band">
+<span class="sig-prename descclassname"><span class="pre">sign_language.api.schemas.</span></span><span class="sig-name descname"><span class="pre">level_band</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">letters_learned</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><span class="pre">int</span></a></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#tuple" title="(in Python v3.14)"><span class="pre">tuple</span></a><span class="p"><span class="pre">[</span></span><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><span class="pre">int</span></a><span class="p"><span class="pre">,</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><span class="pre">str</span></a><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="../_modules/sign_language/api/schemas.html#level_band"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#sign_language.api.schemas.level_band" title="Link to this definition"></a></dt>
+<dd><p>Map a letters-learned count to a (level number, level name).</p>
+<dl class="simple">
+<dt>Bands (22-letter NGT alphabet):</dt><dd><p>0–4  → 1 Beginner
+5–9  → 2 Learner
+10–14 → 3 Halfway
+15–21 → 4 Advanced
+22   → 5 Alphabet Master</p>
+</dd>
+</dl>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>letters_learned</strong> – Number of letters the user has learned (0–22).</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>A <code class="docutils literal notranslate"><span class="pre">(level,</span> <span class="pre">level_name)</span></code> tuple.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="sign_language.api.schemas.StatsResponse">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">sign_language.api.schemas.</span></span><span class="sig-name descname"><span class="pre">StatsResponse</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Any</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Any</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/sign_language/api/schemas.html#StatsResponse"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#sign_language.api.schemas.StatsResponse" title="Link to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">BaseModel</span></code></p>
+<p>Response body for the <code class="docutils literal notranslate"><span class="pre">GET</span> <span class="pre">/api/stats</span></code> endpoint.</p>
+<p>The per-user progress shown on the logged-in home page. <code class="docutils literal notranslate"><span class="pre">level</span></code> and
+<code class="docutils literal notranslate"><span class="pre">level_name</span></code> are derived from <code class="docutils literal notranslate"><span class="pre">letters_learned</span></code> (see
+<a class="reference internal" href="#sign_language.api.schemas.level_band" title="sign_language.api.schemas.level_band"><code class="xref py py-func docutils literal notranslate"><span class="pre">level_band()</span></code></a>); they are not stored.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>streak</strong> – Consecutive-day practice streak.</p></li>
+<li><p><strong>letters_learned</strong> – Letters learned so far (signed correctly 3×), 0–22.</p></li>
+<li><p><strong>total_letters</strong> – Total letters in the NGT alphabet (22) — lets the
+frontend show progress as <code class="docutils literal notranslate"><span class="pre">letters_learned</span> <span class="pre">/</span> <span class="pre">total_letters</span></code>.</p></li>
+<li><p><strong>points</strong> – Points earned through practice.</p></li>
+<li><p><strong>level</strong> – Level number (1–5), derived from <code class="docutils literal notranslate"><span class="pre">letters_learned</span></code>.</p></li>
+<li><p><strong>level_name</strong> – Human-readable level name, e.g. <code class="docutils literal notranslate"><span class="pre">&quot;Beginner&quot;</span></code>.</p></li>
+<li><p><strong>last_played</strong> – Name of the last mode/activity, or <code class="docutils literal notranslate"><span class="pre">None</span></code>.</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="sign_language.api.schemas.StatsResponse.streak">
+<span class="sig-name descname"><span class="pre">streak</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><span class="pre">int</span></a></em><a class="headerlink" href="#sign_language.api.schemas.StatsResponse.streak" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="sign_language.api.schemas.StatsResponse.letters_learned">
+<span class="sig-name descname"><span class="pre">letters_learned</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><span class="pre">int</span></a></em><a class="headerlink" href="#sign_language.api.schemas.StatsResponse.letters_learned" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="sign_language.api.schemas.StatsResponse.total_letters">
+<span class="sig-name descname"><span class="pre">total_letters</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><span class="pre">int</span></a></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">22</span></em><a class="headerlink" href="#sign_language.api.schemas.StatsResponse.total_letters" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="sign_language.api.schemas.StatsResponse.points">
+<span class="sig-name descname"><span class="pre">points</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><span class="pre">int</span></a></em><a class="headerlink" href="#sign_language.api.schemas.StatsResponse.points" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="sign_language.api.schemas.StatsResponse.level">
+<span class="sig-name descname"><span class="pre">level</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><span class="pre">int</span></a></em><a class="headerlink" href="#sign_language.api.schemas.StatsResponse.level" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="sign_language.api.schemas.StatsResponse.level_name">
+<span class="sig-name descname"><span class="pre">level_name</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><span class="pre">str</span></a></em><a class="headerlink" href="#sign_language.api.schemas.StatsResponse.level_name" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="sign_language.api.schemas.StatsResponse.last_played">
+<span class="sig-name descname"><span class="pre">last_played</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><span class="pre">str</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.14)"><span class="pre">None</span></a></em><a class="headerlink" href="#sign_language.api.schemas.StatsResponse.last_played" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="sign_language.api.schemas.StatsResponse.practiced_today">
+<span class="sig-name descname"><span class="pre">practiced_today</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><span class="pre">int</span></a></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">0</span></em><a class="headerlink" href="#sign_language.api.schemas.StatsResponse.practiced_today" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="sign_language.api.schemas.StatsResponse.daily_goal">
+<span class="sig-name descname"><span class="pre">daily_goal</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><span class="pre">int</span></a></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">5</span></em><a class="headerlink" href="#sign_language.api.schemas.StatsResponse.daily_goal" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="sign_language.api.schemas.CollectRequest">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">sign_language.api.schemas.</span></span><span class="sig-name descname"><span class="pre">CollectRequest</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Any</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Any</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/sign_language/api/schemas.html#CollectRequest"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#sign_language.api.schemas.CollectRequest" title="Link to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">BaseModel</span></code></p>
+<p>Request body for <code class="docutils literal notranslate"><span class="pre">POST</span> <span class="pre">/api/collect</span></code> — one contributed sample.</p>
+<p>Matches what the Collect-mode frontend produces per sample.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>image</strong> – Base64-encoded image (data URL or raw base64).</p></li>
+<li><p><strong>letter</strong> – The letter the sample is labelled with, e.g. <code class="docutils literal notranslate"><span class="pre">&quot;A&quot;</span></code>.</p></li>
+<li><p><strong>source</strong> – How it was captured — <code class="docutils literal notranslate"><span class="pre">&quot;camera&quot;</span></code>, <code class="docutils literal notranslate"><span class="pre">&quot;upload&quot;</span></code>, or <code class="docutils literal notranslate"><span class="pre">&quot;auto&quot;</span></code>.</p></li>
+<li><p><strong>language</strong> – Sign language the sample belongs to. Defaults to <code class="docutils literal notranslate"><span class="pre">&quot;NGT&quot;</span></code>.</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="sign_language.api.schemas.CollectRequest.image">
+<span class="sig-name descname"><span class="pre">image</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><span class="pre">str</span></a></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">Ellipsis</span></em><a class="headerlink" href="#sign_language.api.schemas.CollectRequest.image" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="sign_language.api.schemas.CollectRequest.letter">
+<span class="sig-name descname"><span class="pre">letter</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><span class="pre">str</span></a></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">Ellipsis</span></em><a class="headerlink" href="#sign_language.api.schemas.CollectRequest.letter" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="sign_language.api.schemas.CollectRequest.source">
+<span class="sig-name descname"><span class="pre">source</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><span class="pre">str</span></a></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">Ellipsis</span></em><a class="headerlink" href="#sign_language.api.schemas.CollectRequest.source" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="sign_language.api.schemas.CollectResponse">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">sign_language.api.schemas.</span></span><span class="sig-name descname"><span class="pre">CollectResponse</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Any</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Any</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/sign_language/api/schemas.html#CollectResponse"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#sign_language.api.schemas.CollectResponse" title="Link to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">BaseModel</span></code></p>
+<p>Response body for <code class="docutils literal notranslate"><span class="pre">POST</span> <span class="pre">/api/collect</span></code>.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>id</strong> – The stored sample’s unique identifier.</p></li>
+<li><p><strong>letter</strong> – The letter the sample was labelled with.</p></li>
+<li><p><strong>stored</strong> – Always <code class="docutils literal notranslate"><span class="pre">True</span></code> on success, confirming the sample was saved.</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="sign_language.api.schemas.CollectResponse.id">
+<span class="sig-name descname"><span class="pre">id</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><span class="pre">str</span></a></em><a class="headerlink" href="#sign_language.api.schemas.CollectResponse.id" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="sign_language.api.schemas.CollectResponse.letter">
+<span class="sig-name descname"><span class="pre">letter</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><span class="pre">str</span></a></em><a class="headerlink" href="#sign_language.api.schemas.CollectResponse.letter" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="sign_language.api.schemas.CollectResponse.stored">
+<span class="sig-name descname"><span class="pre">stored</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.14)"><span class="pre">bool</span></a></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">True</span></em><a class="headerlink" href="#sign_language.api.schemas.CollectResponse.stored" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="sign_language.api.schemas.ProgressRequest">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">sign_language.api.schemas.</span></span><span class="sig-name descname"><span class="pre">ProgressRequest</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Any</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Any</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/sign_language/api/schemas.html#ProgressRequest"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#sign_language.api.schemas.ProgressRequest" title="Link to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">BaseModel</span></code></p>
+<p>Request body for <code class="docutils literal notranslate"><span class="pre">POST</span> <span class="pre">/api/stats/progress</span></code> — one practice event.</p>
+<p>Sent by the game / Learn pages each time the user attempts a sign.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>letter</strong> – The letter that was attempted, e.g. <code class="docutils literal notranslate"><span class="pre">&quot;A&quot;</span></code>.</p></li>
+<li><p><strong>correct</strong> – Whether the attempt was correct.</p></li>
+<li><p><strong>points</strong> – Points earned for this event (the frontend computes these,
+accounting for hints/bonuses). Ignored when <code class="docutils literal notranslate"><span class="pre">correct</span></code> is False.</p></li>
+<li><p><strong>activity</strong> – Optional name of the activity, e.g. <code class="docutils literal notranslate"><span class="pre">&quot;Random</span> <span class="pre">Letters&quot;</span></code>;
+stored as <code class="docutils literal notranslate"><span class="pre">last_played</span></code> when provided.</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="sign_language.api.schemas.ProgressRequest.letter">
+<span class="sig-name descname"><span class="pre">letter</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><span class="pre">str</span></a></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">Ellipsis</span></em><a class="headerlink" href="#sign_language.api.schemas.ProgressRequest.letter" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="sign_language.api.schemas.ProgressRequest.correct">
+<span class="sig-name descname"><span class="pre">correct</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.14)"><span class="pre">bool</span></a></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">Ellipsis</span></em><a class="headerlink" href="#sign_language.api.schemas.ProgressRequest.correct" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="sign_language.api.schemas.LetterProgressItem">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">sign_language.api.schemas.</span></span><span class="sig-name descname"><span class="pre">LetterProgressItem</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Any</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Any</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/sign_language/api/schemas.html#LetterProgressItem"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#sign_language.api.schemas.LetterProgressItem" title="Link to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">BaseModel</span></code></p>
+<p>One letter’s practice progress, for the home-page progress list.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>letter</strong> – The letter, e.g. <code class="docutils literal notranslate"><span class="pre">&quot;A&quot;</span></code>.</p></li>
+<li><p><strong>correct_count</strong> – Times the user has signed it correctly.</p></li>
+<li><p><strong>learned</strong> – True once <code class="docutils literal notranslate"><span class="pre">correct_count</span></code> has reached LEARNED_THRESHOLD.</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="sign_language.api.schemas.LetterProgressItem.letter">
+<span class="sig-name descname"><span class="pre">letter</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><span class="pre">str</span></a></em><a class="headerlink" href="#sign_language.api.schemas.LetterProgressItem.letter" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="sign_language.api.schemas.LetterProgressItem.correct_count">
+<span class="sig-name descname"><span class="pre">correct_count</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><span class="pre">int</span></a></em><a class="headerlink" href="#sign_language.api.schemas.LetterProgressItem.correct_count" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="sign_language.api.schemas.LetterProgressItem.learned">
+<span class="sig-name descname"><span class="pre">learned</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.14)"><span class="pre">bool</span></a></em><a class="headerlink" href="#sign_language.api.schemas.LetterProgressItem.learned" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="sign_language.api.schemas.LetterProgressResponse">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">sign_language.api.schemas.</span></span><span class="sig-name descname"><span class="pre">LetterProgressResponse</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Any</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Any</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/sign_language/api/schemas.html#LetterProgressResponse"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#sign_language.api.schemas.LetterProgressResponse" title="Link to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">BaseModel</span></code></p>
+<p>Response for <code class="docutils literal notranslate"><span class="pre">GET</span> <span class="pre">/api/stats/letters</span></code>.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>threshold</strong> – Correct-count needed to “learn” a letter (LEARNED_THRESHOLD).</p></li>
+<li><p><strong>total_letters</strong> – Total letters in the NGT alphabet being tracked.</p></li>
+<li><p><strong>letters</strong> – Per-letter progress, ordered most-practiced first.</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="sign_language.api.schemas.LetterProgressResponse.threshold">
+<span class="sig-name descname"><span class="pre">threshold</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><span class="pre">int</span></a></em><a class="headerlink" href="#sign_language.api.schemas.LetterProgressResponse.threshold" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="sign_language.api.schemas.LetterProgressResponse.total_letters">
+<span class="sig-name descname"><span class="pre">total_letters</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><span class="pre">int</span></a></em><a class="headerlink" href="#sign_language.api.schemas.LetterProgressResponse.total_letters" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="sign_language.api.schemas.LetterProgressResponse.letters">
+<span class="sig-name descname"><span class="pre">letters</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#list" title="(in Python v3.14)"><span class="pre">list</span></a><span class="p"><span class="pre">[</span></span><a class="reference internal" href="#sign_language.api.schemas.LetterProgressItem" title="sign_language.api.schemas.LetterProgressItem"><span class="pre">LetterProgressItem</span></a><span class="p"><span class="pre">]</span></span></em><a class="headerlink" href="#sign_language.api.schemas.LetterProgressResponse.letters" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+</section>
+<section id="module-sign_language.api.state">
+<span id="sign-language-api-state-module"></span><h2>sign_language.api.state module<a class="headerlink" href="#module-sign_language.api.state" title="Link to this heading"></a></h2>
+<p>Application-wide state: loaded models + stateful helpers.</p>
+<dl class="py class">
+<dt class="sig sig-object py" id="sign_language.api.state.AppState">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">sign_language.api.state.</span></span><span class="sig-name descname"><span class="pre">AppState</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">models:</span> <span class="pre">~sign_language.models.loader.LoadedModels</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">smoother:</span> <span class="pre">~sign_language.utils.smoothing.PredictionSmoother</span> <span class="pre">=</span> <span class="pre">&lt;factory&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sequence:</span> <span class="pre">~sign_language.utils.sequence.SequenceBuilder</span> <span class="pre">=</span> <span class="pre">&lt;factory&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">lock:</span> <span class="pre">~_thread.allocate_lock</span> <span class="pre">=</span> <span class="pre">&lt;factory&gt;</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/sign_language/api/state.html#AppState"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#sign_language.api.state.AppState" title="Link to this definition"></a></dt>
+<dd><p>Bases: <a class="reference external" href="https://docs.python.org/3/library/functions.html#object" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></a></p>
+<p>Shared application state holding loaded models and stateful inference helpers.</p>
+<p>One instance is created at startup in the lifespan context and stored on
+<code class="docutils literal notranslate"><span class="pre">app.state.app_state</span></code>. All mutable fields are protected by <code class="docutils literal notranslate"><span class="pre">lock</span></code> for
+thread-safe access from concurrent requests.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>models</strong> – The loaded ML models and associated metadata, populated
+at startup by <a class="reference internal" href="sign_language.models.html#sign_language.models.loader.load_all" title="sign_language.models.loader.load_all"><code class="xref py py-func docutils literal notranslate"><span class="pre">load_all()</span></code></a>.</p></li>
+<li><p><strong>smoother</strong> – Prediction smoother that stabilises per-frame letter
+predictions across consecutive frames.</p></li>
+<li><p><strong>sequence</strong> – Sequence builder that accumulates committed letters into
+words and sentences.</p></li>
+<li><p><strong>lock</strong> – Threading lock protecting <code class="docutils literal notranslate"><span class="pre">smoother</span></code> and <code class="docutils literal notranslate"><span class="pre">sequence</span></code>
+from concurrent modification.</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="sign_language.api.state.AppState.models">
+<span class="sig-name descname"><span class="pre">models</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference internal" href="sign_language.models.html#sign_language.models.loader.LoadedModels" title="sign_language.models.loader.LoadedModels"><span class="pre">LoadedModels</span></a></em><a class="headerlink" href="#sign_language.api.state.AppState.models" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="sign_language.api.state.AppState.smoother">
+<span class="sig-name descname"><span class="pre">smoother</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference internal" href="sign_language.utils.html#sign_language.utils.smoothing.PredictionSmoother" title="sign_language.utils.smoothing.PredictionSmoother"><span class="pre">PredictionSmoother</span></a></em><a class="headerlink" href="#sign_language.api.state.AppState.smoother" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="sign_language.api.state.AppState.sequence">
+<span class="sig-name descname"><span class="pre">sequence</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference internal" href="sign_language.utils.html#sign_language.utils.sequence.SequenceBuilder" title="sign_language.utils.sequence.SequenceBuilder"><span class="pre">SequenceBuilder</span></a></em><a class="headerlink" href="#sign_language.api.state.AppState.sequence" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="sign_language.api.state.AppState.lock">
+<span class="sig-name descname"><span class="pre">lock</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">allocate_lock</span></em><a class="headerlink" href="#sign_language.api.state.AppState.lock" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sign_language.api.state.AppState.reset">
+<span class="sig-name descname"><span class="pre">reset</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.14)"><span class="pre">None</span></a></span></span><a class="reference internal" href="../_modules/sign_language/api/state.html#AppState.reset"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#sign_language.api.state.AppState.reset" title="Link to this definition"></a></dt>
+<dd><p>Reset the smoother and sequence builder to their initial state.</p>
+<p>Acquires <code class="docutils literal notranslate"><span class="pre">lock</span></code> before clearing both stateful helpers to ensure
+thread safety during concurrent request handling.</p>
+</dd></dl>
+
+</dd></dl>
+
+</section>
+<section id="module-sign_language.api.ws">
+<span id="sign-language-api-ws-module"></span><h2>sign_language.api.ws module<a class="headerlink" href="#module-sign_language.api.ws" title="Link to this heading"></a></h2>
+<p>WebSocket endpoint for real-time sign language prediction.</p>
+<dl class="py class">
+<dt class="sig sig-object py" id="sign_language.api.ws.HandTracker">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">sign_language.api.ws.</span></span><span class="sig-name descname"><span class="pre">HandTracker</span></span><a class="reference internal" href="../_modules/sign_language/core/hand_tracking.html#HandTracker"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#sign_language.api.ws.HandTracker" title="Link to this definition"></a></dt>
+<dd><p>Bases: <a class="reference external" href="https://docs.python.org/3/library/functions.html#object" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></a></p>
+<p>Match detected hands to persistent slots using wrist proximity.</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="sign_language.api.ws.HandTracker.__init__">
+<span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.14)"><span class="pre">None</span></a></span></span><a class="reference internal" href="../_modules/sign_language/core/hand_tracking.html#HandTracker.__init__"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#sign_language.api.ws.HandTracker.__init__" title="Link to this definition"></a></dt>
+<dd><p>Initialize the tracker with no active hand slots.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sign_language.api.ws.HandTracker.match">
+<span class="sig-name descname"><span class="pre">match</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">detections</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Sequence" title="(in Python v3.14)"><span class="pre">Sequence</span></a><span class="p"><span class="pre">[</span></span><span class="pre">DetectionT</span><span class="p"><span class="pre">]</span></span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#list" title="(in Python v3.14)"><span class="pre">list</span></a><span class="p"><span class="pre">[</span></span><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#tuple" title="(in Python v3.14)"><span class="pre">tuple</span></a><span class="p"><span class="pre">[</span></span><span class="pre">DetectionT</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">HandSlot</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="../_modules/sign_language/core/hand_tracking.html#HandTracker.match"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#sign_language.api.ws.HandTracker.match" title="Link to this definition"></a></dt>
+<dd><p>Match detections to existing slots and create new slots as needed.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>detections</strong> – Hand detections from the current frame.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Matched <code class="docutils literal notranslate"><span class="pre">(detection,</span> <span class="pre">slot)</span></code> pairs for the current frame.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sign_language.api.ws.HandTracker.clear">
+<span class="sig-name descname"><span class="pre">clear</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.14)"><span class="pre">None</span></a></span></span><a class="reference internal" href="../_modules/sign_language/core/hand_tracking.html#HandTracker.clear"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#sign_language.api.ws.HandTracker.clear" title="Link to this definition"></a></dt>
+<dd><p>Remove all tracked hand slots.</p>
+</dd></dl>
+
+</dd></dl>
+
+</section>
+<section id="module-sign_language.api">
+<span id="module-contents"></span><h2>Module contents<a class="headerlink" href="#module-sign_language.api" title="Link to this heading"></a></h2>
+<dl class="py function">
+<dt class="sig sig-object py" id="sign_language.api.create_app">
+<span class="sig-prename descclassname"><span class="pre">sign_language.api.</span></span><span class="sig-name descname"><span class="pre">create_app</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">fastapi.FastAPI</span></span></span><a class="reference internal" href="../_modules/sign_language/api/app.html#create_app"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#sign_language.api.create_app" title="Link to this definition"></a></dt>
+<dd><p>Create and configure the FastAPI application instance.</p>
+<p>Registers all middleware, authentication routers, API routers, and
+the static frontend file server in the correct order. Should be
+called once per process, typically via <code class="docutils literal notranslate"><span class="pre">uvicorn</span></code> with the
+<code class="docutils literal notranslate"><span class="pre">--factory</span></code> flag:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>uvicorn<span class="w"> </span>sign_language.api:create_app<span class="w"> </span>--factory<span class="w"> </span>--reload
+</pre></div>
+</div>
+<p><strong>Middleware (applied in reverse registration order):</strong></p>
+<ul class="simple">
+<li><p><code class="xref py py-class docutils literal notranslate"><span class="pre">CORSMiddleware</span></code> — handles
+cross-origin requests. When <code class="docutils literal notranslate"><span class="pre">settings.cors_origins</span></code> is set,
+only the listed origins are allowed with credentials. When unset,
+all origins are permitted without credentials.</p></li>
+<li><p><code class="xref py py-class docutils literal notranslate"><span class="pre">MonitoringMiddleware</span></code> — records per-request latency and
+status codes to the <code class="docutils literal notranslate"><span class="pre">monitoring_events</span></code> PostgreSQL table.</p></li>
+</ul>
+<p><strong>Router registration order:</strong></p>
+<p>Auth routers are registered before the static file mount so that
+<code class="docutils literal notranslate"><span class="pre">/api/auth/*</span></code> and <code class="docutils literal notranslate"><span class="pre">/api/users/*</span></code> paths are matched by their
+handlers rather than falling through to the frontend.</p>
+<p>The WebSocket router is registered without a prefix; the prediction
+endpoint lives at <code class="docutils literal notranslate"><span class="pre">/ws/predict</span></code>.</p>
+<p>If the frontend build directory configured in settings does not
+exist, the application starts in API-only mode and logs a warning.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>A fully configured <code class="xref py py-class docutils literal notranslate"><span class="pre">fastapi.FastAPI</span></code> instance ready to
+be served by an ASGI server.</p>
+</dd>
+</dl>
+</dd></dl>
+
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2026, Kinga Marchlewska, Raya Kichukova, Ana-Maria Farazică, Maciej Czerniak, Szymon Chirowski.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

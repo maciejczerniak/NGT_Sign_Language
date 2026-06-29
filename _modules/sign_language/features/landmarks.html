@@ -1,0 +1,219 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>sign_language.features.landmarks &mdash; Sign Language 0.1.0 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/css/theme.css?v=9edc463e" />
+
+  
+      <script src="../../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../../_static/documentation_options.js?v=01f34227"></script>
+      <script src="../../../_static/doctools.js?v=9a2dae69"></script>
+      <script src="../../../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../index.html" class="icon icon-home">
+            Sign Language
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Getting Started</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../installation.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../usage.html">Usage</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">API Reference</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../reference/sign_language.html">sign_language package</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../reference/sign_language_training.html">sign_language_training package</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../index.html">Sign Language</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">sign_language.features.landmarks</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for sign_language.features.landmarks</h1><div class="highlight"><pre>
+<span></span><span class="sd">&quot;&quot;&quot;Hand landmark feature extraction.</span>
+
+<span class="sd">Normalises raw MediaPipe hand landmarks and engineers geometric features</span>
+<span class="sd">(joint angles, fingertip distances) to match the training pipeline used</span>
+<span class="sd">by the Landmark MLP.</span>
+<span class="sd">&quot;&quot;&quot;</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">math</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">itertools</span><span class="w"> </span><span class="kn">import</span> <span class="n">combinations</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">torch</span>
+
+<span class="c1"># ---------------------------------------------------------------------------</span>
+<span class="c1"># Joint triplets used for angle computation (must match training exactly)</span>
+<span class="c1"># ---------------------------------------------------------------------------</span>
+<span class="n">JOINT_TRIPLETS</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">int</span><span class="p">,</span> <span class="nb">int</span><span class="p">]]</span> <span class="o">=</span> <span class="p">[</span>
+    <span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">),</span>
+    <span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">),</span>
+    <span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">4</span><span class="p">),</span>
+    <span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">5</span><span class="p">,</span> <span class="mi">6</span><span class="p">),</span>
+    <span class="p">(</span><span class="mi">5</span><span class="p">,</span> <span class="mi">6</span><span class="p">,</span> <span class="mi">7</span><span class="p">),</span>
+    <span class="p">(</span><span class="mi">6</span><span class="p">,</span> <span class="mi">7</span><span class="p">,</span> <span class="mi">8</span><span class="p">),</span>
+    <span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">9</span><span class="p">,</span> <span class="mi">10</span><span class="p">),</span>
+    <span class="p">(</span><span class="mi">9</span><span class="p">,</span> <span class="mi">10</span><span class="p">,</span> <span class="mi">11</span><span class="p">),</span>
+    <span class="p">(</span><span class="mi">10</span><span class="p">,</span> <span class="mi">11</span><span class="p">,</span> <span class="mi">12</span><span class="p">),</span>
+    <span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">13</span><span class="p">,</span> <span class="mi">14</span><span class="p">),</span>
+    <span class="p">(</span><span class="mi">13</span><span class="p">,</span> <span class="mi">14</span><span class="p">,</span> <span class="mi">15</span><span class="p">),</span>
+    <span class="p">(</span><span class="mi">14</span><span class="p">,</span> <span class="mi">15</span><span class="p">,</span> <span class="mi">16</span><span class="p">),</span>
+    <span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">17</span><span class="p">,</span> <span class="mi">18</span><span class="p">),</span>
+    <span class="p">(</span><span class="mi">17</span><span class="p">,</span> <span class="mi">18</span><span class="p">,</span> <span class="mi">19</span><span class="p">),</span>
+    <span class="p">(</span><span class="mi">18</span><span class="p">,</span> <span class="mi">19</span><span class="p">,</span> <span class="mi">20</span><span class="p">),</span>
+    <span class="p">(</span><span class="mi">5</span><span class="p">,</span> <span class="mi">9</span><span class="p">,</span> <span class="mi">13</span><span class="p">),</span>
+    <span class="p">(</span><span class="mi">9</span><span class="p">,</span> <span class="mi">13</span><span class="p">,</span> <span class="mi">17</span><span class="p">),</span>
+    <span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">5</span><span class="p">,</span> <span class="mi">17</span><span class="p">),</span>
+    <span class="p">(</span><span class="mi">5</span><span class="p">,</span> <span class="mi">9</span><span class="p">,</span> <span class="mi">17</span><span class="p">),</span>
+    <span class="p">(</span><span class="mi">9</span><span class="p">,</span> <span class="mi">13</span><span class="p">,</span> <span class="mi">17</span><span class="p">),</span>
+    <span class="p">(</span><span class="mi">4</span><span class="p">,</span> <span class="mi">8</span><span class="p">,</span> <span class="mi">12</span><span class="p">),</span>
+<span class="p">]</span>
+
+<span class="n">FINGERTIP_PAIRS</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">int</span><span class="p">]]</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">combinations</span><span class="p">([</span><span class="mi">4</span><span class="p">,</span> <span class="mi">8</span><span class="p">,</span> <span class="mi">12</span><span class="p">,</span> <span class="mi">16</span><span class="p">,</span> <span class="mi">20</span><span class="p">],</span> <span class="mi">2</span><span class="p">))</span>
+
+
+<div class="viewcode-block" id="normalize_landmarks">
+<a class="viewcode-back" href="../../../reference/sign_language.features.html#sign_language.features.landmarks.normalize_landmarks">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">normalize_landmarks</span><span class="p">(</span><span class="n">landmarks</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">dict</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Centre landmarks on the wrist and scale by the wrist-to-middle-MCP distance.</span>
+
+<span class="sd">    Translates all 21 landmarks so that landmark 0 (wrist) is at the origin,</span>
+<span class="sd">    then divides by the Euclidean norm of landmark 9 (middle-finger MCP) to</span>
+<span class="sd">    make the representation scale-invariant.</span>
+
+<span class="sd">    :param landmarks: List of 21 dicts each with ``x``, ``y``, and ``z`` keys</span>
+<span class="sd">        containing normalised MediaPipe coordinates.</span>
+<span class="sd">    :returns: A ``(21, 3)`` float32 :class:`numpy.ndarray` of normalised</span>
+<span class="sd">        landmark coordinates.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">pts</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([[</span><span class="n">lm</span><span class="p">[</span><span class="s2">&quot;x&quot;</span><span class="p">],</span> <span class="n">lm</span><span class="p">[</span><span class="s2">&quot;y&quot;</span><span class="p">],</span> <span class="n">lm</span><span class="p">[</span><span class="s2">&quot;z&quot;</span><span class="p">]]</span> <span class="k">for</span> <span class="n">lm</span> <span class="ow">in</span> <span class="n">landmarks</span><span class="p">],</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">float32</span><span class="p">)</span>
+    <span class="n">pts</span> <span class="o">-=</span> <span class="n">pts</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+    <span class="n">scale</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">norm</span><span class="p">(</span><span class="n">pts</span><span class="p">[</span><span class="mi">9</span><span class="p">])</span>
+    <span class="k">if</span> <span class="n">scale</span> <span class="o">&gt;</span> <span class="mf">1e-6</span><span class="p">:</span>
+        <span class="n">pts</span> <span class="o">/=</span> <span class="n">scale</span>
+    <span class="k">return</span> <span class="n">pts</span></div>
+
+
+
+<div class="viewcode-block" id="angle_between">
+<a class="viewcode-back" href="../../../reference/sign_language.features.html#sign_language.features.landmarks.angle_between">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">angle_between</span><span class="p">(</span><span class="n">v1</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">v2</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Compute the angle in radians between two vectors.</span>
+
+<span class="sd">    :param v1: First vector as a :class:`numpy.ndarray`.</span>
+<span class="sd">    :param v2: Second vector as a :class:`numpy.ndarray`.</span>
+<span class="sd">    :returns: Angle in radians in [0, π], or ``0.0`` if either vector has</span>
+<span class="sd">        near-zero magnitude.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">n1</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">norm</span><span class="p">(</span><span class="n">v1</span><span class="p">)</span>
+    <span class="n">n2</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">norm</span><span class="p">(</span><span class="n">v2</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">n1</span> <span class="o">&lt;</span> <span class="mf">1e-6</span> <span class="ow">or</span> <span class="n">n2</span> <span class="o">&lt;</span> <span class="mf">1e-6</span><span class="p">:</span>
+        <span class="k">return</span> <span class="mf">0.0</span>
+    <span class="k">return</span> <span class="n">math</span><span class="o">.</span><span class="n">acos</span><span class="p">(</span><span class="nb">float</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">clip</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">dot</span><span class="p">(</span><span class="n">v1</span><span class="p">,</span> <span class="n">v2</span><span class="p">)</span> <span class="o">/</span> <span class="p">(</span><span class="n">n1</span> <span class="o">*</span> <span class="n">n2</span><span class="p">),</span> <span class="o">-</span><span class="mf">1.0</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">)))</span></div>
+
+
+
+<div class="viewcode-block" id="extract_landmark_features">
+<a class="viewcode-back" href="../../../reference/sign_language.features.html#sign_language.features.landmarks.extract_landmark_features">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">extract_landmark_features</span><span class="p">(</span><span class="n">landmarks</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">dict</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Build the full feature vector from raw MediaPipe landmarks.</span>
+
+<span class="sd">    Concatenates three feature groups into a single 1D tensor:</span>
+
+<span class="sd">    1. Flattened normalised landmark coordinates (``21 × 3 = 63`` values).</span>
+<span class="sd">    2. Joint angles for each triplet in :data:`JOINT_TRIPLETS`.</span>
+<span class="sd">    3. Euclidean distances between all fingertip pairs in :data:`FINGERTIP_PAIRS`.</span>
+
+<span class="sd">    The resulting feature vector must match the input dimensionality expected</span>
+<span class="sd">    by the Landmark MLP exactly.</span>
+
+<span class="sd">    :param landmarks: List of 21 landmark dicts with ``x``, ``y``, and ``z``</span>
+<span class="sd">        keys, as returned by MediaPipe or the preprocessing pipeline.</span>
+<span class="sd">    :returns: A :class:`torch.Tensor` of shape ``(1, feature_dim)`` with</span>
+<span class="sd">        dtype ``float32``, ready for direct input to the Landmark MLP.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">pts</span> <span class="o">=</span> <span class="n">normalize_landmarks</span><span class="p">(</span><span class="n">landmarks</span><span class="p">)</span>
+    <span class="n">raw</span> <span class="o">=</span> <span class="n">pts</span><span class="o">.</span><span class="n">flatten</span><span class="p">()</span>
+    <span class="n">angles</span> <span class="o">=</span> <span class="p">[</span>
+        <span class="n">angle_between</span><span class="p">(</span><span class="n">pts</span><span class="p">[</span><span class="n">a</span><span class="p">]</span> <span class="o">-</span> <span class="n">pts</span><span class="p">[</span><span class="n">b</span><span class="p">],</span> <span class="n">pts</span><span class="p">[</span><span class="n">c</span><span class="p">]</span> <span class="o">-</span> <span class="n">pts</span><span class="p">[</span><span class="n">b</span><span class="p">])</span> <span class="k">for</span> <span class="n">a</span><span class="p">,</span> <span class="n">b</span><span class="p">,</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">JOINT_TRIPLETS</span>
+    <span class="p">]</span>
+    <span class="n">dists</span> <span class="o">=</span> <span class="p">[</span><span class="nb">float</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">norm</span><span class="p">(</span><span class="n">pts</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">-</span> <span class="n">pts</span><span class="p">[</span><span class="n">j</span><span class="p">]))</span> <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">j</span> <span class="ow">in</span> <span class="n">FINGERTIP_PAIRS</span><span class="p">]</span>
+    <span class="n">features</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">concatenate</span><span class="p">([</span><span class="n">raw</span><span class="p">,</span> <span class="n">angles</span><span class="p">,</span> <span class="n">dists</span><span class="p">])</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">float32</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">torch</span><span class="o">.</span><span class="n">tensor</span><span class="p">(</span><span class="n">features</span><span class="p">)</span><span class="o">.</span><span class="n">unsqueeze</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span></div>
+
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2026, Kinga Marchlewska, Raya Kichukova, Ana-Maria Farazică, Maciej Czerniak, Szymon Chirowski.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

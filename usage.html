@@ -1,0 +1,293 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="./">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Usage &mdash; Sign Language 0.1.0 documentation</title>
+      <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=9edc463e" />
+
+  
+      <script src="_static/jquery.js?v=5d32c60e"></script>
+      <script src="_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="_static/documentation_options.js?v=01f34227"></script>
+      <script src="_static/doctools.js?v=9a2dae69"></script>
+      <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="sign_language package" href="reference/sign_language.html" />
+    <link rel="prev" title="Installation" href="installation.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="index.html" class="icon icon-home">
+            Sign Language
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Getting Started</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="installation.html">Installation</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Usage</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#cli">CLI</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#show-help">Show help</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#run-inference-on-an-image">Run inference on an image</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#start-the-api-server">Start the API server</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#run-the-training-workflow">Run the training workflow</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#api">API</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#http-endpoints">HTTP endpoints</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#websocket-endpoint">WebSocket endpoint</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#training-trigger-api">Training trigger API</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#azure-ml-pipeline-submission">Azure ML pipeline submission</a></li>
+</ul>
+</li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">API Reference</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="reference/sign_language.html">sign_language package</a></li>
+<li class="toctree-l1"><a class="reference internal" href="reference/sign_language_training.html">sign_language_training package</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">Sign Language</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">Usage</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="_sources/usage.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="usage">
+<h1>Usage<a class="headerlink" href="#usage" title="Link to this heading"></a></h1>
+<section id="cli">
+<h2>CLI<a class="headerlink" href="#cli" title="Link to this heading"></a></h2>
+<p>The package provides a <code class="docutils literal notranslate"><span class="pre">sign-language</span></code> command with four subcommands.</p>
+<section id="show-help">
+<h3>Show help<a class="headerlink" href="#show-help" title="Link to this heading"></a></h3>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>poetry<span class="w"> </span>run<span class="w"> </span>sign-language<span class="w"> </span>--help
+poetry<span class="w"> </span>run<span class="w"> </span>sign-language<span class="w"> </span>predict<span class="w"> </span>--help
+poetry<span class="w"> </span>run<span class="w"> </span>sign-language<span class="w"> </span>serve<span class="w"> </span>--help
+poetry<span class="w"> </span>run<span class="w"> </span>sign-language<span class="w"> </span>train<span class="w"> </span>--help
+</pre></div>
+</div>
+</section>
+<section id="run-inference-on-an-image">
+<h3>Run inference on an image<a class="headerlink" href="#run-inference-on-an-image" title="Link to this heading"></a></h3>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>poetry<span class="w"> </span>run<span class="w"> </span>sign-language<span class="w"> </span>predict<span class="w"> </span>--image<span class="w"> </span>path/to/hand.jpg
+</pre></div>
+</div>
+<p>With custom model checkpoints:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>poetry<span class="w"> </span>run<span class="w"> </span>sign-language<span class="w"> </span>predict<span class="w"> </span>--image<span class="w"> </span>path/to/hand.jpg<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--model<span class="w"> </span>models/best_ngt_model_v2.pth<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--lm-model<span class="w"> </span>models/best_landmark_mlp.pth<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--landmarker<span class="w"> </span>hand_landmarker.task
+</pre></div>
+</div>
+<p>Additional options:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>poetry<span class="w"> </span>run<span class="w"> </span>sign-language<span class="w"> </span>predict<span class="w"> </span>--image<span class="w"> </span>hand.jpg<span class="w"> </span>--top-k<span class="w"> </span><span class="m">3</span><span class="w"> </span>--verbose
+</pre></div>
+</div>
+</section>
+<section id="start-the-api-server">
+<h3>Start the API server<a class="headerlink" href="#start-the-api-server" title="Link to this heading"></a></h3>
+<p>Development mode (auto-reload on file changes):</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>poetry<span class="w"> </span>run<span class="w"> </span>sign-language<span class="w"> </span>serve<span class="w"> </span>--reload
+</pre></div>
+</div>
+<p>Production mode with multiple workers:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>poetry<span class="w"> </span>run<span class="w"> </span>sign-language<span class="w"> </span>serve<span class="w"> </span>--host<span class="w"> </span><span class="m">0</span>.0.0.0<span class="w"> </span>--port<span class="w"> </span><span class="m">8000</span><span class="w"> </span>--workers<span class="w"> </span><span class="m">4</span>
+</pre></div>
+</div>
+</section>
+<section id="run-the-training-workflow">
+<h3>Run the training workflow<a class="headerlink" href="#run-the-training-workflow" title="Link to this heading"></a></h3>
+<p>Fine-tune EfficientNet-B0 on the NGT dataset:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>poetry<span class="w"> </span>run<span class="w"> </span>sign-language<span class="w"> </span>train<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--pretrained-checkpoint<span class="w"> </span>models/best_ngt_model_v2.pth<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--data-dir<span class="w"> </span>data/raw<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--epochs<span class="w"> </span><span class="m">30</span><span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--batch-size<span class="w"> </span><span class="m">16</span>
+</pre></div>
+</div>
+<p>Run the local retraining pipeline (preprocess → train):</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>poetry<span class="w"> </span>run<span class="w"> </span>sign-language<span class="w"> </span>local-pipeline<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--pretrained-checkpoint<span class="w"> </span>models/best_ngt_model_v2.pth<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--raw-data-dir<span class="w"> </span>data/raw<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--epochs<span class="w"> </span><span class="m">5</span><span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--batch-size<span class="w"> </span><span class="m">8</span>
+</pre></div>
+</div>
+</section>
+</section>
+<section id="api">
+<h2>API<a class="headerlink" href="#api" title="Link to this heading"></a></h2>
+<p>Once the server is running, interactive API documentation is available at:</p>
+<ul class="simple">
+<li><p><a class="reference external" href="http://127.0.0.1:8000/docs">http://127.0.0.1:8000/docs</a> — Swagger UI</p></li>
+<li><p><a class="reference external" href="http://127.0.0.1:8000/redoc">http://127.0.0.1:8000/redoc</a> — ReDoc</p></li>
+</ul>
+<section id="http-endpoints">
+<h3>HTTP endpoints<a class="headerlink" href="#http-endpoints" title="Link to this heading"></a></h3>
+<table class="docutils align-default">
+<colgroup>
+<col style="width: 10.0%" />
+<col style="width: 20.0%" />
+<col style="width: 70.0%" />
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head"><p>Method</p></th>
+<th class="head"><p>Endpoint</p></th>
+<th class="head"><p>Description</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>GET</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">/api/health</span></code></p></td>
+<td><p>Liveness check. Returns <code class="docutils literal notranslate"><span class="pre">{&quot;status&quot;:</span> <span class="pre">&quot;ok&quot;}</span></code>.</p></td>
+</tr>
+<tr class="row-odd"><td><p>GET</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">/api/info</span></code></p></td>
+<td><p>Returns app version, device, class count, and model availability.</p></td>
+</tr>
+<tr class="row-even"><td><p>POST</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">/api/predict</span></code></p></td>
+<td><p>Run inference on a single base64-encoded image frame.</p></td>
+</tr>
+<tr class="row-odd"><td><p>POST</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">/api/reset</span></code></p></td>
+<td><p>Reset the prediction smoother and sequence builder.</p></td>
+</tr>
+<tr class="row-even"><td><p>POST</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">/api/auth/jwt/login</span></code></p></td>
+<td><p>Obtain a JWT bearer token.</p></td>
+</tr>
+<tr class="row-odd"><td><p>POST</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">/api/auth/register</span></code></p></td>
+<td><p>Register a new user account.</p></td>
+</tr>
+</tbody>
+</table>
+<p>Send a prediction request:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>curl<span class="w"> </span>-X<span class="w"> </span>POST<span class="w"> </span>http://127.0.0.1:8000/api/predict<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>-H<span class="w"> </span><span class="s2">&quot;Content-Type: application/json&quot;</span><span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>-d<span class="w"> </span><span class="s1">&#39;{&quot;image&quot;: &quot;&lt;base64-encoded-frame&gt;&quot;}&#39;</span>
+</pre></div>
+</div>
+</section>
+<section id="websocket-endpoint">
+<h3>WebSocket endpoint<a class="headerlink" href="#websocket-endpoint" title="Link to this heading"></a></h3>
+<p>Connect to <code class="docutils literal notranslate"><span class="pre">ws://127.0.0.1:8000/ws/predict</span></code> for real-time multi-hand
+prediction over a persistent connection.</p>
+<p>Send a frame:</p>
+<div class="highlight-json notranslate"><div class="highlight"><pre><span></span><span class="p">{</span><span class="nt">&quot;image&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;&lt;base64-encoded-frame&gt;&quot;</span><span class="p">}</span>
+</pre></div>
+</div>
+<p>Reset the server-side state:</p>
+<div class="highlight-json notranslate"><div class="highlight"><pre><span></span><span class="p">{</span><span class="nt">&quot;action&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;reset&quot;</span><span class="p">}</span>
+</pre></div>
+</div>
+</section>
+</section>
+<section id="training-trigger-api">
+<h2>Training trigger API<a class="headerlink" href="#training-trigger-api" title="Link to this heading"></a></h2>
+<p>Start the trigger service:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>poetry<span class="w"> </span>run<span class="w"> </span>uvicorn<span class="w"> </span>sign_language_training.trigger_api.app:app<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--host<span class="w"> </span><span class="m">0</span>.0.0.0<span class="w"> </span>--port<span class="w"> </span><span class="m">8010</span>
+</pre></div>
+</div>
+<p>Health check:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>curl<span class="w"> </span>http://localhost:8010/health
+</pre></div>
+</div>
+<p>Trigger a manual retraining job:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>curl<span class="w"> </span>-X<span class="w"> </span>POST<span class="w"> </span>http://localhost:8010/train<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>-H<span class="w"> </span><span class="s2">&quot;X-API-Key: your-api-key&quot;</span><span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>-H<span class="w"> </span><span class="s2">&quot;Content-Type: application/json&quot;</span><span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>-d<span class="w"> </span><span class="s1">&#39;{&quot;reason&quot;: &quot;manual&quot;, &quot;force&quot;: true}&#39;</span>
+</pre></div>
+</div>
+</section>
+<section id="azure-ml-pipeline-submission">
+<h2>Azure ML pipeline submission<a class="headerlink" href="#azure-ml-pipeline-submission" title="Link to this heading"></a></h2>
+<p>Submit the preprocessing and training pipeline:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>poetry<span class="w"> </span>run<span class="w"> </span>python<span class="w"> </span>scripts/submit_pipeline.py
+</pre></div>
+</div>
+<p>Submit a hyperparameter sweep:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>poetry<span class="w"> </span>run<span class="w"> </span>python<span class="w"> </span>scripts/submit_sweep_job.py<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--max-total-trials<span class="w"> </span><span class="m">12</span><span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--batch-sizes<span class="w"> </span><span class="m">8</span>,16,32<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--patience-values<span class="w"> </span><span class="m">5</span>,7,10
+</pre></div>
+</div>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="installation.html" class="btn btn-neutral float-left" title="Installation" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="reference/sign_language.html" class="btn btn-neutral float-right" title="sign_language package" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2026, Kinga Marchlewska, Raya Kichukova, Ana-Maria Farazică, Maciej Czerniak, Szymon Chirowski.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

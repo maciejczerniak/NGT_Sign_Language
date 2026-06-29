@@ -1,0 +1,291 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>sign_language.api.app &mdash; Sign Language 0.1.0 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/css/theme.css?v=9edc463e" />
+
+  
+      <script src="../../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../../_static/documentation_options.js?v=01f34227"></script>
+      <script src="../../../_static/doctools.js?v=9a2dae69"></script>
+      <script src="../../../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../index.html" class="icon icon-home">
+            Sign Language
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Getting Started</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../installation.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../usage.html">Usage</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">API Reference</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../reference/sign_language.html">sign_language package</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../reference/sign_language_training.html">sign_language_training package</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../index.html">Sign Language</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">sign_language.api.app</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for sign_language.api.app</h1><div class="highlight"><pre>
+<span></span><span class="sd">&quot;&quot;&quot;FastAPI application factory for the Sign Language API.</span>
+
+<span class="sd">This module defines two entry points:</span>
+
+<span class="sd">- :func:`lifespan` — an async context manager that loads ML models on</span>
+<span class="sd">  startup and disposes of the database engine on shutdown.</span>
+<span class="sd">- :func:`create_app` — the application factory that wires together</span>
+<span class="sd">  middleware, authentication routers, API routers, and the static</span>
+<span class="sd">  frontend file server.</span>
+
+<span class="sd">The factory pattern (rather than a module-level ``app`` instance) allows</span>
+<span class="sd">the application to be instantiated multiple times in tests with different</span>
+<span class="sd">configurations, and is compatible with ``uvicorn``&#39;s ``--factory`` flag.</span>
+
+<span class="sd">Database schema management is intentionally left to Alembic. The</span>
+<span class="sd">``create_all`` call is omitted here so that the schema has exactly one</span>
+<span class="sd">source of truth. Run ``alembic upgrade head`` before starting the server.</span>
+<span class="sd">&quot;&quot;&quot;</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">logging</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">contextlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">asynccontextmanager</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">AsyncIterator</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">fastapi</span><span class="w"> </span><span class="kn">import</span> <span class="n">FastAPI</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">fastapi.middleware.cors</span><span class="w"> </span><span class="kn">import</span> <span class="n">CORSMiddleware</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">fastapi.staticfiles</span><span class="w"> </span><span class="kn">import</span> <span class="n">StaticFiles</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">sign_language.core.settings</span><span class="w"> </span><span class="kn">import</span> <span class="n">settings</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">sign_language.db.engine</span><span class="w"> </span><span class="kn">import</span> <span class="n">engine</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">sign_language.models.loader</span><span class="w"> </span><span class="kn">import</span> <span class="n">load_all</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">sign_language.auth.schemas</span><span class="w"> </span><span class="kn">import</span> <span class="n">UserCreate</span><span class="p">,</span> <span class="n">UserRead</span><span class="p">,</span> <span class="n">UserUpdate</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">sign_language.auth.users</span><span class="w"> </span><span class="kn">import</span> <span class="n">auth_backend</span><span class="p">,</span> <span class="n">fastapi_users</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">.monitoring</span><span class="w"> </span><span class="kn">import</span> <span class="n">MonitoringMiddleware</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">.routes</span><span class="w"> </span><span class="kn">import</span> <span class="n">router</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">.shared_routes</span><span class="w"> </span><span class="kn">import</span> <span class="n">shared_router</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">.state</span><span class="w"> </span><span class="kn">import</span> <span class="n">AppState</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">.ws</span><span class="w"> </span><span class="kn">import</span> <span class="n">ws_router</span>
+
+<span class="n">logger</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="vm">__name__</span><span class="p">)</span>
+
+
+<div class="viewcode-block" id="lifespan">
+<a class="viewcode-back" href="../../../reference/sign_language.api.html#sign_language.api.app.lifespan">[docs]</a>
+<span class="nd">@asynccontextmanager</span>
+<span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">lifespan</span><span class="p">(</span><span class="n">app</span><span class="p">:</span> <span class="n">FastAPI</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">AsyncIterator</span><span class="p">[</span><span class="kc">None</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Manage application startup and shutdown lifecycle.</span>
+
+<span class="sd">    On startup, loads all ML models via :func:`load_all` and attaches the</span>
+<span class="sd">    resulting :class:`AppState` instance to ``app.state.app_state`` so</span>
+<span class="sd">    that it is accessible from every request handler via</span>
+<span class="sd">    ``request.app.state.app_state``.</span>
+
+<span class="sd">    On shutdown (after the ``yield``), disposes of the SQLAlchemy async</span>
+<span class="sd">    engine to cleanly close all database connections in the connection</span>
+<span class="sd">    pool.</span>
+
+<span class="sd">    Database schema management is handled exclusively by Alembic.</span>
+<span class="sd">    ``create_all`` is not called here — run ``alembic upgrade head``</span>
+<span class="sd">    before starting the server to ensure the schema is up to date.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        app: The FastAPI application instance. Passed automatically by</span>
+<span class="sd">            FastAPI when the lifespan context manager is registered.</span>
+
+<span class="sd">    Yields:</span>
+<span class="sd">        Nothing. Control returns to FastAPI between the startup and</span>
+<span class="sd">        shutdown phases.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Loading models …&quot;</span><span class="p">)</span>
+    <span class="n">models</span> <span class="o">=</span> <span class="n">load_all</span><span class="p">()</span>
+    <span class="n">app</span><span class="o">.</span><span class="n">state</span><span class="o">.</span><span class="n">app_state</span> <span class="o">=</span> <span class="n">AppState</span><span class="p">(</span><span class="n">models</span><span class="o">=</span><span class="n">models</span><span class="p">)</span>
+    <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Models ready.&quot;</span><span class="p">)</span>
+
+    <span class="k">yield</span>
+
+    <span class="k">await</span> <span class="n">engine</span><span class="o">.</span><span class="n">dispose</span><span class="p">()</span></div>
+
+
+
+<div class="viewcode-block" id="create_app">
+<a class="viewcode-back" href="../../../reference/sign_language.api.html#sign_language.api.app.create_app">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">create_app</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="n">FastAPI</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Create and configure the FastAPI application instance.</span>
+
+<span class="sd">    Registers all middleware, authentication routers, API routers, and</span>
+<span class="sd">    the static frontend file server in the correct order. Should be</span>
+<span class="sd">    called once per process, typically via ``uvicorn`` with the</span>
+<span class="sd">    ``--factory`` flag:</span>
+
+<span class="sd">    .. code-block:: bash</span>
+
+<span class="sd">        uvicorn sign_language.api:create_app --factory --reload</span>
+
+<span class="sd">    **Middleware (applied in reverse registration order):**</span>
+
+<span class="sd">    - :class:`~fastapi.middleware.cors.CORSMiddleware` — handles</span>
+<span class="sd">      cross-origin requests. When ``settings.cors_origins`` is set,</span>
+<span class="sd">      only the listed origins are allowed with credentials. When unset,</span>
+<span class="sd">      all origins are permitted without credentials.</span>
+<span class="sd">    - :class:`.MonitoringMiddleware` — records per-request latency and</span>
+<span class="sd">      status codes to the ``monitoring_events`` PostgreSQL table.</span>
+
+<span class="sd">    **Router registration order:**</span>
+
+<span class="sd">    Auth routers are registered before the static file mount so that</span>
+<span class="sd">    ``/api/auth/*`` and ``/api/users/*`` paths are matched by their</span>
+<span class="sd">    handlers rather than falling through to the frontend.</span>
+
+<span class="sd">    The WebSocket router is registered without a prefix; the prediction</span>
+<span class="sd">    endpoint lives at ``/ws/predict``.</span>
+
+<span class="sd">    If the frontend build directory configured in settings does not</span>
+<span class="sd">    exist, the application starts in API-only mode and logs a warning.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        A fully configured :class:`fastapi.FastAPI` instance ready to</span>
+<span class="sd">        be served by an ASGI server.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">app</span> <span class="o">=</span> <span class="n">FastAPI</span><span class="p">(</span>
+        <span class="n">title</span><span class="o">=</span><span class="n">settings</span><span class="o">.</span><span class="n">app_name</span><span class="p">,</span>
+        <span class="n">version</span><span class="o">=</span><span class="n">settings</span><span class="o">.</span><span class="n">version</span><span class="p">,</span>
+        <span class="n">lifespan</span><span class="o">=</span><span class="n">lifespan</span><span class="p">,</span>
+    <span class="p">)</span>
+
+    <span class="n">configured_origins</span> <span class="o">=</span> <span class="n">settings</span><span class="o">.</span><span class="n">cors_origins</span>
+    <span class="n">origins</span> <span class="o">=</span> <span class="n">configured_origins</span> <span class="ow">or</span> <span class="p">[</span><span class="s2">&quot;*&quot;</span><span class="p">]</span>
+    <span class="n">allow_credentials</span> <span class="o">=</span> <span class="nb">bool</span><span class="p">(</span><span class="n">configured_origins</span><span class="p">)</span>
+    <span class="n">app</span><span class="o">.</span><span class="n">add_middleware</span><span class="p">(</span>
+        <span class="n">CORSMiddleware</span><span class="p">,</span>
+        <span class="n">allow_origins</span><span class="o">=</span><span class="n">origins</span><span class="p">,</span>
+        <span class="n">allow_credentials</span><span class="o">=</span><span class="n">allow_credentials</span><span class="p">,</span>
+        <span class="n">allow_methods</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;*&quot;</span><span class="p">],</span>
+        <span class="n">allow_headers</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;*&quot;</span><span class="p">],</span>
+    <span class="p">)</span>
+    <span class="n">app</span><span class="o">.</span><span class="n">add_middleware</span><span class="p">(</span><span class="n">MonitoringMiddleware</span><span class="p">)</span>
+
+    <span class="c1"># ── Auth routers (before the catch-all static mount) ────────────</span>
+    <span class="n">app</span><span class="o">.</span><span class="n">include_router</span><span class="p">(</span>
+        <span class="n">fastapi_users</span><span class="o">.</span><span class="n">get_auth_router</span><span class="p">(</span><span class="n">auth_backend</span><span class="p">),</span>
+        <span class="n">prefix</span><span class="o">=</span><span class="s2">&quot;/api/auth/jwt&quot;</span><span class="p">,</span>
+        <span class="n">tags</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;auth&quot;</span><span class="p">],</span>
+    <span class="p">)</span>
+    <span class="n">app</span><span class="o">.</span><span class="n">include_router</span><span class="p">(</span>
+        <span class="n">fastapi_users</span><span class="o">.</span><span class="n">get_register_router</span><span class="p">(</span><span class="n">UserRead</span><span class="p">,</span> <span class="n">UserCreate</span><span class="p">),</span>
+        <span class="n">prefix</span><span class="o">=</span><span class="s2">&quot;/api/auth&quot;</span><span class="p">,</span>
+        <span class="n">tags</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;auth&quot;</span><span class="p">],</span>
+    <span class="p">)</span>
+    <span class="n">app</span><span class="o">.</span><span class="n">include_router</span><span class="p">(</span>
+        <span class="n">fastapi_users</span><span class="o">.</span><span class="n">get_reset_password_router</span><span class="p">(),</span>
+        <span class="n">prefix</span><span class="o">=</span><span class="s2">&quot;/api/auth&quot;</span><span class="p">,</span>
+        <span class="n">tags</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;auth&quot;</span><span class="p">],</span>
+    <span class="p">)</span>
+    <span class="n">app</span><span class="o">.</span><span class="n">include_router</span><span class="p">(</span>
+        <span class="n">fastapi_users</span><span class="o">.</span><span class="n">get_verify_router</span><span class="p">(</span><span class="n">UserRead</span><span class="p">),</span>
+        <span class="n">prefix</span><span class="o">=</span><span class="s2">&quot;/api/auth&quot;</span><span class="p">,</span>
+        <span class="n">tags</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;auth&quot;</span><span class="p">],</span>
+    <span class="p">)</span>
+    <span class="n">app</span><span class="o">.</span><span class="n">include_router</span><span class="p">(</span>
+        <span class="n">fastapi_users</span><span class="o">.</span><span class="n">get_users_router</span><span class="p">(</span><span class="n">UserRead</span><span class="p">,</span> <span class="n">UserUpdate</span><span class="p">),</span>
+        <span class="n">prefix</span><span class="o">=</span><span class="s2">&quot;/api/users&quot;</span><span class="p">,</span>
+        <span class="n">tags</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;users&quot;</span><span class="p">],</span>
+    <span class="p">)</span>
+
+    <span class="c1"># ── App routers ─────────────────────────────────────────────────</span>
+    <span class="n">app</span><span class="o">.</span><span class="n">include_router</span><span class="p">(</span><span class="n">router</span><span class="p">,</span> <span class="n">prefix</span><span class="o">=</span><span class="s2">&quot;/api&quot;</span><span class="p">)</span>
+    <span class="n">app</span><span class="o">.</span><span class="n">include_router</span><span class="p">(</span><span class="n">shared_router</span><span class="p">,</span> <span class="n">prefix</span><span class="o">=</span><span class="s2">&quot;/api&quot;</span><span class="p">)</span>
+    <span class="n">app</span><span class="o">.</span><span class="n">include_router</span><span class="p">(</span><span class="n">ws_router</span><span class="p">)</span>  <span class="c1"># /ws/predict — no prefix</span>
+
+    <span class="k">if</span> <span class="n">settings</span><span class="o">.</span><span class="n">frontend_build_dir</span><span class="o">.</span><span class="n">exists</span><span class="p">():</span>
+        <span class="n">app</span><span class="o">.</span><span class="n">mount</span><span class="p">(</span>
+            <span class="s2">&quot;/&quot;</span><span class="p">,</span>
+            <span class="n">StaticFiles</span><span class="p">(</span><span class="n">directory</span><span class="o">=</span><span class="n">settings</span><span class="o">.</span><span class="n">frontend_build_dir</span><span class="p">,</span> <span class="n">html</span><span class="o">=</span><span class="kc">True</span><span class="p">),</span>
+            <span class="n">name</span><span class="o">=</span><span class="s2">&quot;frontend&quot;</span><span class="p">,</span>
+        <span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span>
+            <span class="s2">&quot;Frontend build dir not found (</span><span class="si">%s</span><span class="s2">) — API-only mode.&quot;</span><span class="p">,</span>
+            <span class="n">settings</span><span class="o">.</span><span class="n">frontend_build_dir</span><span class="p">,</span>
+        <span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">app</span></div>
+
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2026, Kinga Marchlewska, Raya Kichukova, Ana-Maria Farazică, Maciej Czerniak, Szymon Chirowski.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

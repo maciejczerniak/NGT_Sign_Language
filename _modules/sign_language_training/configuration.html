@@ -1,0 +1,460 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>sign_language_training.configuration &mdash; Sign Language 0.1.0 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../../_static/css/theme.css?v=9edc463e" />
+
+  
+      <script src="../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../_static/documentation_options.js?v=01f34227"></script>
+      <script src="../../_static/doctools.js?v=9a2dae69"></script>
+      <script src="../../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../index.html" class="icon icon-home">
+            Sign Language
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Getting Started</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../installation.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../usage.html">Usage</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">API Reference</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../reference/sign_language.html">sign_language package</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../reference/sign_language_training.html">sign_language_training package</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../index.html">Sign Language</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">sign_language_training.configuration</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for sign_language_training.configuration</h1><div class="highlight"><pre>
+<span></span><span class="sd">&quot;&quot;&quot;Training configuration and path helpers.&quot;&quot;&quot;</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">logging</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">dataclasses</span><span class="w"> </span><span class="kn">import</span> <span class="n">dataclass</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">pathlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">Path</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Any</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">sign_language_training.settings</span><span class="w"> </span><span class="kn">import</span> <span class="n">settings</span>
+
+<span class="n">logger</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="vm">__name__</span><span class="p">)</span>
+
+<span class="n">MODEL_CHECKPOINT_FILENAME</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">settings</span><span class="o">.</span><span class="n">training_best_checkpoint_name</span>
+<span class="n">TRAINING_HISTORY_FILENAME</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">settings</span><span class="o">.</span><span class="n">training_history_filename</span>
+<span class="n">METRICS_FILENAME</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">settings</span><span class="o">.</span><span class="n">training_metrics_filename</span>
+<span class="n">CLASSIFICATION_REPORT_FILENAME</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">settings</span><span class="o">.</span><span class="n">training_report_filename</span>
+<span class="n">CLASS_NAMES_FILENAME</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">settings</span><span class="o">.</span><span class="n">training_class_names_filename</span>
+
+
+<div class="viewcode-block" id="TrainingPaths">
+<a class="viewcode-back" href="../../reference/sign_language_training.html#sign_language_training.configuration.TrainingPaths">[docs]</a>
+<span class="nd">@dataclass</span><span class="p">(</span><span class="n">frozen</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">TrainingPaths</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Filesystem paths used by the training workflow.</span>
+
+<span class="sd">    All path properties are derived from the four required directories and</span>
+<span class="sd">    the filename constants, which default to the values from project settings.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        data_dir: Root directory of the training ImageFolder dataset.</span>
+<span class="sd">        pretrained_checkpoint: Path to the pretrained ``.pth`` checkpoint</span>
+<span class="sd">            used as the fine-tuning starting point.</span>
+<span class="sd">        checkpoint_dir: Directory where model checkpoints are saved during</span>
+<span class="sd">            training.</span>
+<span class="sd">        results_dir: Directory where training history, metrics, classification</span>
+<span class="sd">            report, and class names are saved.</span>
+<span class="sd">        best_checkpoint_name: Filename for the best model checkpoint.</span>
+<span class="sd">        history_filename: Filename for the saved training history JSON.</span>
+<span class="sd">        metrics_filename: Filename for the saved evaluation metrics JSON.</span>
+<span class="sd">        report_filename: Filename for the saved classification report text.</span>
+<span class="sd">        class_names_filename: Filename for the saved class names JSON.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">data_dir</span><span class="p">:</span> <span class="n">Path</span>
+    <span class="n">pretrained_checkpoint</span><span class="p">:</span> <span class="n">Path</span>
+    <span class="n">checkpoint_dir</span><span class="p">:</span> <span class="n">Path</span>
+    <span class="n">results_dir</span><span class="p">:</span> <span class="n">Path</span>
+    <span class="n">best_checkpoint_name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">settings</span><span class="o">.</span><span class="n">training_best_checkpoint_name</span>
+    <span class="n">history_filename</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">settings</span><span class="o">.</span><span class="n">training_history_filename</span>
+    <span class="n">metrics_filename</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">settings</span><span class="o">.</span><span class="n">training_metrics_filename</span>
+    <span class="n">report_filename</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">settings</span><span class="o">.</span><span class="n">training_report_filename</span>
+    <span class="n">class_names_filename</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">settings</span><span class="o">.</span><span class="n">training_class_names_filename</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">best_model_path</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Path</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Return the full path to the best model checkpoint file.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            ``checkpoint_dir / best_checkpoint_name``.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">checkpoint_dir</span> <span class="o">/</span> <span class="bp">self</span><span class="o">.</span><span class="n">best_checkpoint_name</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">history_path</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Path</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Return the full path to the training history JSON file.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            ``results_dir / history_filename``.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">results_dir</span> <span class="o">/</span> <span class="bp">self</span><span class="o">.</span><span class="n">history_filename</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">metrics_path</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Path</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Return the full path to the evaluation metrics JSON file.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            ``results_dir / metrics_filename``.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">results_dir</span> <span class="o">/</span> <span class="bp">self</span><span class="o">.</span><span class="n">metrics_filename</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">report_path</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Path</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Return the full path to the classification report text file.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            ``results_dir / report_filename``.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">results_dir</span> <span class="o">/</span> <span class="bp">self</span><span class="o">.</span><span class="n">report_filename</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">class_names_path</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Path</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Return the full path to the class names JSON file.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            ``results_dir / class_names_filename``.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">results_dir</span> <span class="o">/</span> <span class="bp">self</span><span class="o">.</span><span class="n">class_names_filename</span>
+
+<div class="viewcode-block" id="TrainingPaths.ensure_directories">
+<a class="viewcode-back" href="../../reference/sign_language_training.html#sign_language_training.configuration.TrainingPaths.ensure_directories">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">ensure_directories</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Create the checkpoint and results directories if they do not exist.&quot;&quot;&quot;</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Ensuring checkpoint and results directories exist&quot;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">checkpoint_dir</span><span class="o">.</span><span class="n">mkdir</span><span class="p">(</span><span class="n">parents</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">exist_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">results_dir</span><span class="o">.</span><span class="n">mkdir</span><span class="p">(</span><span class="n">parents</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">exist_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="TrainingPaths.validate_inputs">
+<a class="viewcode-back" href="../../reference/sign_language_training.html#sign_language_training.configuration.TrainingPaths.validate_inputs">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">validate_inputs</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Validate that required input paths exist on disk.</span>
+
+<span class="sd">        Raises:</span>
+<span class="sd">            FileNotFoundError: If ``data_dir`` or ``pretrained_checkpoint``</span>
+<span class="sd">                does not exist.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">data_dir</span><span class="o">.</span><span class="n">exists</span><span class="p">():</span>
+            <span class="k">raise</span> <span class="ne">FileNotFoundError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Data directory not found: </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">data_dir</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">pretrained_checkpoint</span><span class="o">.</span><span class="n">exists</span><span class="p">():</span>
+            <span class="k">raise</span> <span class="ne">FileNotFoundError</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">&quot;Pretrained checkpoint not found: </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">pretrained_checkpoint</span><span class="si">}</span><span class="s2">&quot;</span>
+            <span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="TrainingPaths.for_run">
+<a class="viewcode-back" href="../../reference/sign_language_training.html#sign_language_training.configuration.TrainingPaths.for_run">[docs]</a>
+    <span class="nd">@staticmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">for_run</span><span class="p">(</span>
+        <span class="n">data_dir</span><span class="p">:</span> <span class="n">Path</span><span class="p">,</span>
+        <span class="n">pretrained_checkpoint</span><span class="p">:</span> <span class="n">Path</span><span class="p">,</span>
+        <span class="n">checkpoints_root</span><span class="p">:</span> <span class="n">Path</span><span class="p">,</span>
+        <span class="n">results_root</span><span class="p">:</span> <span class="n">Path</span><span class="p">,</span>
+        <span class="n">run_name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">&quot;TrainingPaths&quot;</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Create a :class:`TrainingPaths` instance for a single training run.</span>
+
+<span class="sd">        Generates a unique run name via</span>
+<span class="sd">        :func:`~sign_language_training.run_naming.generate_run_name` if one</span>
+<span class="sd">        is not provided, then constructs per-run subdirectories under the</span>
+<span class="sd">        given root directories.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            data_dir: Root directory of the training dataset.</span>
+<span class="sd">            pretrained_checkpoint: Path to the pretrained checkpoint.</span>
+<span class="sd">            checkpoints_root: Root directory under which per-run checkpoint</span>
+<span class="sd">                subdirectories are created.</span>
+<span class="sd">            results_root: Root directory under which per-run results</span>
+<span class="sd">                subdirectories are created.</span>
+<span class="sd">            run_name: Optional run name override. If ``None``, a unique name</span>
+<span class="sd">                is generated automatically.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            A :class:`TrainingPaths` instance with per-run directories</span>
+<span class="sd">                set to ``checkpoints_root / run_name`` and</span>
+<span class="sd">                ``results_root / run_name``.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="kn">from</span><span class="w"> </span><span class="nn">sign_language_training.run_naming</span><span class="w"> </span><span class="kn">import</span> <span class="n">generate_run_name</span>
+
+        <span class="k">if</span> <span class="n">run_name</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">run_name</span> <span class="o">=</span> <span class="n">generate_run_name</span><span class="p">(</span><span class="n">checkpoints_root</span><span class="p">)</span>
+
+        <span class="n">checkpoint_dir</span> <span class="o">=</span> <span class="n">checkpoints_root</span> <span class="o">/</span> <span class="n">run_name</span>
+        <span class="n">results_dir</span> <span class="o">=</span> <span class="n">results_root</span> <span class="o">/</span> <span class="n">run_name</span>
+
+        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Checkpoint directory: </span><span class="si">%s</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">checkpoint_dir</span><span class="p">)</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Results directory: </span><span class="si">%s</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">results_dir</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">TrainingPaths</span><span class="p">(</span>
+            <span class="n">data_dir</span><span class="o">=</span><span class="n">data_dir</span><span class="p">,</span>
+            <span class="n">pretrained_checkpoint</span><span class="o">=</span><span class="n">pretrained_checkpoint</span><span class="p">,</span>
+            <span class="n">checkpoint_dir</span><span class="o">=</span><span class="n">checkpoint_dir</span><span class="p">,</span>
+            <span class="n">results_dir</span><span class="o">=</span><span class="n">results_dir</span><span class="p">,</span>
+            <span class="n">best_checkpoint_name</span><span class="o">=</span><span class="n">settings</span><span class="o">.</span><span class="n">training_best_checkpoint_name</span><span class="p">,</span>
+            <span class="n">history_filename</span><span class="o">=</span><span class="n">settings</span><span class="o">.</span><span class="n">training_history_filename</span><span class="p">,</span>
+            <span class="n">metrics_filename</span><span class="o">=</span><span class="n">settings</span><span class="o">.</span><span class="n">training_metrics_filename</span><span class="p">,</span>
+            <span class="n">report_filename</span><span class="o">=</span><span class="n">settings</span><span class="o">.</span><span class="n">training_report_filename</span><span class="p">,</span>
+            <span class="n">class_names_filename</span><span class="o">=</span><span class="n">settings</span><span class="o">.</span><span class="n">training_class_names_filename</span><span class="p">,</span>
+        <span class="p">)</span></div>
+</div>
+
+
+
+<div class="viewcode-block" id="TrainingConfig">
+<a class="viewcode-back" href="../../reference/sign_language_training.html#sign_language_training.configuration.TrainingConfig">[docs]</a>
+<span class="nd">@dataclass</span><span class="p">(</span><span class="n">frozen</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">TrainingConfig</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Hyperparameters and runtime settings for NGT EfficientNet-B0 fine-tuning.</span>
+
+<span class="sd">    All fields default to the corresponding values from project settings and</span>
+<span class="sd">    can be overridden at construction time or via :meth:`from_mapping`.</span>
+<span class="sd">    Validation is run automatically after construction via ``__post_init__``.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        img_size: Input image size in pixels.</span>
+<span class="sd">        batch_size: Number of samples per training batch.</span>
+<span class="sd">        learning_rate: Initial optimiser learning rate.</span>
+<span class="sd">        epochs: Maximum number of training epochs.</span>
+<span class="sd">        patience: Early stopping patience in epochs.</span>
+<span class="sd">        val_split: Fraction of the dataset to use for validation.</span>
+<span class="sd">        target_accuracy: Minimum validation accuracy for the gate check.</span>
+<span class="sd">        seed: Random seed for reproducible training.</span>
+<span class="sd">        n_splits: Number of stratified splits (must be 1).</span>
+<span class="sd">        num_workers: Number of DataLoader worker processes.</span>
+<span class="sd">        pin_memory: Whether to use pinned memory in the DataLoader.</span>
+<span class="sd">        eta_min: Minimum learning rate for the cosine annealing scheduler.</span>
+<span class="sd">        expected_num_classes: Expected number of output classes.</span>
+<span class="sd">        use_mlflow: Whether to enable MLflow experiment tracking.</span>
+<span class="sd">        mlflow_tracking_uri: MLflow tracking URI override, or ``None`` for</span>
+<span class="sd">            the default.</span>
+<span class="sd">        mlflow_experiment_name: MLflow experiment name.</span>
+<span class="sd">        mlflow_run_name: Optional MLflow run name.</span>
+<span class="sd">        mlflow_autolog: Whether to enable MLflow PyTorch autologging.</span>
+<span class="sd">        mlflow_log_artifacts: Whether to log training artifacts to MLflow.</span>
+<span class="sd">        model_name: Azure ML model registry name used by the gate check.</span>
+<span class="sd">        f1_threshold: Minimum macro F1 score required to pass the gate check.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">img_size</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="n">settings</span><span class="o">.</span><span class="n">training_img_size</span>
+    <span class="n">batch_size</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="n">settings</span><span class="o">.</span><span class="n">training_batch_size</span>
+    <span class="n">learning_rate</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="n">settings</span><span class="o">.</span><span class="n">training_learning_rate</span>
+    <span class="n">epochs</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="n">settings</span><span class="o">.</span><span class="n">training_epochs</span>
+    <span class="n">patience</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="n">settings</span><span class="o">.</span><span class="n">training_patience</span>
+    <span class="n">val_split</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="n">settings</span><span class="o">.</span><span class="n">training_val_split</span>
+    <span class="n">target_accuracy</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="n">settings</span><span class="o">.</span><span class="n">training_target_accuracy</span>
+    <span class="n">seed</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="n">settings</span><span class="o">.</span><span class="n">training_seed</span>
+    <span class="n">n_splits</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="n">settings</span><span class="o">.</span><span class="n">training_n_splits</span>
+    <span class="n">num_workers</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="n">settings</span><span class="o">.</span><span class="n">training_num_workers</span>
+    <span class="n">pin_memory</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="n">settings</span><span class="o">.</span><span class="n">training_pin_memory</span>
+    <span class="n">eta_min</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="n">settings</span><span class="o">.</span><span class="n">training_eta_min</span>
+    <span class="n">expected_num_classes</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="n">settings</span><span class="o">.</span><span class="n">training_expected_num_classes</span>
+
+    <span class="n">use_mlflow</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="n">settings</span><span class="o">.</span><span class="n">mlflow_enabled</span>
+    <span class="n">mlflow_tracking_uri</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="n">settings</span><span class="o">.</span><span class="n">mlflow_tracking_uri</span>
+    <span class="n">mlflow_experiment_name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">settings</span><span class="o">.</span><span class="n">mlflow_experiment_name</span>
+    <span class="n">mlflow_run_name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="n">settings</span><span class="o">.</span><span class="n">mlflow_run_name</span>
+    <span class="n">mlflow_autolog</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="n">settings</span><span class="o">.</span><span class="n">mlflow_autolog</span>
+    <span class="n">mlflow_log_artifacts</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="n">settings</span><span class="o">.</span><span class="n">mlflow_log_artifacts</span>
+    <span class="n">model_name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">settings</span><span class="o">.</span><span class="n">model_registry_name</span>
+    <span class="n">f1_threshold</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="n">settings</span><span class="o">.</span><span class="n">training_f1_threshold</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">__post_init__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Run validation immediately after construction.&quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">validate</span><span class="p">()</span>
+
+<div class="viewcode-block" id="TrainingConfig.from_mapping">
+<a class="viewcode-back" href="../../reference/sign_language_training.html#sign_language_training.configuration.TrainingConfig.from_mapping">[docs]</a>
+    <span class="nd">@classmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">from_mapping</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">values</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="s2">&quot;TrainingConfig&quot;</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Create a :class:`TrainingConfig` from a dictionary of values.</span>
+
+<span class="sd">        Filters out unknown keys (logging a warning) and ``None`` values so</span>
+<span class="sd">        that CLI and API callers can pass partial overrides without specifying</span>
+<span class="sd">        every field.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            values: Dictionary of field names to values. Keys not matching</span>
+<span class="sd">                any dataclass field are ignored with a warning. ``None`` values</span>
+<span class="sd">                are also ignored so the field default is used instead.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            A new :class:`TrainingConfig` instance with the provided</span>
+<span class="sd">                values applied over the defaults.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">valid_fields</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span><span class="bp">cls</span><span class="o">.</span><span class="n">__dataclass_fields__</span><span class="o">.</span><span class="n">keys</span><span class="p">())</span>
+        <span class="n">unknown_fields</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">(</span><span class="nb">set</span><span class="p">(</span><span class="n">values</span><span class="p">)</span> <span class="o">-</span> <span class="n">valid_fields</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">unknown_fields</span><span class="p">:</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span>
+                <span class="s2">&quot;Ignoring unknown training config fields: </span><span class="si">%s</span><span class="s2">&quot;</span><span class="p">,</span>
+                <span class="s2">&quot;, &quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">unknown_fields</span><span class="p">),</span>
+            <span class="p">)</span>
+        <span class="n">filtered</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="n">key</span><span class="p">:</span> <span class="n">value</span>
+            <span class="k">for</span> <span class="n">key</span><span class="p">,</span> <span class="n">value</span> <span class="ow">in</span> <span class="n">values</span><span class="o">.</span><span class="n">items</span><span class="p">()</span>
+            <span class="k">if</span> <span class="n">key</span> <span class="ow">in</span> <span class="n">valid_fields</span> <span class="ow">and</span> <span class="n">value</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
+        <span class="p">}</span>
+        <span class="k">return</span> <span class="bp">cls</span><span class="p">(</span><span class="o">**</span><span class="n">filtered</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="TrainingConfig.validate">
+<a class="viewcode-back" href="../../reference/sign_language_training.html#sign_language_training.configuration.TrainingConfig.validate">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">validate</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Validate all hyperparameter constraints.</span>
+
+<span class="sd">        Raises:</span>
+<span class="sd">            ValueError: If any field violates its constraint, such as</span>
+<span class="sd">                non-positive batch size, learning rate outside valid range,</span>
+<span class="sd">                ``val_split`` outside (0, 1), ``n_splits`` not equal to 1, or</span>
+<span class="sd">                missing MLflow experiment name when MLflow is enabled.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">img_size</span> <span class="o">&lt;=</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Image size must be positive.&quot;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">batch_size</span> <span class="o">&lt;=</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Batch size must be positive.&quot;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">learning_rate</span> <span class="o">&lt;=</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Learning rate must be positive.&quot;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">epochs</span> <span class="o">&lt;=</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Epoch count must be positive.&quot;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">patience</span> <span class="o">&lt;=</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Patience must be positive.&quot;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="mi">0</span> <span class="o">&lt;</span> <span class="bp">self</span><span class="o">.</span><span class="n">val_split</span> <span class="o">&lt;</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Validation split must be between 0 and 1.&quot;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="mi">0</span> <span class="o">&lt;=</span> <span class="bp">self</span><span class="o">.</span><span class="n">target_accuracy</span> <span class="o">&lt;=</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Target accuracy must be between 0 and 1.&quot;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">n_splits</span> <span class="o">!=</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="s2">&quot;Number of splits must be exactly 1 for the current training workflow.&quot;</span>
+            <span class="p">)</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">num_workers</span> <span class="o">&lt;</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Number of workers cannot be negative.&quot;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">eta_min</span> <span class="o">&lt;</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;eta_min cannot be negative.&quot;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">eta_min</span> <span class="o">&gt;=</span> <span class="bp">self</span><span class="o">.</span><span class="n">learning_rate</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;eta_min must be smaller than learning_rate.&quot;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">expected_num_classes</span> <span class="o">&lt;=</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Expected number of NGT classes must be positive.&quot;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">use_mlflow</span> <span class="ow">and</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">mlflow_experiment_name</span><span class="o">.</span><span class="n">strip</span><span class="p">():</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="s2">&quot;MLflow experiment name must be set when MLflow tracking is enabled.&quot;</span>
+            <span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="TrainingConfig.to_mlflow_params">
+<a class="viewcode-back" href="../../reference/sign_language_training.html#sign_language_training.configuration.TrainingConfig.to_mlflow_params">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">to_mlflow_params</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">int</span> <span class="o">|</span> <span class="nb">float</span> <span class="o">|</span> <span class="nb">str</span> <span class="o">|</span> <span class="nb">bool</span> <span class="o">|</span> <span class="kc">None</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Return a flat dictionary of parameters suitable for MLflow logging.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            Dict of hyperparameter names to their values, covering all</span>
+<span class="sd">                training and MLflow configuration fields that should be recorded</span>
+<span class="sd">                as MLflow run parameters.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="p">{</span>
+            <span class="s2">&quot;img_size&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">img_size</span><span class="p">,</span>
+            <span class="s2">&quot;batch_size&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">batch_size</span><span class="p">,</span>
+            <span class="s2">&quot;learning_rate&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">learning_rate</span><span class="p">,</span>
+            <span class="s2">&quot;epochs&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">epochs</span><span class="p">,</span>
+            <span class="s2">&quot;patience&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">patience</span><span class="p">,</span>
+            <span class="s2">&quot;val_split&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">val_split</span><span class="p">,</span>
+            <span class="s2">&quot;target_accuracy&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">target_accuracy</span><span class="p">,</span>
+            <span class="s2">&quot;seed&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">seed</span><span class="p">,</span>
+            <span class="s2">&quot;n_splits&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">n_splits</span><span class="p">,</span>
+            <span class="s2">&quot;num_workers&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">num_workers</span><span class="p">,</span>
+            <span class="s2">&quot;pin_memory&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">pin_memory</span><span class="p">,</span>
+            <span class="s2">&quot;eta_min&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">eta_min</span><span class="p">,</span>
+            <span class="s2">&quot;expected_num_classes&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">expected_num_classes</span><span class="p">,</span>
+            <span class="s2">&quot;use_mlflow&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">use_mlflow</span><span class="p">,</span>
+            <span class="s2">&quot;mlflow_experiment_name&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">mlflow_experiment_name</span><span class="p">,</span>
+            <span class="s2">&quot;mlflow_autolog&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">mlflow_autolog</span><span class="p">,</span>
+            <span class="s2">&quot;mlflow_log_artifacts&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">mlflow_log_artifacts</span><span class="p">,</span>
+        <span class="p">}</span></div>
+</div>
+
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2026, Kinga Marchlewska, Raya Kichukova, Ana-Maria Farazică, Maciej Czerniak, Szymon Chirowski.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

@@ -1,0 +1,685 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>sign_language.models.loader &mdash; Sign Language 0.1.0 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/css/theme.css?v=9edc463e" />
+
+  
+      <script src="../../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../../_static/documentation_options.js?v=01f34227"></script>
+      <script src="../../../_static/doctools.js?v=9a2dae69"></script>
+      <script src="../../../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../index.html" class="icon icon-home">
+            Sign Language
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Getting Started</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../installation.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../usage.html">Usage</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">API Reference</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../reference/sign_language.html">sign_language package</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../reference/sign_language_training.html">sign_language_training package</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../index.html">Sign Language</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">sign_language.models.loader</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for sign_language.models.loader</h1><div class="highlight"><pre>
+<span></span><span class="sd">&quot;&quot;&quot;Model loading and initialisation.</span>
+
+<span class="sd">Loads EfficientNet and Landmark MLP checkpoints from disk, selects the</span>
+<span class="sd">compute device, and initialises the MediaPipe hand landmarker.</span>
+
+<span class="sd">The EfficientNet checkpoint source is selected by ``settings.deploy_target``:</span>
+
+<span class="sd">- ``&quot;local&quot;``: read from ``settings.model_path`` on disk.</span>
+<span class="sd">- ``&quot;onprem&quot;``: fetch the version aliased ``@champion`` from the self-hosted</span>
+<span class="sd">  MLflow model registry at ``settings.mlflow_tracking_uri``.</span>
+<span class="sd">- ``&quot;azure&quot;``: fetch the latest promoted version from the Azure ML model</span>
+<span class="sd">  registry under ``settings.azure_subscription_id`` /</span>
+<span class="sd">  ``settings.azure_resource_group`` / ``settings.azure_workspace``.</span>
+
+<span class="sd">Both remote paths cache downloaded checkpoints under</span>
+<span class="sd">``settings.model_cache_dir`` keyed by version, so repeated container</span>
+<span class="sd">restarts do not re-download unchanged models.</span>
+<span class="sd">&quot;&quot;&quot;</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">logging</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">dataclasses</span><span class="w"> </span><span class="kn">import</span> <span class="n">dataclass</span><span class="p">,</span> <span class="n">field</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">pathlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">Path</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Optional</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">torch</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">torch.nn</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">nn</span>
+
+<span class="c1"># Azure ML SDK (optional — only required when deploy_target == &quot;azure&quot;)</span>
+<span class="k">try</span><span class="p">:</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">azure.ai.ml</span><span class="w"> </span><span class="kn">import</span> <span class="n">MLClient</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">azure.identity</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+        <span class="n">AzureCliCredential</span><span class="p">,</span>
+        <span class="n">ChainedTokenCredential</span><span class="p">,</span>
+        <span class="n">ManagedIdentityCredential</span><span class="p">,</span>
+    <span class="p">)</span>
+<span class="k">except</span> <span class="ne">ImportError</span><span class="p">:</span>
+    <span class="n">MLClient</span> <span class="o">=</span> <span class="kc">None</span>  <span class="c1"># type: ignore[assignment,misc]</span>
+    <span class="n">ManagedIdentityCredential</span> <span class="o">=</span> <span class="kc">None</span>  <span class="c1"># type: ignore[assignment,misc]</span>
+    <span class="n">AzureCliCredential</span> <span class="o">=</span> <span class="kc">None</span>  <span class="c1"># type: ignore[assignment,misc]</span>
+    <span class="n">ChainedTokenCredential</span> <span class="o">=</span> <span class="kc">None</span>  <span class="c1"># type: ignore[assignment,misc]</span>
+
+<span class="c1"># MLflow client (optional — only required when deploy_target == &quot;onprem&quot;)</span>
+<span class="k">try</span><span class="p">:</span>
+    <span class="kn">import</span><span class="w"> </span><span class="nn">mlflow</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">mlflow.tracking</span><span class="w"> </span><span class="kn">import</span> <span class="n">MlflowClient</span>
+<span class="k">except</span> <span class="ne">ImportError</span><span class="p">:</span>
+    <span class="n">mlflow</span> <span class="o">=</span> <span class="kc">None</span>  <span class="c1"># type: ignore[assignment]</span>
+    <span class="n">MlflowClient</span> <span class="o">=</span> <span class="kc">None</span>  <span class="c1"># type: ignore[assignment,misc]</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">sign_language.core.settings</span><span class="w"> </span><span class="kn">import</span> <span class="n">settings</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">sign_language.models.architectures</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">build_efficientnet</span><span class="p">,</span>
+    <span class="n">build_landmark_mlp</span><span class="p">,</span>
+<span class="p">)</span>
+
+<span class="n">logger</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="vm">__name__</span><span class="p">)</span>
+
+
+<span class="c1"># =============================================================================</span>
+<span class="c1"># Azure ML registry path</span>
+<span class="c1"># =============================================================================</span>
+
+
+<div class="viewcode-block" id="download_latest_model_azure">
+<a class="viewcode-back" href="../../../reference/sign_language.models.html#sign_language.models.loader.download_latest_model_azure">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">download_latest_model_azure</span><span class="p">(</span>
+    <span class="n">model_name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+    <span class="n">download_dir</span><span class="p">:</span> <span class="n">Path</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Path</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Download the latest registered EfficientNet checkpoint from Azure ML.</span>
+
+<span class="sd">    Prefers the version explicitly tagged ``promoted=true``, selecting the</span>
+<span class="sd">    one with the highest ``f1_macro`` (with ``accuracy`` as tiebreaker).</span>
+<span class="sd">    Falls back to ``label=&quot;latest&quot;`` when no promoted version exists.</span>
+
+<span class="sd">    Downloaded assets are cached under ``download_dir`` keyed by version</span>
+<span class="sd">    number. On subsequent startups the cached file is reused if the version</span>
+<span class="sd">    has not changed.</span>
+
+<span class="sd">    :param model_name: Registry name, e.g. ``&quot;ngt-sign-language&quot;``.</span>
+<span class="sd">    :param download_dir: Local directory to cache the downloaded checkpoint.</span>
+<span class="sd">    :returns: :class:`~pathlib.Path` to the downloaded ``.pth`` file.</span>
+<span class="sd">    :raises RuntimeError: If Azure ML dependencies are not installed, or if</span>
+<span class="sd">        any required Azure settings (subscription ID, resource group,</span>
+<span class="sd">        workspace) are missing.</span>
+<span class="sd">    :raises FileNotFoundError: If no ``.pth`` file is found in the download</span>
+<span class="sd">        directory after the download completes.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Fetching promoted &#39;</span><span class="si">%s</span><span class="s2">&#39; from Azure ML registry …&quot;</span><span class="p">,</span> <span class="n">model_name</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="p">(</span>
+        <span class="n">MLClient</span> <span class="ow">is</span> <span class="kc">None</span>
+        <span class="ow">or</span> <span class="n">ManagedIdentityCredential</span> <span class="ow">is</span> <span class="kc">None</span>
+        <span class="ow">or</span> <span class="n">AzureCliCredential</span> <span class="ow">is</span> <span class="kc">None</span>
+        <span class="ow">or</span> <span class="n">ChainedTokenCredential</span> <span class="ow">is</span> <span class="kc">None</span>
+    <span class="p">):</span>
+        <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span>
+            <span class="s2">&quot;Azure ML registry loading requires azure-ai-ml and azure-identity. &quot;</span>
+            <span class="s2">&quot;Install Azure dependencies or set DEPLOY_TARGET=local.&quot;</span>
+        <span class="p">)</span>
+
+    <span class="n">missing</span> <span class="o">=</span> <span class="p">[</span>
+        <span class="n">name</span>
+        <span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">value</span> <span class="ow">in</span> <span class="p">{</span>
+            <span class="s2">&quot;AZURE_SUBSCRIPTION_ID&quot;</span><span class="p">:</span> <span class="n">settings</span><span class="o">.</span><span class="n">azure_subscription_id</span><span class="p">,</span>
+            <span class="s2">&quot;AZURE_RESOURCE_GROUP&quot;</span><span class="p">:</span> <span class="n">settings</span><span class="o">.</span><span class="n">azure_resource_group</span><span class="p">,</span>
+            <span class="s2">&quot;AZURE_WORKSPACE&quot;</span><span class="p">:</span> <span class="n">settings</span><span class="o">.</span><span class="n">azure_workspace</span><span class="p">,</span>
+        <span class="p">}</span><span class="o">.</span><span class="n">items</span><span class="p">()</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">str</span><span class="p">(</span><span class="n">value</span> <span class="ow">or</span> <span class="s2">&quot;&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
+    <span class="p">]</span>
+    <span class="k">if</span> <span class="n">missing</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span>
+            <span class="s2">&quot;DEPLOY_TARGET=azure but required settings are missing: &quot;</span>
+            <span class="o">+</span> <span class="s2">&quot;, &quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">missing</span><span class="p">)</span>
+        <span class="p">)</span>
+
+    <span class="n">credential</span> <span class="o">=</span> <span class="n">ChainedTokenCredential</span><span class="p">(</span>
+        <span class="n">ManagedIdentityCredential</span><span class="p">(),</span>
+        <span class="n">AzureCliCredential</span><span class="p">(),</span>
+    <span class="p">)</span>
+
+    <span class="n">ml_client</span> <span class="o">=</span> <span class="n">MLClient</span><span class="p">(</span>
+        <span class="n">credential</span><span class="o">=</span><span class="n">credential</span><span class="p">,</span>
+        <span class="n">subscription_id</span><span class="o">=</span><span class="n">settings</span><span class="o">.</span><span class="n">azure_subscription_id</span><span class="p">,</span>
+        <span class="n">resource_group_name</span><span class="o">=</span><span class="n">settings</span><span class="o">.</span><span class="n">azure_resource_group</span><span class="p">,</span>
+        <span class="n">workspace_name</span><span class="o">=</span><span class="n">settings</span><span class="o">.</span><span class="n">azure_workspace</span><span class="p">,</span>
+    <span class="p">)</span>
+
+    <span class="n">all_versions</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">ml_client</span><span class="o">.</span><span class="n">models</span><span class="o">.</span><span class="n">list</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="n">model_name</span><span class="p">))</span>
+    <span class="n">promoted</span> <span class="o">=</span> <span class="p">[</span><span class="n">v</span> <span class="k">for</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">all_versions</span> <span class="k">if</span> <span class="n">v</span><span class="o">.</span><span class="n">tags</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;promoted&quot;</span><span class="p">)</span> <span class="o">==</span> <span class="s2">&quot;true&quot;</span><span class="p">]</span>
+
+    <span class="k">if</span> <span class="n">promoted</span><span class="p">:</span>
+        <span class="n">model_info</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span>
+            <span class="n">promoted</span><span class="p">,</span>
+            <span class="n">key</span><span class="o">=</span><span class="k">lambda</span> <span class="n">v</span><span class="p">:</span> <span class="p">(</span>
+                <span class="nb">float</span><span class="p">(</span><span class="n">v</span><span class="o">.</span><span class="n">tags</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;f1_macro&quot;</span><span class="p">,</span> <span class="mi">0</span><span class="p">)),</span>
+                <span class="nb">float</span><span class="p">(</span><span class="n">v</span><span class="o">.</span><span class="n">tags</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;accuracy&quot;</span><span class="p">,</span> <span class="mi">0</span><span class="p">)),</span>
+            <span class="p">),</span>
+        <span class="p">)</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span>
+            <span class="s2">&quot;Using promoted version </span><span class="si">%s</span><span class="s2"> (f1_macro=</span><span class="si">%s</span><span class="s2">, accuracy=</span><span class="si">%s</span><span class="s2">)&quot;</span><span class="p">,</span>
+            <span class="n">model_info</span><span class="o">.</span><span class="n">version</span><span class="p">,</span>
+            <span class="n">model_info</span><span class="o">.</span><span class="n">tags</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;f1_macro&quot;</span><span class="p">),</span>
+            <span class="n">model_info</span><span class="o">.</span><span class="n">tags</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;accuracy&quot;</span><span class="p">),</span>
+        <span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span>
+            <span class="s2">&quot;No promoted version found for &#39;</span><span class="si">%s</span><span class="s2">&#39; — falling back to label=&#39;latest&#39;.&quot;</span><span class="p">,</span>
+            <span class="n">model_name</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="n">model_info</span> <span class="o">=</span> <span class="n">ml_client</span><span class="o">.</span><span class="n">models</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="n">model_name</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s2">&quot;latest&quot;</span><span class="p">)</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Fallback to latest version: </span><span class="si">%s</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">model_info</span><span class="o">.</span><span class="n">version</span><span class="p">)</span>
+
+    <span class="n">version_dir</span> <span class="o">=</span> <span class="n">download_dir</span> <span class="o">/</span> <span class="s2">&quot;azure&quot;</span> <span class="o">/</span> <span class="sa">f</span><span class="s2">&quot;v</span><span class="si">{</span><span class="n">model_info</span><span class="o">.</span><span class="n">version</span><span class="si">}</span><span class="s2">&quot;</span>
+
+    <span class="n">cached</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">version_dir</span><span class="o">.</span><span class="n">rglob</span><span class="p">(</span><span class="s2">&quot;*.pth&quot;</span><span class="p">))</span>
+    <span class="k">if</span> <span class="n">cached</span><span class="p">:</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Using cached model at </span><span class="si">%s</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">cached</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+        <span class="k">return</span> <span class="n">cached</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+
+    <span class="n">version_dir</span><span class="o">.</span><span class="n">mkdir</span><span class="p">(</span><span class="n">parents</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">exist_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="n">ml_client</span><span class="o">.</span><span class="n">models</span><span class="o">.</span><span class="n">download</span><span class="p">(</span>
+        <span class="n">name</span><span class="o">=</span><span class="n">model_name</span><span class="p">,</span>
+        <span class="n">version</span><span class="o">=</span><span class="nb">str</span><span class="p">(</span><span class="n">model_info</span><span class="o">.</span><span class="n">version</span><span class="p">),</span>
+        <span class="n">download_path</span><span class="o">=</span><span class="nb">str</span><span class="p">(</span><span class="n">version_dir</span><span class="p">),</span>
+    <span class="p">)</span>
+
+    <span class="n">pth_files</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">version_dir</span><span class="o">.</span><span class="n">rglob</span><span class="p">(</span><span class="s2">&quot;*.pth&quot;</span><span class="p">))</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">pth_files</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">FileNotFoundError</span><span class="p">(</span>
+            <span class="sa">f</span><span class="s2">&quot;No .pth file found after downloading &#39;</span><span class="si">{</span><span class="n">model_name</span><span class="si">}</span><span class="s2">&#39; &quot;</span>
+            <span class="sa">f</span><span class="s2">&quot;v</span><span class="si">{</span><span class="n">model_info</span><span class="o">.</span><span class="n">version</span><span class="si">}</span><span class="s2"> to </span><span class="si">{</span><span class="n">version_dir</span><span class="si">}</span><span class="s2">&quot;</span>
+        <span class="p">)</span>
+
+    <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Downloaded model to </span><span class="si">%s</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">pth_files</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+    <span class="k">return</span> <span class="n">pth_files</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span></div>
+
+
+
+<span class="c1"># =============================================================================</span>
+<span class="c1"># Self-hosted MLflow registry path</span>
+<span class="c1"># =============================================================================</span>
+
+
+<div class="viewcode-block" id="download_latest_model_mlflow">
+<a class="viewcode-back" href="../../../reference/sign_language.models.html#sign_language.models.loader.download_latest_model_mlflow">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">download_latest_model_mlflow</span><span class="p">(</span>
+    <span class="n">model_name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+    <span class="n">download_dir</span><span class="p">:</span> <span class="n">Path</span><span class="p">,</span>
+    <span class="n">alias</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;champion&quot;</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Path</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Download the EfficientNet checkpoint aliased ``@&lt;alias&gt;`` from MLflow.</span>
+
+<span class="sd">    Resolves ``models:/&lt;model_name&gt;@&lt;alias&gt;`` against the MLflow registry</span>
+<span class="sd">    configured by ``settings.mlflow_tracking_uri``. Downloads the artifact</span>
+<span class="sd">    directory to a version-keyed local cache; on subsequent startups the</span>
+<span class="sd">    cached ``.pth`` file is reused if the aliased version has not changed.</span>
+
+<span class="sd">    The MLflow server is expected to run with ``--serve-artifacts`` (the</span>
+<span class="sd">    BUaS on-prem reference configuration), so the client only needs the</span>
+<span class="sd">    tracking URI — no MinIO / S3 credentials.</span>
+
+<span class="sd">    :param model_name: Registered model name, e.g. ``&quot;ngt-sign-language&quot;``.</span>
+<span class="sd">    :param download_dir: Local directory to cache the downloaded checkpoint.</span>
+<span class="sd">    :param alias: Registry alias to resolve. Defaults to ``&quot;champion&quot;``.</span>
+<span class="sd">    :returns: :class:`~pathlib.Path` to the downloaded ``.pth`` file.</span>
+<span class="sd">    :raises RuntimeError: If MLflow is not installed, or if</span>
+<span class="sd">        ``MLFLOW_TRACKING_URI`` is not configured.</span>
+<span class="sd">    :raises FileNotFoundError: If no ``.pth`` file is present in the</span>
+<span class="sd">        downloaded artifact directory.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span>
+        <span class="s2">&quot;Fetching &#39;</span><span class="si">%s</span><span class="s2">@</span><span class="si">%s</span><span class="s2">&#39; from MLflow registry at </span><span class="si">%s</span><span class="s2"> …&quot;</span><span class="p">,</span>
+        <span class="n">model_name</span><span class="p">,</span>
+        <span class="n">alias</span><span class="p">,</span>
+        <span class="n">settings</span><span class="o">.</span><span class="n">mlflow_tracking_uri</span><span class="p">,</span>
+    <span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">mlflow</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="n">MlflowClient</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span>
+            <span class="s2">&quot;MLflow registry loading requires the mlflow package. &quot;</span>
+            <span class="s2">&quot;Install MLflow or set DEPLOY_TARGET=local.&quot;</span>
+        <span class="p">)</span>
+
+    <span class="n">tracking_uri</span> <span class="o">=</span> <span class="p">(</span><span class="n">settings</span><span class="o">.</span><span class="n">mlflow_tracking_uri</span> <span class="ow">or</span> <span class="s2">&quot;&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">tracking_uri</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span>
+            <span class="s2">&quot;DEPLOY_TARGET=onprem but MLFLOW_TRACKING_URI is not configured.&quot;</span>
+        <span class="p">)</span>
+
+    <span class="n">mlflow</span><span class="o">.</span><span class="n">set_tracking_uri</span><span class="p">(</span><span class="n">tracking_uri</span><span class="p">)</span>
+    <span class="n">client</span> <span class="o">=</span> <span class="n">MlflowClient</span><span class="p">(</span><span class="n">tracking_uri</span><span class="o">=</span><span class="n">tracking_uri</span><span class="p">)</span>
+
+    <span class="c1"># Resolve the alias to a concrete version for cache keying.</span>
+    <span class="n">mv</span> <span class="o">=</span> <span class="n">client</span><span class="o">.</span><span class="n">get_model_version_by_alias</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="n">model_name</span><span class="p">,</span> <span class="n">alias</span><span class="o">=</span><span class="n">alias</span><span class="p">)</span>
+    <span class="n">version</span> <span class="o">=</span> <span class="n">mv</span><span class="o">.</span><span class="n">version</span>
+    <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Alias &#39;</span><span class="si">%s</span><span class="s2">&#39; resolves to </span><span class="si">%s</span><span class="s2"> v</span><span class="si">%s</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">alias</span><span class="p">,</span> <span class="n">model_name</span><span class="p">,</span> <span class="n">version</span><span class="p">)</span>
+
+    <span class="n">version_dir</span> <span class="o">=</span> <span class="n">download_dir</span> <span class="o">/</span> <span class="s2">&quot;mlflow&quot;</span> <span class="o">/</span> <span class="sa">f</span><span class="s2">&quot;v</span><span class="si">{</span><span class="n">version</span><span class="si">}</span><span class="s2">&quot;</span>
+
+    <span class="n">cached</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">version_dir</span><span class="o">.</span><span class="n">rglob</span><span class="p">(</span><span class="s2">&quot;*.pth&quot;</span><span class="p">))</span>
+    <span class="k">if</span> <span class="n">cached</span><span class="p">:</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Using cached model at </span><span class="si">%s</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">cached</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+        <span class="k">return</span> <span class="n">cached</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+
+    <span class="n">version_dir</span><span class="o">.</span><span class="n">mkdir</span><span class="p">(</span><span class="n">parents</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">exist_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+    <span class="c1"># Download the entire artifact directory for this version. With</span>
+    <span class="c1"># --serve-artifacts the tracking server proxies the bytes from MinIO/S3,</span>
+    <span class="c1"># so no object-store credentials are needed on this client.</span>
+    <span class="n">artifact_uri</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;models:/</span><span class="si">{</span><span class="n">model_name</span><span class="si">}</span><span class="s2">@</span><span class="si">{</span><span class="n">alias</span><span class="si">}</span><span class="s2">&quot;</span>
+    <span class="n">local_path</span> <span class="o">=</span> <span class="n">mlflow</span><span class="o">.</span><span class="n">artifacts</span><span class="o">.</span><span class="n">download_artifacts</span><span class="p">(</span>
+        <span class="n">artifact_uri</span><span class="o">=</span><span class="n">artifact_uri</span><span class="p">,</span>
+        <span class="n">dst_path</span><span class="o">=</span><span class="nb">str</span><span class="p">(</span><span class="n">version_dir</span><span class="p">),</span>
+    <span class="p">)</span>
+    <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;MLflow artifacts downloaded to </span><span class="si">%s</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">local_path</span><span class="p">)</span>
+
+    <span class="n">pth_files</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">version_dir</span><span class="o">.</span><span class="n">rglob</span><span class="p">(</span><span class="s2">&quot;*.pth&quot;</span><span class="p">))</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">pth_files</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">FileNotFoundError</span><span class="p">(</span>
+            <span class="sa">f</span><span class="s2">&quot;No .pth file found after downloading &#39;</span><span class="si">{</span><span class="n">model_name</span><span class="si">}</span><span class="s2">@</span><span class="si">{</span><span class="n">alias</span><span class="si">}</span><span class="s2">&#39; &quot;</span>
+            <span class="sa">f</span><span class="s2">&quot;(version </span><span class="si">{</span><span class="n">version</span><span class="si">}</span><span class="s2">) to </span><span class="si">{</span><span class="n">version_dir</span><span class="si">}</span><span class="s2">&quot;</span>
+        <span class="p">)</span>
+
+    <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Resolved checkpoint: </span><span class="si">%s</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">pth_files</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+    <span class="k">return</span> <span class="n">pth_files</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span></div>
+
+
+
+<span class="c1"># =============================================================================</span>
+<span class="c1"># Dispatch</span>
+<span class="c1"># =============================================================================</span>
+
+
+<div class="viewcode-block" id="resolve_efficientnet_path">
+<a class="viewcode-back" href="../../../reference/sign_language.models.html#sign_language.models.loader.resolve_efficientnet_path">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">resolve_efficientnet_path</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="n">Path</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Return the EfficientNet checkpoint path to load at startup.</span>
+
+<span class="sd">    Dispatches on :attr:`settings.deploy_target`:</span>
+
+<span class="sd">    - ``&quot;local&quot;``: returns ``settings.model_path`` unchanged.</span>
+<span class="sd">    - ``&quot;onprem&quot;``: downloads the version aliased ``@champion`` from the</span>
+<span class="sd">      self-hosted MLflow registry via :func:`download_latest_model_mlflow`.</span>
+<span class="sd">    - ``&quot;azure&quot;``: downloads the latest promoted version from the Azure ML</span>
+<span class="sd">      registry via :func:`download_latest_model_azure`.</span>
+
+<span class="sd">    :returns: :class:`~pathlib.Path` to the EfficientNet ``.pth`` checkpoint.</span>
+<span class="sd">    :raises RuntimeError: If the selected target&#39;s required dependencies or</span>
+<span class="sd">        settings are missing.</span>
+<span class="sd">    :raises FileNotFoundError: If a remote download completes but no</span>
+<span class="sd">        ``.pth`` file is found in the cache directory.</span>
+<span class="sd">    :raises ValueError: If ``settings.deploy_target`` is set to an unknown</span>
+<span class="sd">        value (should be unreachable due to the ``Literal`` constraint).</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">target</span> <span class="o">=</span> <span class="n">settings</span><span class="o">.</span><span class="n">deploy_target</span>
+    <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Resolving EfficientNet checkpoint for DEPLOY_TARGET=</span><span class="si">%s</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">target</span><span class="p">)</span>
+
+    <span class="k">match</span> <span class="n">target</span><span class="p">:</span>
+        <span class="k">case</span> <span class="s2">&quot;azure&quot;</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">download_latest_model_azure</span><span class="p">(</span>
+                <span class="n">model_name</span><span class="o">=</span><span class="n">settings</span><span class="o">.</span><span class="n">model_registry_name</span><span class="p">,</span>
+                <span class="n">download_dir</span><span class="o">=</span><span class="n">settings</span><span class="o">.</span><span class="n">model_cache_dir</span><span class="p">,</span>
+            <span class="p">)</span>
+        <span class="k">case</span> <span class="s2">&quot;onprem&quot;</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">download_latest_model_mlflow</span><span class="p">(</span>
+                <span class="n">model_name</span><span class="o">=</span><span class="n">settings</span><span class="o">.</span><span class="n">model_registry_name</span><span class="p">,</span>
+                <span class="n">download_dir</span><span class="o">=</span><span class="n">settings</span><span class="o">.</span><span class="n">model_cache_dir</span><span class="p">,</span>
+            <span class="p">)</span>
+        <span class="k">case</span> <span class="s2">&quot;local&quot;</span><span class="p">:</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Local mode — using on-disk path: </span><span class="si">%s</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">settings</span><span class="o">.</span><span class="n">model_path</span><span class="p">)</span>
+            <span class="k">return</span> <span class="n">settings</span><span class="o">.</span><span class="n">model_path</span>
+        <span class="k">case</span><span class="w"> </span><span class="k">_</span><span class="p">:</span>  <span class="c1"># pragma: no cover — guarded by Literal</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Unknown DEPLOY_TARGET: </span><span class="si">{</span><span class="n">target</span><span class="si">!r}</span><span class="s2">&quot;</span><span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="resolve_landmark_path">
+<a class="viewcode-back" href="../../../reference/sign_language.models.html#sign_language.models.loader.resolve_landmark_path">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">resolve_landmark_path</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Path</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Return the Landmark MLP checkpoint path to load at startup, if available.</span>
+
+<span class="sd">    Dispatches on :attr:`settings.deploy_target`, mirroring</span>
+<span class="sd">    :func:`resolve_efficientnet_path`:</span>
+
+<span class="sd">    - ``&quot;local&quot;``: returns ``settings.lm_model_path`` unchanged. If the file</span>
+<span class="sd">      doesn&#39;t exist, ``load_landmark_mlp`` will skip it gracefully — same</span>
+<span class="sd">      behaviour as before.</span>
+<span class="sd">    - ``&quot;onprem&quot;`` / ``&quot;azure&quot;``: attempts to download the version aliased</span>
+<span class="sd">      ``@champion`` from the corresponding registry. Returns ``None`` if the</span>
+<span class="sd">      model isn&#39;t registered, the registry is unreachable, or the download</span>
+<span class="sd">      fails — the landmark MLP is a fallback, not a hard requirement, so we</span>
+<span class="sd">      degrade gracefully rather than blocking app startup.</span>
+
+<span class="sd">    :returns: :class:`~pathlib.Path` to the Landmark MLP ``.pth`` file, or</span>
+<span class="sd">        ``None`` if no checkpoint could be resolved.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">target</span> <span class="o">=</span> <span class="n">settings</span><span class="o">.</span><span class="n">deploy_target</span>
+    <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Resolving Landmark MLP checkpoint for DEPLOY_TARGET=</span><span class="si">%s</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">target</span><span class="p">)</span>
+
+    <span class="k">match</span> <span class="n">target</span><span class="p">:</span>
+        <span class="k">case</span> <span class="s2">&quot;azure&quot;</span><span class="p">:</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="k">return</span> <span class="n">download_latest_model_azure</span><span class="p">(</span>
+                    <span class="n">model_name</span><span class="o">=</span><span class="n">settings</span><span class="o">.</span><span class="n">lm_model_registry_name</span><span class="p">,</span>
+                    <span class="n">download_dir</span><span class="o">=</span><span class="n">settings</span><span class="o">.</span><span class="n">model_cache_dir</span><span class="p">,</span>
+                <span class="p">)</span>
+            <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">exc</span><span class="p">:</span>
+                <span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span>
+                    <span class="s2">&quot;Landmark MLP unavailable from Azure ML registry &quot;</span>
+                    <span class="s2">&quot;(&#39;</span><span class="si">%s</span><span class="s2">&#39;): </span><span class="si">%s</span><span class="s2"> — continuing without fallback model.&quot;</span><span class="p">,</span>
+                    <span class="n">settings</span><span class="o">.</span><span class="n">lm_model_registry_name</span><span class="p">,</span>
+                    <span class="n">exc</span><span class="p">,</span>
+                <span class="p">)</span>
+                <span class="k">return</span> <span class="kc">None</span>
+        <span class="k">case</span> <span class="s2">&quot;onprem&quot;</span><span class="p">:</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="k">return</span> <span class="n">download_latest_model_mlflow</span><span class="p">(</span>
+                    <span class="n">model_name</span><span class="o">=</span><span class="n">settings</span><span class="o">.</span><span class="n">lm_model_registry_name</span><span class="p">,</span>
+                    <span class="n">download_dir</span><span class="o">=</span><span class="n">settings</span><span class="o">.</span><span class="n">model_cache_dir</span><span class="p">,</span>
+                <span class="p">)</span>
+            <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">exc</span><span class="p">:</span>
+                <span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span>
+                    <span class="s2">&quot;Landmark MLP unavailable from MLflow registry &quot;</span>
+                    <span class="s2">&quot;(&#39;</span><span class="si">%s</span><span class="s2">&#39;): </span><span class="si">%s</span><span class="s2"> — continuing without fallback model.&quot;</span><span class="p">,</span>
+                    <span class="n">settings</span><span class="o">.</span><span class="n">lm_model_registry_name</span><span class="p">,</span>
+                    <span class="n">exc</span><span class="p">,</span>
+                <span class="p">)</span>
+                <span class="k">return</span> <span class="kc">None</span>
+        <span class="k">case</span> <span class="s2">&quot;local&quot;</span><span class="p">:</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span>
+                <span class="s2">&quot;Local mode — using on-disk landmark path: </span><span class="si">%s</span><span class="s2">&quot;</span><span class="p">,</span>
+                <span class="n">settings</span><span class="o">.</span><span class="n">lm_model_path</span><span class="p">,</span>
+            <span class="p">)</span>
+            <span class="k">return</span> <span class="n">settings</span><span class="o">.</span><span class="n">lm_model_path</span>
+        <span class="k">case</span><span class="w"> </span><span class="k">_</span><span class="p">:</span>  <span class="c1"># pragma: no cover — guarded by Literal</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Unknown DEPLOY_TARGET: </span><span class="si">{</span><span class="n">target</span><span class="si">!r}</span><span class="s2">&quot;</span><span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="LoadedModels">
+<a class="viewcode-back" href="../../../reference/sign_language.models.html#sign_language.models.loader.LoadedModels">[docs]</a>
+<span class="nd">@dataclass</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">LoadedModels</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Container holding all loaded models and associated metadata.</span>
+
+<span class="sd">    Populated by :func:`load_all` at application startup and stored on</span>
+<span class="sd">    ``app.state.app_state`` for access during inference.</span>
+
+<span class="sd">    :param device: The torch device all models are loaded onto.</span>
+<span class="sd">    :param model: The loaded EfficientNet-B0 classifier in eval mode.</span>
+<span class="sd">    :param class_names: Ordered list of class label strings matching the</span>
+<span class="sd">        EfficientNet output head.</span>
+<span class="sd">    :param landmark_model: The loaded Landmark MLP in eval mode, or ``None``</span>
+<span class="sd">        if the checkpoint was not found.</span>
+<span class="sd">    :param lm_class_names: Ordered list of class label strings matching the</span>
+<span class="sd">        MLP output head. Empty if the landmark model is not loaded.</span>
+<span class="sd">    :param hands_detector: The initialised MediaPipe ``HandLandmarker``</span>
+<span class="sd">        instance, or ``None`` if the task file was not found or MediaPipe</span>
+<span class="sd">        is unavailable.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">device</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">device</span>
+    <span class="n">model</span><span class="p">:</span> <span class="n">nn</span><span class="o">.</span><span class="n">Module</span>
+    <span class="n">class_names</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span>
+    <span class="n">landmark_model</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">nn</span><span class="o">.</span><span class="n">Module</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">lm_class_names</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="nb">list</span><span class="p">)</span>
+    <span class="n">hands_detector</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">object</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span></div>
+
+
+
+<div class="viewcode-block" id="load_efficientnet">
+<a class="viewcode-back" href="../../../reference/sign_language.models.html#sign_language.models.loader.load_efficientnet">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">load_efficientnet</span><span class="p">(</span>
+    <span class="n">model_path</span><span class="p">:</span> <span class="n">Path</span><span class="p">,</span> <span class="n">device</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">device</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">nn</span><span class="o">.</span><span class="n">Module</span><span class="p">,</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span> <span class="nb">dict</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Load an EfficientNet-B0 checkpoint from disk.</span>
+
+<span class="sd">    :param model_path: Path to the ``.pth`` checkpoint file containing</span>
+<span class="sd">        ``model_state``, ``class_names``, ``val_acc``, and ``epoch`` keys.</span>
+<span class="sd">    :param device: Torch device to map the weights onto.</span>
+<span class="sd">    :returns: A three-tuple of ``(model, class_names, checkpoint_dict)``</span>
+<span class="sd">        where ``model`` is in eval mode on ``device``.</span>
+<span class="sd">    :raises FileNotFoundError: If ``model_path`` does not exist on disk.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">model_path</span><span class="o">.</span><span class="n">exists</span><span class="p">():</span>
+        <span class="k">raise</span> <span class="ne">FileNotFoundError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;EfficientNet checkpoint not found: </span><span class="si">{</span><span class="n">model_path</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+
+    <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Loading EfficientNet from </span><span class="si">%s</span><span class="s2"> …&quot;</span><span class="p">,</span> <span class="n">model_path</span><span class="p">)</span>
+    <span class="n">ckpt</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">model_path</span><span class="p">,</span> <span class="n">map_location</span><span class="o">=</span><span class="n">device</span><span class="p">,</span> <span class="n">weights_only</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+    <span class="n">class_names</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="n">ckpt</span><span class="p">[</span><span class="s2">&quot;class_names&quot;</span><span class="p">]</span>
+
+    <span class="n">model</span> <span class="o">=</span> <span class="n">build_efficientnet</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">class_names</span><span class="p">))</span>
+    <span class="n">model</span><span class="o">.</span><span class="n">load_state_dict</span><span class="p">(</span><span class="n">ckpt</span><span class="p">[</span><span class="s2">&quot;model_state&quot;</span><span class="p">])</span>
+    <span class="n">model</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="n">device</span><span class="p">)</span>
+    <span class="n">model</span><span class="o">.</span><span class="n">eval</span><span class="p">()</span>
+
+    <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span>
+        <span class="s2">&quot;EfficientNet loaded — </span><span class="si">%d</span><span class="s2"> classes, val_acc=</span><span class="si">%.4f</span><span class="s2">, epoch=</span><span class="si">%d</span><span class="s2">&quot;</span><span class="p">,</span>
+        <span class="nb">len</span><span class="p">(</span><span class="n">class_names</span><span class="p">),</span>
+        <span class="n">ckpt</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;val_acc&quot;</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">),</span>
+        <span class="n">ckpt</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;epoch&quot;</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">),</span>
+    <span class="p">)</span>
+    <span class="k">return</span> <span class="n">model</span><span class="p">,</span> <span class="n">class_names</span><span class="p">,</span> <span class="n">ckpt</span></div>
+
+
+
+<div class="viewcode-block" id="load_landmark_mlp">
+<a class="viewcode-back" href="../../../reference/sign_language.models.html#sign_language.models.loader.load_landmark_mlp">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">load_landmark_mlp</span><span class="p">(</span>
+    <span class="n">model_path</span><span class="p">:</span> <span class="n">Path</span><span class="p">,</span> <span class="n">device</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">device</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">Optional</span><span class="p">[</span><span class="n">nn</span><span class="o">.</span><span class="n">Module</span><span class="p">],</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]]:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Load the Landmark MLP checkpoint from disk.</span>
+
+<span class="sd">    Returns ``(None, [])`` gracefully when the checkpoint file is missing,</span>
+<span class="sd">    allowing the application to start without the landmark fallback model.</span>
+
+<span class="sd">    :param model_path: Path to the ``.pth`` checkpoint file containing</span>
+<span class="sd">        ``model_state``, ``class_names``, ``input_dim``, and ``val_acc`` keys.</span>
+<span class="sd">    :param device: Torch device to map the weights onto.</span>
+<span class="sd">    :returns: A two-tuple of ``(model, class_names)`` where ``model`` is in</span>
+<span class="sd">        eval mode on ``device``, or ``(None, [])`` if the checkpoint is missing.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">model_path</span><span class="o">.</span><span class="n">exists</span><span class="p">():</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="s2">&quot;Landmark MLP checkpoint not found: </span><span class="si">%s</span><span class="s2"> — skipping&quot;</span><span class="p">,</span> <span class="n">model_path</span><span class="p">)</span>
+        <span class="k">return</span> <span class="kc">None</span><span class="p">,</span> <span class="p">[]</span>
+
+    <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Loading Landmark MLP from </span><span class="si">%s</span><span class="s2"> …&quot;</span><span class="p">,</span> <span class="n">model_path</span><span class="p">)</span>
+    <span class="n">ckpt</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">model_path</span><span class="p">,</span> <span class="n">map_location</span><span class="o">=</span><span class="n">device</span><span class="p">,</span> <span class="n">weights_only</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+    <span class="n">lm_class_names</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="n">ckpt</span><span class="p">[</span><span class="s2">&quot;class_names&quot;</span><span class="p">]</span>
+    <span class="n">input_dim</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="n">ckpt</span><span class="p">[</span><span class="s2">&quot;input_dim&quot;</span><span class="p">]</span>
+
+    <span class="n">model</span> <span class="o">=</span> <span class="n">build_landmark_mlp</span><span class="p">(</span><span class="n">input_dim</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">lm_class_names</span><span class="p">))</span>
+    <span class="n">model</span><span class="o">.</span><span class="n">load_state_dict</span><span class="p">(</span><span class="n">ckpt</span><span class="p">[</span><span class="s2">&quot;model_state&quot;</span><span class="p">])</span>
+    <span class="n">model</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="n">device</span><span class="p">)</span>
+    <span class="n">model</span><span class="o">.</span><span class="n">eval</span><span class="p">()</span>
+
+    <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span>
+        <span class="s2">&quot;Landmark MLP loaded — </span><span class="si">%d</span><span class="s2"> classes, val_acc=</span><span class="si">%.4f</span><span class="s2">&quot;</span><span class="p">,</span>
+        <span class="nb">len</span><span class="p">(</span><span class="n">lm_class_names</span><span class="p">),</span>
+        <span class="n">ckpt</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;val_acc&quot;</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">),</span>
+    <span class="p">)</span>
+    <span class="k">return</span> <span class="n">model</span><span class="p">,</span> <span class="n">lm_class_names</span></div>
+
+
+
+<div class="viewcode-block" id="init_hand_detector">
+<a class="viewcode-back" href="../../../reference/sign_language.models.html#sign_language.models.loader.init_hand_detector">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">init_hand_detector</span><span class="p">(</span><span class="n">landmarker_path</span><span class="p">:</span> <span class="n">Path</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">object</span> <span class="o">|</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Initialise the MediaPipe hand landmarker from a task file.</span>
+
+<span class="sd">    Returns ``None`` gracefully if the task file is missing or if MediaPipe</span>
+<span class="sd">    is unavailable, allowing the application to start without hand detection.</span>
+
+<span class="sd">    :param landmarker_path: Path to the ``hand_landmarker.task`` file.</span>
+<span class="sd">    :returns: A MediaPipe ``HandLandmarker`` instance configured for up to</span>
+<span class="sd">        two hands, or ``None`` if the task file is missing or an error occurs.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">landmarker_path</span><span class="o">.</span><span class="n">exists</span><span class="p">():</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="s2">&quot;Hand landmarker task file not found: </span><span class="si">%s</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">landmarker_path</span><span class="p">)</span>
+        <span class="k">return</span> <span class="kc">None</span>
+
+    <span class="k">try</span><span class="p">:</span>
+        <span class="kn">from</span><span class="w"> </span><span class="nn">mediapipe.tasks</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>  <span class="c1"># type: ignore[import-untyped]</span>
+            <span class="n">python</span> <span class="k">as</span> <span class="n">mp_python</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="kn">from</span><span class="w"> </span><span class="nn">mediapipe.tasks.python</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>  <span class="c1"># type: ignore[import-untyped]</span>
+            <span class="n">vision</span><span class="p">,</span>
+        <span class="p">)</span>
+
+        <span class="n">base_options</span> <span class="o">=</span> <span class="n">mp_python</span><span class="o">.</span><span class="n">BaseOptions</span><span class="p">(</span><span class="n">model_asset_path</span><span class="o">=</span><span class="nb">str</span><span class="p">(</span><span class="n">landmarker_path</span><span class="p">))</span>
+        <span class="n">options</span> <span class="o">=</span> <span class="n">vision</span><span class="o">.</span><span class="n">HandLandmarkerOptions</span><span class="p">(</span>
+            <span class="n">base_options</span><span class="o">=</span><span class="n">base_options</span><span class="p">,</span>
+            <span class="n">num_hands</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span>
+            <span class="n">min_hand_detection_confidence</span><span class="o">=</span><span class="mf">0.7</span><span class="p">,</span>
+            <span class="n">min_hand_presence_confidence</span><span class="o">=</span><span class="mf">0.5</span><span class="p">,</span>
+            <span class="n">min_tracking_confidence</span><span class="o">=</span><span class="mf">0.5</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="n">detector</span> <span class="o">=</span> <span class="n">vision</span><span class="o">.</span><span class="n">HandLandmarker</span><span class="o">.</span><span class="n">create_from_options</span><span class="p">(</span><span class="n">options</span><span class="p">)</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;MediaPipe hand landmarker initialised&quot;</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">detector</span>  <span class="c1"># type: ignore[no-any-return]</span>
+    <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">exc</span><span class="p">:</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span>
+            <span class="s2">&quot;MediaPipe unavailable: </span><span class="si">%s</span><span class="s2"> — continuing without hand detection&quot;</span><span class="p">,</span>
+            <span class="n">exc</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="k">return</span> <span class="kc">None</span></div>
+
+
+
+<div class="viewcode-block" id="load_all">
+<a class="viewcode-back" href="../../../reference/sign_language.models.html#sign_language.models.loader.load_all">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">load_all</span><span class="p">(</span>
+    <span class="n">model_path</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Path</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">lm_model_path</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Path</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">landmarker_path</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Path</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">LoadedModels</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Load every model and return them in a single :class:`LoadedModels` container.</span>
+
+<span class="sd">    When ``model_path`` is ``None``, :func:`resolve_efficientnet_path` is</span>
+<span class="sd">    called, which dispatches on ``settings.deploy_target`` to either return</span>
+<span class="sd">    the local on-disk path, download from MLflow (``onprem``), or download</span>
+<span class="sd">    from the Azure ML registry (``azure``).</span>
+
+<span class="sd">    :param model_path: Path to the EfficientNet ``.pth`` checkpoint, or</span>
+<span class="sd">        ``None`` to resolve automatically via :func:`resolve_efficientnet_path`.</span>
+<span class="sd">    :param lm_model_path: Path to the Landmark MLP ``.pth`` checkpoint, or</span>
+<span class="sd">        ``None`` to resolve automatically via :func:`resolve_landmark_path`.</span>
+<span class="sd">    :param landmarker_path: Path to the MediaPipe ``hand_landmarker.task``</span>
+<span class="sd">        file. Defaults to ``settings.hand_landmarker_path``.</span>
+<span class="sd">    :returns: A :class:`LoadedModels` dataclass with all models loaded and</span>
+<span class="sd">        ready for inference.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">device</span> <span class="o">=</span> <span class="n">settings</span><span class="o">.</span><span class="n">get_device</span><span class="p">()</span>
+
+    <span class="n">resolved_model_path</span> <span class="o">=</span> <span class="n">model_path</span> <span class="ow">or</span> <span class="n">resolve_efficientnet_path</span><span class="p">()</span>
+    <span class="n">resolved_lm_model_path</span> <span class="o">=</span> <span class="n">lm_model_path</span> <span class="ow">or</span> <span class="n">resolve_landmark_path</span><span class="p">()</span>
+    <span class="n">resolved_landmarker_path</span> <span class="o">=</span> <span class="n">landmarker_path</span> <span class="ow">or</span> <span class="n">settings</span><span class="o">.</span><span class="n">hand_landmarker_path</span>
+    <span class="n">model</span><span class="p">,</span> <span class="n">class_names</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">load_efficientnet</span><span class="p">(</span><span class="n">resolved_model_path</span><span class="p">,</span> <span class="n">device</span><span class="p">)</span>
+    <span class="c1"># resolve_landmark_path() may return None when running in onprem/azure</span>
+    <span class="c1"># mode and no landmark MLP is registered yet. load_landmark_mlp expects</span>
+    <span class="c1"># a Path, so guard with a sentinel that triggers its graceful skip path.</span>
+    <span class="n">landmark_model</span><span class="p">,</span> <span class="n">lm_class_names</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="n">load_landmark_mlp</span><span class="p">(</span><span class="n">resolved_lm_model_path</span><span class="p">,</span> <span class="n">device</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">resolved_lm_model_path</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
+        <span class="k">else</span> <span class="p">(</span><span class="kc">None</span><span class="p">,</span> <span class="p">[])</span>
+    <span class="p">)</span>
+    <span class="n">hands_detector</span> <span class="o">=</span> <span class="n">init_hand_detector</span><span class="p">(</span><span class="n">resolved_landmarker_path</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">LoadedModels</span><span class="p">(</span>
+        <span class="n">device</span><span class="o">=</span><span class="n">device</span><span class="p">,</span>
+        <span class="n">model</span><span class="o">=</span><span class="n">model</span><span class="p">,</span>
+        <span class="n">class_names</span><span class="o">=</span><span class="n">class_names</span><span class="p">,</span>
+        <span class="n">landmark_model</span><span class="o">=</span><span class="n">landmark_model</span><span class="p">,</span>
+        <span class="n">lm_class_names</span><span class="o">=</span><span class="n">lm_class_names</span><span class="p">,</span>
+        <span class="n">hands_detector</span><span class="o">=</span><span class="n">hands_detector</span><span class="p">,</span>
+    <span class="p">)</span></div>
+
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2026, Kinga Marchlewska, Raya Kichukova, Ana-Maria Farazică, Maciej Czerniak, Szymon Chirowski.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

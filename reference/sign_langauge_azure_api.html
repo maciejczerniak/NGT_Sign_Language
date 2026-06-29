@@ -1,0 +1,436 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>sign_language_azure_api package &mdash; Sign Language 0.1.0 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../_static/css/theme.css?v=9edc463e" />
+
+  
+      <script src="../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../_static/documentation_options.js?v=01f34227"></script>
+      <script src="../_static/doctools.js?v=9a2dae69"></script>
+      <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../index.html" class="icon icon-home">
+            Sign Language
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Getting Started</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../installation.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../usage.html">Usage</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">API Reference</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="sign_language.html">sign_language package</a></li>
+<li class="toctree-l1"><a class="reference internal" href="sign_language_training.html">sign_language_training package</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">Sign Language</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">sign_language_azure_api package</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../_sources/reference/sign_langauge_azure_api.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="module-sign_language_azure_api">
+<span id="sign-language-azure-api-package"></span><h1>sign_language_azure_api package<a class="headerlink" href="#module-sign_language_azure_api" title="Link to this heading"></a></h1>
+<p>Separate Azure ML endpoint API package for cloud inference.</p>
+<p id="module-sign_language_azure_api.app">Standalone FastAPI app for Azure ML endpoint inference.</p>
+<dl class="py function">
+<dt class="sig sig-object py" id="sign_language_azure_api.app.create_app">
+<span class="sig-prename descclassname"><span class="pre">sign_language_azure_api.app.</span></span><span class="sig-name descname"><span class="pre">create_app</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">fastapi.FastAPI</span></span></span><a class="reference internal" href="../_modules/sign_language_azure_api/app.html#create_app"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#sign_language_azure_api.app.create_app" title="Link to this definition"></a></dt>
+<dd><p>Create the standalone Azure endpoint proxy API.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Configured FastAPI application.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<p id="module-sign_language_azure_api.client">Client for Azure ML managed online endpoint inference.</p>
+<dl class="py class">
+<dt class="sig sig-object py" id="sign_language_azure_api.client.AzureEndpointPrediction">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">sign_language_azure_api.client.</span></span><span class="sig-name descname"><span class="pre">AzureEndpointPrediction</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">predicted_letter</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><span class="pre">str</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.14)"><span class="pre">None</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">confidence</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.14)"><span class="pre">float</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">top_3</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#list" title="(in Python v3.14)"><span class="pre">list</span></a><span class="p"><span class="pre">[</span></span><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#dict" title="(in Python v3.14)"><span class="pre">dict</span></a><span class="p"><span class="pre">[</span></span><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><span class="pre">str</span></a><span class="p"><span class="pre">,</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.14)"><span class="pre">float</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><span class="pre">str</span></a><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">model_name</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><span class="pre">str</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.14)"><span class="pre">None</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">model_version</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><span class="pre">str</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.14)"><span class="pre">None</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/sign_language_azure_api/client.html#AzureEndpointPrediction"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#sign_language_azure_api.client.AzureEndpointPrediction" title="Link to this definition"></a></dt>
+<dd><p>Bases: <a class="reference external" href="https://docs.python.org/3/library/functions.html#object" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></a></p>
+<p>Normalized prediction returned by the Azure ML online endpoint.</p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="sign_language_azure_api.client.AzureEndpointPrediction.predicted_letter">
+<span class="sig-name descname"><span class="pre">predicted_letter</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><span class="pre">str</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.14)"><span class="pre">None</span></a></em><a class="headerlink" href="#sign_language_azure_api.client.AzureEndpointPrediction.predicted_letter" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="sign_language_azure_api.client.AzureEndpointPrediction.confidence">
+<span class="sig-name descname"><span class="pre">confidence</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.14)"><span class="pre">float</span></a></em><a class="headerlink" href="#sign_language_azure_api.client.AzureEndpointPrediction.confidence" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="sign_language_azure_api.client.AzureEndpointPrediction.top_3">
+<span class="sig-name descname"><span class="pre">top_3</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#list" title="(in Python v3.14)"><span class="pre">list</span></a><span class="p"><span class="pre">[</span></span><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#dict" title="(in Python v3.14)"><span class="pre">dict</span></a><span class="p"><span class="pre">[</span></span><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><span class="pre">str</span></a><span class="p"><span class="pre">,</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.14)"><span class="pre">float</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><span class="pre">str</span></a><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></em><a class="headerlink" href="#sign_language_azure_api.client.AzureEndpointPrediction.top_3" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="sign_language_azure_api.client.AzureEndpointPrediction.model_name">
+<span class="sig-name descname"><span class="pre">model_name</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><span class="pre">str</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.14)"><span class="pre">None</span></a></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">None</span></em><a class="headerlink" href="#sign_language_azure_api.client.AzureEndpointPrediction.model_name" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="sign_language_azure_api.client.AzureEndpointPrediction.model_version">
+<span class="sig-name descname"><span class="pre">model_version</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><span class="pre">str</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.14)"><span class="pre">None</span></a></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">None</span></em><a class="headerlink" href="#sign_language_azure_api.client.AzureEndpointPrediction.model_version" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py exception">
+<dt class="sig sig-object py" id="sign_language_azure_api.client.AzureEndpointError">
+<em class="property"><span class="pre">exception</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">sign_language_azure_api.client.</span></span><span class="sig-name descname"><span class="pre">AzureEndpointError</span></span><a class="reference internal" href="../_modules/sign_language_azure_api/client.html#AzureEndpointError"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#sign_language_azure_api.client.AzureEndpointError" title="Link to this definition"></a></dt>
+<dd><p>Bases: <a class="reference external" href="https://docs.python.org/3/library/exceptions.html#RuntimeError" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">RuntimeError</span></code></a></p>
+<p>Raised when the Azure ML endpoint cannot return a valid prediction.</p>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="sign_language_azure_api.client.AzureMLEndpointClient">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">sign_language_azure_api.client.</span></span><span class="sig-name descname"><span class="pre">AzureMLEndpointClient</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">endpoint_url</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><span class="pre">str</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">endpoint_key</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><span class="pre">str</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">timeout_seconds</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.14)"><span class="pre">float</span></a></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/sign_language_azure_api/client.html#AzureMLEndpointClient"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#sign_language_azure_api.client.AzureMLEndpointClient" title="Link to this definition"></a></dt>
+<dd><p>Bases: <a class="reference external" href="https://docs.python.org/3/library/functions.html#object" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></a></p>
+<p>Small synchronous HTTP client for Azure ML online endpoint calls.</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="sign_language_azure_api.client.AzureMLEndpointClient.__init__">
+<span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">endpoint_url</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><span class="pre">str</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">endpoint_key</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><span class="pre">str</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">timeout_seconds</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.14)"><span class="pre">float</span></a></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/sign_language_azure_api/client.html#AzureMLEndpointClient.__init__"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#sign_language_azure_api.client.AzureMLEndpointClient.__init__" title="Link to this definition"></a></dt>
+<dd><p>Initialize the Azure ML online endpoint client.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>endpoint_url</strong> – Azure ML scoring URI.</p></li>
+<li><p><strong>endpoint_key</strong> – Endpoint authentication key.</p></li>
+<li><p><strong>timeout_seconds</strong> – Maximum duration for one endpoint request.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Raises<span class="colon">:</span></dt>
+<dd class="field-even"><p><a class="reference external" href="https://docs.python.org/3/library/exceptions.html#ValueError" title="(in Python v3.14)"><strong>ValueError</strong></a> – If the endpoint URL or key is empty.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sign_language_azure_api.client.AzureMLEndpointClient.predict">
+<span class="sig-name descname"><span class="pre">predict</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">image_data</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><span class="pre">str</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">deployment_name</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><span class="pre">str</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.14)"><span class="pre">None</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="#sign_language_azure_api.client.AzureEndpointPrediction" title="sign_language_azure_api.client.AzureEndpointPrediction"><span class="pre">AzureEndpointPrediction</span></a></span></span><a class="reference internal" href="../_modules/sign_language_azure_api/client.html#AzureMLEndpointClient.predict"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#sign_language_azure_api.client.AzureMLEndpointClient.predict" title="Link to this definition"></a></dt>
+<dd><p>Send one base64 image to the Azure ML online endpoint.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>image_data</strong> – Base64-encoded image content.</p></li>
+<li><p><strong>deployment_name</strong> – Optional deployment targeted by the request.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Normalized Azure endpoint prediction.</p>
+</dd>
+<dt class="field-odd">Raises<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference internal" href="#sign_language_azure_api.client.AzureEndpointError" title="sign_language_azure_api.client.AzureEndpointError"><strong>AzureEndpointError</strong></a> – If the request fails or Azure returns invalid data.</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+<p id="module-sign_language_azure_api.main">CLI entrypoint for the standalone Azure ML endpoint API.</p>
+<dl class="py function">
+<dt class="sig sig-object py" id="sign_language_azure_api.main.serve">
+<span class="sig-prename descclassname"><span class="pre">sign_language_azure_api.main.</span></span><span class="sig-name descname"><span class="pre">serve</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">host</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><span class="pre">str</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">typer.Option</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">port</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><span class="pre">int</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">typer.Option</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">reload</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.14)"><span class="pre">bool</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">typer.Option</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.14)"><span class="pre">None</span></a></span></span><a class="headerlink" href="#sign_language_azure_api.main.serve" title="Link to this definition"></a></dt>
+<dd><p>Serve the standalone Azure ML endpoint API.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>host</strong> – Optional bind host overriding application settings.</p></li>
+<li><p><strong>port</strong> – Optional bind port overriding application settings.</p></li>
+<li><p><strong>reload</strong> – Enable Uvicorn development reload mode.</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="sign_language_azure_api.main.main">
+<span class="sig-prename descclassname"><span class="pre">sign_language_azure_api.main.</span></span><span class="sig-name descname"><span class="pre">main</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.14)"><span class="pre">None</span></a></span></span><a class="reference internal" href="../_modules/sign_language_azure_api/main.html#main"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#sign_language_azure_api.main.main" title="Link to this definition"></a></dt>
+<dd><p>Run the standalone Azure API command-line application.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>None.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<p id="module-sign_language_azure_api.schemas">Schemas for the separate Azure ML endpoint API.</p>
+<dl class="py class">
+<dt class="sig sig-object py" id="sign_language_azure_api.schemas.HealthResponse">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">sign_language_azure_api.schemas.</span></span><span class="sig-name descname"><span class="pre">HealthResponse</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Any</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Any</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/sign_language_azure_api/schemas.html#HealthResponse"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#sign_language_azure_api.schemas.HealthResponse" title="Link to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">BaseModel</span></code></p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="sign_language_azure_api.schemas.HealthResponse.status">
+<span class="sig-name descname"><span class="pre">status</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><span class="pre">str</span></a></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'ok'</span></em><a class="headerlink" href="#sign_language_azure_api.schemas.HealthResponse.status" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="sign_language_azure_api.schemas.AzureApiInfoResponse">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">sign_language_azure_api.schemas.</span></span><span class="sig-name descname"><span class="pre">AzureApiInfoResponse</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Any</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Any</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/sign_language_azure_api/schemas.html#AzureApiInfoResponse"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#sign_language_azure_api.schemas.AzureApiInfoResponse" title="Link to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">BaseModel</span></code></p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="sign_language_azure_api.schemas.AzureApiInfoResponse.app_name">
+<span class="sig-name descname"><span class="pre">app_name</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><span class="pre">str</span></a></em><a class="headerlink" href="#sign_language_azure_api.schemas.AzureApiInfoResponse.app_name" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="sign_language_azure_api.schemas.AzureApiInfoResponse.endpoint_configured">
+<span class="sig-name descname"><span class="pre">endpoint_configured</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.14)"><span class="pre">bool</span></a></em><a class="headerlink" href="#sign_language_azure_api.schemas.AzureApiInfoResponse.endpoint_configured" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="sign_language_azure_api.schemas.AzureApiInfoResponse.model_version">
+<span class="sig-name descname"><span class="pre">model_version</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><span class="pre">str</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.14)"><span class="pre">None</span></a></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">None</span></em><a class="headerlink" href="#sign_language_azure_api.schemas.AzureApiInfoResponse.model_version" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="sign_language_azure_api.schemas.AzureApiInfoResponse.model_name">
+<span class="sig-name descname"><span class="pre">model_name</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><span class="pre">str</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.14)"><span class="pre">None</span></a></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">None</span></em><a class="headerlink" href="#sign_language_azure_api.schemas.AzureApiInfoResponse.model_name" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="sign_language_azure_api.schemas.AzureApiInfoResponse.endpoint_name">
+<span class="sig-name descname"><span class="pre">endpoint_name</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><span class="pre">str</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.14)"><span class="pre">None</span></a></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">None</span></em><a class="headerlink" href="#sign_language_azure_api.schemas.AzureApiInfoResponse.endpoint_name" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="sign_language_azure_api.schemas.AzureApiInfoResponse.selected_deployment">
+<span class="sig-name descname"><span class="pre">selected_deployment</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><span class="pre">str</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.14)"><span class="pre">None</span></a></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">None</span></em><a class="headerlink" href="#sign_language_azure_api.schemas.AzureApiInfoResponse.selected_deployment" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="sign_language_azure_api.schemas.AzureApiInfoResponse.default_deployment">
+<span class="sig-name descname"><span class="pre">default_deployment</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><span class="pre">str</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.14)"><span class="pre">None</span></a></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">None</span></em><a class="headerlink" href="#sign_language_azure_api.schemas.AzureApiInfoResponse.default_deployment" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="sign_language_azure_api.schemas.AzureApiInfoResponse.deployment_provisioning_state">
+<span class="sig-name descname"><span class="pre">deployment_provisioning_state</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><span class="pre">str</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.14)"><span class="pre">None</span></a></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">None</span></em><a class="headerlink" href="#sign_language_azure_api.schemas.AzureApiInfoResponse.deployment_provisioning_state" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="sign_language_azure_api.schemas.AzureApiInfoResponse.metadata_available">
+<span class="sig-name descname"><span class="pre">metadata_available</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.14)"><span class="pre">bool</span></a></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">False</span></em><a class="headerlink" href="#sign_language_azure_api.schemas.AzureApiInfoResponse.metadata_available" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="sign_language_azure_api.schemas.AzureApiInfoResponse.metadata_error">
+<span class="sig-name descname"><span class="pre">metadata_error</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><span class="pre">str</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.14)"><span class="pre">None</span></a></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">None</span></em><a class="headerlink" href="#sign_language_azure_api.schemas.AzureApiInfoResponse.metadata_error" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="sign_language_azure_api.schemas.PredictRequest">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">sign_language_azure_api.schemas.</span></span><span class="sig-name descname"><span class="pre">PredictRequest</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Any</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Any</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/sign_language_azure_api/schemas.html#PredictRequest"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#sign_language_azure_api.schemas.PredictRequest" title="Link to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">BaseModel</span></code></p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="sign_language_azure_api.schemas.PredictRequest.image">
+<span class="sig-name descname"><span class="pre">image</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><span class="pre">str</span></a></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">Ellipsis</span></em><a class="headerlink" href="#sign_language_azure_api.schemas.PredictRequest.image" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="sign_language_azure_api.schemas.TopKItem">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">sign_language_azure_api.schemas.</span></span><span class="sig-name descname"><span class="pre">TopKItem</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Any</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Any</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/sign_language_azure_api/schemas.html#TopKItem"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#sign_language_azure_api.schemas.TopKItem" title="Link to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">BaseModel</span></code></p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="sign_language_azure_api.schemas.TopKItem.letter">
+<span class="sig-name descname"><span class="pre">letter</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><span class="pre">str</span></a></em><a class="headerlink" href="#sign_language_azure_api.schemas.TopKItem.letter" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="sign_language_azure_api.schemas.TopKItem.confidence">
+<span class="sig-name descname"><span class="pre">confidence</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.14)"><span class="pre">float</span></a></em><a class="headerlink" href="#sign_language_azure_api.schemas.TopKItem.confidence" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="sign_language_azure_api.schemas.PredictResponse">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">sign_language_azure_api.schemas.</span></span><span class="sig-name descname"><span class="pre">PredictResponse</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Any</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Any</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/sign_language_azure_api/schemas.html#PredictResponse"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#sign_language_azure_api.schemas.PredictResponse" title="Link to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">BaseModel</span></code></p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="sign_language_azure_api.schemas.PredictResponse.predicted_letter">
+<span class="sig-name descname"><span class="pre">predicted_letter</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><span class="pre">str</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.14)"><span class="pre">None</span></a></em><a class="headerlink" href="#sign_language_azure_api.schemas.PredictResponse.predicted_letter" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="sign_language_azure_api.schemas.PredictResponse.confidence">
+<span class="sig-name descname"><span class="pre">confidence</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.14)"><span class="pre">float</span></a></em><a class="headerlink" href="#sign_language_azure_api.schemas.PredictResponse.confidence" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="sign_language_azure_api.schemas.PredictResponse.top_3">
+<span class="sig-name descname"><span class="pre">top_3</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#list" title="(in Python v3.14)"><span class="pre">list</span></a><span class="p"><span class="pre">[</span></span><a class="reference internal" href="#sign_language_azure_api.schemas.TopKItem" title="sign_language_azure_api.schemas.TopKItem"><span class="pre">TopKItem</span></a><span class="p"><span class="pre">]</span></span></em><a class="headerlink" href="#sign_language_azure_api.schemas.PredictResponse.top_3" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="sign_language_azure_api.schemas.PredictResponse.model_name">
+<span class="sig-name descname"><span class="pre">model_name</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><span class="pre">str</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.14)"><span class="pre">None</span></a></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">None</span></em><a class="headerlink" href="#sign_language_azure_api.schemas.PredictResponse.model_name" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="sign_language_azure_api.schemas.PredictResponse.model_version">
+<span class="sig-name descname"><span class="pre">model_version</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><span class="pre">str</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.14)"><span class="pre">None</span></a></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">None</span></em><a class="headerlink" href="#sign_language_azure_api.schemas.PredictResponse.model_version" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="sign_language_azure_api.schemas.CollectRequest">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">sign_language_azure_api.schemas.</span></span><span class="sig-name descname"><span class="pre">CollectRequest</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Any</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Any</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/sign_language_azure_api/schemas.html#CollectRequest"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#sign_language_azure_api.schemas.CollectRequest" title="Link to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">BaseModel</span></code></p>
+<p>One labelled sample submitted from the frontend collection page.</p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="sign_language_azure_api.schemas.CollectRequest.image">
+<span class="sig-name descname"><span class="pre">image</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><span class="pre">str</span></a></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">Ellipsis</span></em><a class="headerlink" href="#sign_language_azure_api.schemas.CollectRequest.image" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="sign_language_azure_api.schemas.CollectRequest.letter">
+<span class="sig-name descname"><span class="pre">letter</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><span class="pre">str</span></a></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">Ellipsis</span></em><a class="headerlink" href="#sign_language_azure_api.schemas.CollectRequest.letter" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="sign_language_azure_api.schemas.CollectRequest.source">
+<span class="sig-name descname"><span class="pre">source</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><span class="pre">str</span></a></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">Ellipsis</span></em><a class="headerlink" href="#sign_language_azure_api.schemas.CollectRequest.source" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="sign_language_azure_api.schemas.CollectResponse">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">sign_language_azure_api.schemas.</span></span><span class="sig-name descname"><span class="pre">CollectResponse</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Any</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Any</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/sign_language_azure_api/schemas.html#CollectResponse"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#sign_language_azure_api.schemas.CollectResponse" title="Link to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">BaseModel</span></code></p>
+<p>Confirmation that one sample was stored in pending Azure Blob storage.</p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="sign_language_azure_api.schemas.CollectResponse.id">
+<span class="sig-name descname"><span class="pre">id</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><span class="pre">str</span></a></em><a class="headerlink" href="#sign_language_azure_api.schemas.CollectResponse.id" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="sign_language_azure_api.schemas.CollectResponse.letter">
+<span class="sig-name descname"><span class="pre">letter</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><span class="pre">str</span></a></em><a class="headerlink" href="#sign_language_azure_api.schemas.CollectResponse.letter" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="sign_language_azure_api.schemas.CollectResponse.stored">
+<span class="sig-name descname"><span class="pre">stored</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.14)"><span class="pre">bool</span></a></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">True</span></em><a class="headerlink" href="#sign_language_azure_api.schemas.CollectResponse.stored" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="sign_language_azure_api.schemas.CollectResponse.blob_path">
+<span class="sig-name descname"><span class="pre">blob_path</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><span class="pre">str</span></a></em><a class="headerlink" href="#sign_language_azure_api.schemas.CollectResponse.blob_path" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<p id="module-sign_language_azure_api.settings">Settings for the separate Azure ML endpoint API.</p>
+<dl class="py class">
+<dt class="sig sig-object py" id="sign_language_azure_api.settings.AzureApiSettings">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">sign_language_azure_api.settings.</span></span><span class="sig-name descname"><span class="pre">AzureApiSettings</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Any</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Any</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/sign_language_azure_api/settings.html#AzureApiSettings"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#sign_language_azure_api.settings.AzureApiSettings" title="Link to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">BaseSettings</span></code></p>
+<p>Configuration for the standalone Azure endpoint proxy API.</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="sign_language_azure_api.settings.AzureApiSettings.validate_timeout">
+<span class="sig-name descname"><span class="pre">validate_timeout</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#sign_language_azure_api.settings.AzureApiSettings.validate_timeout" title="Link to this definition"></a></dt>
+<dd><p>Validate the Azure endpoint request timeout.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sign_language_azure_api.settings.AzureApiSettings.validate_port">
+<span class="sig-name descname"><span class="pre">validate_port</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#sign_language_azure_api.settings.AzureApiSettings.validate_port" title="Link to this definition"></a></dt>
+<dd><p>Validate the standalone API listening port.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sign_language_azure_api.settings.AzureApiSettings.validate_collect_max_bytes">
+<span class="sig-name descname"><span class="pre">validate_collect_max_bytes</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#sign_language_azure_api.settings.AzureApiSettings.validate_collect_max_bytes" title="Link to this definition"></a></dt>
+<dd><p>Validate the maximum accepted collection image size.</p>
+</dd></dl>
+
+</dd></dl>
+
+</section>
+
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2026, Kinga Marchlewska, Raya Kichukova, Ana-Maria Farazică, Maciej Czerniak, Szymon Chirowski.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

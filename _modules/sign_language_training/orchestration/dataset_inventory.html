@@ -1,0 +1,265 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>sign_language_training.orchestration.dataset_inventory &mdash; Sign Language 0.1.0 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/css/theme.css?v=9edc463e" />
+
+  
+      <script src="../../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../../_static/documentation_options.js?v=01f34227"></script>
+      <script src="../../../_static/doctools.js?v=9a2dae69"></script>
+      <script src="../../../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../index.html" class="icon icon-home">
+            Sign Language
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Getting Started</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../installation.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../usage.html">Usage</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">API Reference</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../reference/sign_language.html">sign_language package</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../reference/sign_language_training.html">sign_language_training package</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../index.html">Sign Language</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">sign_language_training.orchestration.dataset_inventory</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for sign_language_training.orchestration.dataset_inventory</h1><div class="highlight"><pre>
+<span></span><span class="sd">&quot;&quot;&quot;Dataset inventory helpers for trigger policy decisions.</span>
+
+<span class="sd">Provides utilities to build a deterministic file manifest for an</span>
+<span class="sd">ImageFolder dataset and compare it against a previously recorded state</span>
+<span class="sd">to detect new or removed images.</span>
+<span class="sd">&quot;&quot;&quot;</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">hashlib</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">dataclasses</span><span class="w"> </span><span class="kn">import</span> <span class="n">dataclass</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">pathlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">Path</span>
+
+<span class="n">IMAGE_SUFFIXES</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;.jpg&quot;</span><span class="p">,</span> <span class="s2">&quot;.jpeg&quot;</span><span class="p">,</span> <span class="s2">&quot;.png&quot;</span><span class="p">,</span> <span class="s2">&quot;.bmp&quot;</span><span class="p">,</span> <span class="s2">&quot;.webp&quot;</span><span class="p">}</span>
+
+
+<div class="viewcode-block" id="DatasetInventory">
+<a class="viewcode-back" href="../../../reference/sign_language_training.html#sign_language_training.orchestration.dataset_inventory.DatasetInventory">[docs]</a>
+<span class="nd">@dataclass</span><span class="p">(</span><span class="n">frozen</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">DatasetInventory</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Immutable snapshot of an ImageFolder dataset at a point in time.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        root: Resolved absolute path to the dataset root directory.</span>
+<span class="sd">        image_count: Total number of supported image files found.</span>
+<span class="sd">        files: Sorted list of relative file paths (forward-slash</span>
+<span class="sd">            separated) for all images under ``root``.</span>
+<span class="sd">        manifest_hash: SHA-256 hex digest computed from file names,</span>
+<span class="sd">            sizes, and contents, used for deterministic change detection.</span>
+<span class="sd">        removed_image_count: Number of images present in the previous</span>
+<span class="sd">            state but missing from this snapshot. Defaults to ``0``.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">root</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">image_count</span><span class="p">:</span> <span class="nb">int</span>
+    <span class="n">files</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span>
+    <span class="n">manifest_hash</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">removed_image_count</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">0</span></div>
+
+
+
+<div class="viewcode-block" id="build_dataset_inventory">
+<a class="viewcode-back" href="../../../reference/sign_language_training.html#sign_language_training.orchestration.dataset_inventory.build_dataset_inventory">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">build_dataset_inventory</span><span class="p">(</span><span class="n">data_dir</span><span class="p">:</span> <span class="n">Path</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">DatasetInventory</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Build a deterministic file manifest for an ImageFolder dataset.</span>
+
+<span class="sd">    Recursively finds all supported image files under ``data_dir``, sorts</span>
+<span class="sd">    them for determinism, and computes a SHA-256 digest over their relative</span>
+<span class="sd">    paths, sizes, and contents.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        data_dir: Root directory of the ImageFolder dataset.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        A :class:`DatasetInventory` snapshot of the current dataset</span>
+<span class="sd">            state.</span>
+
+<span class="sd">    Raises:</span>
+<span class="sd">        FileNotFoundError: If ``data_dir`` does not exist.</span>
+<span class="sd">        NotADirectoryError: If ``data_dir`` is not a directory.</span>
+<span class="sd">        ValueError: If no supported image files are found under</span>
+<span class="sd">            ``data_dir``.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">root</span> <span class="o">=</span> <span class="n">data_dir</span><span class="o">.</span><span class="n">resolve</span><span class="p">()</span>
+
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">root</span><span class="o">.</span><span class="n">exists</span><span class="p">():</span>
+        <span class="k">raise</span> <span class="ne">FileNotFoundError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Dataset directory not found: </span><span class="si">{</span><span class="n">root</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">root</span><span class="o">.</span><span class="n">is_dir</span><span class="p">():</span>
+        <span class="k">raise</span> <span class="ne">NotADirectoryError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Dataset path is not a directory: </span><span class="si">{</span><span class="n">root</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+
+    <span class="n">paths</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">(</span>
+        <span class="n">path</span>
+        <span class="k">for</span> <span class="n">path</span> <span class="ow">in</span> <span class="n">root</span><span class="o">.</span><span class="n">rglob</span><span class="p">(</span><span class="s2">&quot;*&quot;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">path</span><span class="o">.</span><span class="n">is_file</span><span class="p">()</span> <span class="ow">and</span> <span class="n">path</span><span class="o">.</span><span class="n">suffix</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span> <span class="ow">in</span> <span class="n">IMAGE_SUFFIXES</span>
+    <span class="p">)</span>
+    <span class="n">files</span> <span class="o">=</span> <span class="p">[</span><span class="nb">str</span><span class="p">(</span><span class="n">path</span><span class="o">.</span><span class="n">relative_to</span><span class="p">(</span><span class="n">root</span><span class="p">))</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s2">&quot;</span><span class="se">\\</span><span class="s2">&quot;</span><span class="p">,</span> <span class="s2">&quot;/&quot;</span><span class="p">)</span> <span class="k">for</span> <span class="n">path</span> <span class="ow">in</span> <span class="n">paths</span><span class="p">]</span>
+
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">files</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Dataset directory contains no supported images: </span><span class="si">{</span><span class="n">root</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+
+    <span class="n">digest</span> <span class="o">=</span> <span class="n">hashlib</span><span class="o">.</span><span class="n">sha256</span><span class="p">()</span>
+    <span class="k">for</span> <span class="n">path</span><span class="p">,</span> <span class="n">file_name</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">paths</span><span class="p">,</span> <span class="n">files</span><span class="p">):</span>
+        <span class="n">digest</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">file_name</span><span class="o">.</span><span class="n">encode</span><span class="p">(</span><span class="s2">&quot;utf-8&quot;</span><span class="p">))</span>
+        <span class="n">digest</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="sa">b</span><span class="s2">&quot;</span><span class="se">\0</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="n">digest</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">path</span><span class="o">.</span><span class="n">stat</span><span class="p">()</span><span class="o">.</span><span class="n">st_size</span><span class="p">)</span><span class="o">.</span><span class="n">encode</span><span class="p">(</span><span class="s2">&quot;utf-8&quot;</span><span class="p">))</span>
+        <span class="n">digest</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="sa">b</span><span class="s2">&quot;</span><span class="se">\0</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="n">digest</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">path</span><span class="o">.</span><span class="n">read_bytes</span><span class="p">())</span>
+
+    <span class="k">return</span> <span class="n">DatasetInventory</span><span class="p">(</span>
+        <span class="n">root</span><span class="o">=</span><span class="nb">str</span><span class="p">(</span><span class="n">root</span><span class="p">),</span>
+        <span class="n">image_count</span><span class="o">=</span><span class="nb">len</span><span class="p">(</span><span class="n">files</span><span class="p">),</span>
+        <span class="n">files</span><span class="o">=</span><span class="n">files</span><span class="p">,</span>
+        <span class="n">manifest_hash</span><span class="o">=</span><span class="n">digest</span><span class="o">.</span><span class="n">hexdigest</span><span class="p">(),</span>
+    <span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="count_new_images">
+<a class="viewcode-back" href="../../../reference/sign_language_training.html#sign_language_training.orchestration.dataset_inventory.count_new_images">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">count_new_images</span><span class="p">(</span>
+    <span class="n">current</span><span class="p">:</span> <span class="n">DatasetInventory</span><span class="p">,</span>
+    <span class="n">previous_files</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Return the number of images present now but absent in the previous state.</span>
+
+<span class="sd">    If no previous state exists, returns the full current image count since</span>
+<span class="sd">    all images are considered new.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        current: The :class:`DatasetInventory` snapshot of the current</span>
+<span class="sd">            dataset state.</span>
+<span class="sd">        previous_files: List of relative file paths from the previously</span>
+<span class="sd">            recorded state, or ``None`` if no prior state exists.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        Count of image files in ``current`` that are not in</span>
+<span class="sd">            ``previous_files``.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">previous_files</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">current</span><span class="o">.</span><span class="n">image_count</span>
+
+    <span class="n">previous</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span><span class="n">previous_files</span><span class="p">)</span>
+    <span class="n">current_files</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span><span class="n">current</span><span class="o">.</span><span class="n">files</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="nb">len</span><span class="p">(</span><span class="n">current_files</span> <span class="o">-</span> <span class="n">previous</span><span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="count_removed_images">
+<a class="viewcode-back" href="../../../reference/sign_language_training.html#sign_language_training.orchestration.dataset_inventory.count_removed_images">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">count_removed_images</span><span class="p">(</span>
+    <span class="n">current</span><span class="p">:</span> <span class="n">DatasetInventory</span><span class="p">,</span>
+    <span class="n">previous_files</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Return the number of previously tracked images missing from the current state.</span>
+
+<span class="sd">    If no previous state exists, returns ``0`` since there is nothing to</span>
+<span class="sd">    compare against.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        current: The :class:`DatasetInventory` snapshot of the current</span>
+<span class="sd">            dataset state.</span>
+<span class="sd">        previous_files: List of relative file paths from the previously</span>
+<span class="sd">            recorded state, or ``None`` if no prior state exists.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        Count of image files in ``previous_files`` that are no longer</span>
+<span class="sd">            present in ``current``.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">previous_files</span><span class="p">:</span>
+        <span class="k">return</span> <span class="mi">0</span>
+
+    <span class="n">previous</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span><span class="n">previous_files</span><span class="p">)</span>
+    <span class="n">current_files</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span><span class="n">current</span><span class="o">.</span><span class="n">files</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="nb">len</span><span class="p">(</span><span class="n">previous</span> <span class="o">-</span> <span class="n">current_files</span><span class="p">)</span></div>
+
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2026, Kinga Marchlewska, Raya Kichukova, Ana-Maria Farazică, Maciej Czerniak, Szymon Chirowski.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>
